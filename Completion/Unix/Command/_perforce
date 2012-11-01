@@ -694,7 +694,15 @@ awk '/^Client:/ { print $2 }')")
   # Limit to the 20 most recent changes by default to avoid huge
   # output.
   cl=(
-${${${${${(f)"$(_perforce_call_p4 changes changes $amax $xargs $cstatus \$file)"}##Change\ }//:/\\:}//\ on\ /:}/\ by\ /\ }
+# mmc: change the format: skip the user@workspace-name
+# what is this anyway: ${(f) ??
+# #xx  cut prefix
+# // on /:  drop INSIDE
+# I want to remove maruska@maruska-platform-android-main-corker-maruskadell
+# and just see the MSG.
+# so we should produce A:B... and the caller will reformat?
+${${${${${(f)"$(_perforce_call_p4 changes changes $amax $xargs $cstatus \$file)"}##Change\ }//:/\\:}//\ on\ /:}/\ by*\*pending\*\ /\ }
+
   )
   # "default" can't have shelved files in it...
   [[ $ctype = shelved* ]] || cl+=("default:change not yet numbered")
