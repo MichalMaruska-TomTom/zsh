@@ -155,6 +155,15 @@ binary-indep: build-indep binary-arch-dynamic
 	dh_installchangelogs    -pzsh-doc -pzsh-common
 	dh_lintian           -i
 	dh_compress          -i                        -Xpdf
+	set -e; cd debian/zsh-common/usr/share/doc/zsh-common; for x in *; do \
+		case "$$x" in \
+			(copyright|changelog.Debian.gz) \
+				;; \
+			(*) \
+				ln -s ../zsh-common/$$x ../zsh/$$x; \
+				;; \
+		esac; \
+	done
 	dh_fixperms          -i
 	dh_installdeb        -i
 	dh_md5sums           -i
@@ -182,7 +191,12 @@ binary-arch-dynamic: build-arch
 		-dDepends    debian/zsh/bin/*   \
 		-dRecommends debian/zsh/usr/lib/*/zsh/*/zsh/*.so
 
-	dh_installdocs -pzsh             -pzsh-dbg --link-doc=zsh-common
+	dh_installdocs -pzsh -pzsh-dbg --link-doc=zsh
+	dh_installchangelogs -pzsh
+	# These are in zsh-common and there is no Policy reason why
+	# they can't be
+	rm -v -f debian/zsh/usr/share/doc/zsh/changelog
+	rm -v -f debian/zsh/usr/share/doc/zsh/NEWS.Debian
 
 binary-arch-static: build-static
 	dh_testdir
@@ -192,7 +206,8 @@ binary-arch-static: build-static
 
 	# Do not symlink /usr/share/doc/zsh-static to
 	# /usr/share/doc/zsh-common because zsh-static has a unique,
-	# generated README.Debian
+	# generated README.Debian, and because --link-doc between
+	# arch-dep and arch-indep packages breaks binNMUs
 	dh_installdocs       -pzsh-static
 	awk 'BEGIN { print "The following modules are statically-compiled into the static zsh binary:\n"; } /link=static/ { printf "%s (%s %s)\n", substr($$1,6), $$4, $$5; }' obj-static/config.modules >debian/zsh-static/usr/share/doc/zsh-static/README.Debian
 
@@ -215,7 +230,8 @@ binary-arch-dev: build-arch
 
 	cd debian/zsh-dev/usr/share/aclocal; mv aczshoot.m4 zshoot.m4
 
-	dh_installdocs -pzsh-dev --link-doc=zsh-common
+	dh_installdocs -pzsh-dev
+	dh_installchangelogs -pzsh-dev
 
 binary-arch: binary-arch-dynamic binary-arch-static binary-arch-dev
 	dh_lintian    -a
