@@ -1,3 +1,23 @@
+zsh (5.0.7-4) UNRELEASED; urgency=medium
+
+  [ Simon McVittie ]
+  * [991d536c] Make zsh source package binNMU-safe (Closes: #768937)
+    + Do not use dh_installdocs --link-doc=zsh-common in
+      architecture-dependent packages
+    + Symlink zsh-common documentation files into /usr/share/doc/zsh
+    + Migrate /usr/share/doc/zsh and /usr/share/doc/zsh-dev from symlink
+      to directory using dpkg-maintscript-helper
+
+  [ Axel Beckert ]
+  * [7b632623] Simplify Simon's patch by making /usr/share/doc/zsh/doc a
+    symlink to ../zsh-common/ in the zsh binary package. Avoids unpack
+    errors probably caused by having _two_ binary packages containing the
+    directory which was previously a symlink. (See the log of #768937.)
+  * [af8ab9de] Also remove zsh4 alternative for rzsh (Closes: #768241)
+  * [353e05ab] Add a post-jessie TODO list to the source package
+
+ -- Axel Beckert <abe@debian.org>  Tue, 11 Nov 2014 01:19:59 +0100
+
 zsh (5.0.7-3) unstable; urgency=low
 
   * Upload to unstable again
