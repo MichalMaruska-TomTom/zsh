@@ -155,15 +155,6 @@ binary-indep: build-indep binary-arch-dynamic
 	dh_installchangelogs    -pzsh-doc -pzsh-common
 	dh_lintian           -i
 	dh_compress          -i                        -Xpdf
-	set -e; cd debian/zsh-common/usr/share/doc/zsh-common; for x in *; do \
-		case "$$x" in \
-			(copyright|changelog.Debian.gz) \
-				;; \
-			(*) \
-				ln -s ../zsh-common/$$x ../zsh/$$x; \
-				;; \
-		esac; \
-	done
 	dh_fixperms          -i
 	dh_installdeb        -i
 	dh_md5sums           -i
@@ -193,10 +184,6 @@ binary-arch-dynamic: build-arch
 
 	dh_installdocs -pzsh             -pzsh-dbg --link-doc=zsh
 	dh_installchangelogs -pzsh
-	# These are in zsh-common and there is no Policy reason why
-	# they can't be
-	rm -v -f debian/zsh/usr/share/doc/zsh/changelog
-	rm -v -f debian/zsh/usr/share/doc/zsh/NEWS.Debian
 
 binary-arch-static: build-static
 	dh_testdir
