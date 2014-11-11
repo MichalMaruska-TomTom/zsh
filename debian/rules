@@ -191,7 +191,7 @@ binary-arch-dynamic: build-arch
 		-dDepends    debian/zsh/bin/*   \
 		-dRecommends debian/zsh/usr/lib/*/zsh/*/zsh/*.so
 
-	dh_installdocs -pzsh -pzsh-dbg --link-doc=zsh
+	dh_installdocs -pzsh             -pzsh-dbg --link-doc=zsh
 	dh_installchangelogs -pzsh
 	# These are in zsh-common and there is no Policy reason why
 	# they can't be
