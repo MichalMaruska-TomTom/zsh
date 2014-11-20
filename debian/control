@@ -32,7 +32,8 @@ Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/zsh.git
 Package: zsh-common
 Architecture: all
 Depends: ${misc:Depends}
-Pre-Depends: ${misc:Pre-Depends}
+Pre-Depends: ${misc:Pre-Depends},
+             dpkg (>= 1.17.14)
 Replaces: zsh (<= 5.0.2-1)
 Recommends: zsh
 Suggests: zsh-doc
@@ -53,7 +54,8 @@ Architecture: any
 Depends: zsh-common (= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Pre-Depends: ${misc:Pre-Depends}
+Pre-Depends: ${misc:Pre-Depends},
+             dpkg (>= 1.17.14)
 Recommends: ${shlibs:Recommends}
 Suggests: zsh-doc
 Description: shell with lots of features
@@ -102,7 +104,8 @@ Package: zsh-dev
 Architecture: any
 Depends: zsh-common (= ${source:Version}),
          ${misc:Depends}
-Pre-Depends: ${misc:Pre-Depends}
+Pre-Depends: ${misc:Pre-Depends},
+             dpkg (>= 1.17.14)
 Section: libdevel
 Description: shell with lots of features (development files)
  Zsh is a UNIX command interpreter (shell) usable as an
