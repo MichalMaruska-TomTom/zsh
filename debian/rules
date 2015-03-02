@@ -58,7 +58,7 @@ build-arch: configure-stamp
 	touch $@
 
 build-indep: configure-stamp
-	faketime "`dpkg-parsechangelog -S date`" dh_auto_build -B obj --parallel -- pdf
+	dh_auto_build -B obj --parallel -- pdf
 	touch $@
 
 build-static: configure-static-stamp

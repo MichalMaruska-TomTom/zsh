@@ -1,11 +1,3 @@
-zsh (5.0.7-6) UNRELEASED; urgency=medium
-
-  * Use faketime to get reproducible time stamps in PDF generation.
-    + Add build-dependency on faketime.
-    + Bump b-d on dpkg-dev to 1.17.0 for using "dpkg-parsechangelog -S"
-
- -- Axel Beckert <abe@debian.org>  Sat, 07 Feb 2015 15:07:58 +0100
-
 zsh (5.0.7-5) unstable; urgency=medium
 
   * [ab70e9dc] Pre-Depend on dpkg >= 1.17.14 explicitly for using
