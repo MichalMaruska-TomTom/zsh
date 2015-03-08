@@ -6,7 +6,6 @@ After the Jessie-Release
 
 * Remove zsh-beta* packages
 * Remove alternatives system properly
-* Remove zsh4* wrappers
 
 Decisions
 ---------
