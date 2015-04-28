@@ -1,7 +1,7 @@
 #!/bin/sh
-# This runs git-dch with appropriate options.
+# This runs "gbp dch" with appropriate options.
 #
-# All given options are handed over to git-dch without tampering. You
+# All given options are handed over to "gbp dch" without tampering. You
 # should probably give a --since="..." definition, so the program knows
 # were to start. Also, when you're planning on a release, pass `-R'. For
 # snapshots, use `-S'.
@@ -11,7 +11,7 @@
 #
 # At the end an editor is spawned on debian/changelog no matter what.
 
-git-dch \
+gbp dch \
     --spawn-editor=never \
     "$@"
 

@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# Seems like `git-dch' doesn't work well with non-linear histories. With
+# Seems like `gbp dch' doesn't work well with non-linear histories. With
 # pkg-zsh we do have merges everytime an upstream release is done. That's
 # where "Upstream Release ChangeLog" comes into play. It takes a set of
 # commit hashes and produces an initial changelog update for those
 # situations in which an upstream release tag was merged. After that,
-# the situation can be reduced to a linear history again and `git-dch'
+# the situation can be reduced to a linear history again and `gbp dch'
 # will do just fine.
 #
 # This script is pretty dumb, so some manual adjustments might be needed

@@ -173,8 +173,9 @@ should be tagged `debian/${zsh_version}-${n+1}`.
 ### Updating debian/changelog
 
 This file should *not* be updated manually. The changes should be
-inserted by running the `git-dch` tool from the package
-`git-buildpackage` before a new release is about to be made.
+inserted by running the `gbp dch` command from the package
+`git-buildpackage` (see gbp-dch(1)) before a new release is about to
+be made.
 
 Changelog entries should be prefixed by a `[$hashsum] ` string, where
 `$hashsum` is a string that represents the first eight characters of
@@ -184,10 +185,10 @@ Also, if multiple authors are involved in a changelog entry-set, each
 author should only appear once in the series with all her/his changes
 listed below her/him in chronological order.
 
-Given that `debian/gbp.conf` is up-to-date, using the git-dch(1) tool
-will result in the desired changelog format:
+Given that `debian/gbp.conf` is up-to-date, using the `gbp dch`
+command will result in the desired changelog format:
 
-    % git-dch
+    % gbp dch
 
 If you absolutely *must* make changelog entries by other means, you
 should make sure that you prefix any resulting commits with
@@ -238,13 +239,13 @@ If old patches were still around, that could lead to conflicts
 when those would be applied during the build process.
 
 The message for the merge commit should be set to "New upstream
-release" to allow `git-dch` to pick it up correctly later. **TODO**:
+release" to allow `gbp dch` to pick it up correctly later. **TODO**:
 Doesn't really work.
 
 ### Insert initial changelog for the new upstream release
 
-`git-dch` seems to be in trouble with non-linear histories. Therefore
-we introduced a small helper script that will help `git-dch` to a
+`gbp dch` seems to be in trouble with non-linear histories. Therefore
+we introduced a small helper script that will help `gbp dch` to a
 linear history again.
 
 Basically, you after merging the upstream release tag into the debian
@@ -298,8 +299,8 @@ the according bug report and/or CVE numbers, e.g. like this:
       + [babeabed] Fixes CVE-2014-9876
 
 When creating a commit with these changelog changes, you may want to
-prefix the commit message with `[dch-ignore] ` or add `-m "Git-Dch:
-Ignore"` to the commit command so it doesn't come up in later git-dch
+prefix the commit message with `[dch-ignore] ` or add `-m "Gbp-Dch:
+Ignore"` to the commit command so it doesn't come up in later `gbp dch`
 runs.
 
 
@@ -335,13 +336,13 @@ There are many ways to do this. Important is:
 
 ### Update changelog again for the release
 
-The `do-dch` helper script should be used to do this. It wraps git-dch
+The `do-dch` helper script should be used to do this. It wraps `gbp dch`
 with appropriate options and weeds out any commits that are prefixed
 with "[dch-ignore] ". All options to the script are turned over to
-git-dch and at least `--since=…` should be used.
+`gbp dch` and at least `--since=…` should be used.
 
 At this particular point the sha1 of the previous initial changelog
-update commit would be a good idea. Also "-R" to tell git-dch to
+update commit would be a good idea. Also "-R" to tell `gbp dch` to
 prepare the changelog for an actual commit. So:
 
     % debian/bin/do-dch --since=1234deadbeef -R
@@ -365,8 +366,8 @@ Generating packages
 
 Alternatively, `git-buildpackage` (short `gbp`) also provides ways of
 building packages from our packaging codebase. And since we are using
-the `gbp dch` command (formerly `git-dch` tool from this utility suite
-anyway, the tool should be available already.
+the `gbp dch` command (formerly the `git-dch` tool from this utility
+suite anyway, the tool should be available already.
 
 `git-buildpackage` allows building the package from within the
 package repository and is currently avial
@@ -505,7 +506,7 @@ TODO
   uploaded/accepted.
 * How and when to push tags. Debian Perl Group's `dpt push` (from the
   package `pkg-perl-tools`) comes in handy.
-* `git commit -m 'Something unimportant' -m 'Git-Dch: Ignore'`
+* `git commit -m 'Something unimportant' -m 'Gbp-Dch: Ignore'`
 * `export QUILT_PATCHES=debian/patches` should be mentioned under
   *Repository setup*, not under *Verify that the package builds*.
 * `* New upstream release` changelog entries should have the git
