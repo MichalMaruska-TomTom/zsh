@@ -370,7 +370,7 @@ the `gbp dch` command (formerly the `git-dch` tool from this utility
 suite anyway, the tool should be available already.
 
 `git-buildpackage` allows building the package from within the
-package repository and is currently avial
+package repository:
 
     % gbp buildpackage
 
