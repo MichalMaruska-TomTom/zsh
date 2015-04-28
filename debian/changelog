@@ -1,3 +1,16 @@
+zsh (5.0.7-6) unstable; urgency=medium
+
+  * [18288a76] Drop manual Pre-Depends on dpkg, raise debhelper
+    build-dependency to ≥ 9.20141221, see #770226 + #770245.
+  * [b3f1e6e4] Remove zsh4 wrappers, they were only needed for the
+    dist-upgrade from Wheezy to Jessie.
+  * [b4c17e7c] Remove zsh-beta* transitional packages. Same reason.
+  * [1e841579] Use "gbp dch" instead of "git-dch" in helper scripts and
+    package build documentation.
+  * [ef133bd8] Rename debian/gbp.conf's section [git-dch] to [dch].
+
+ -- Axel Beckert <abe@debian.org>  Wed, 29 Apr 2015 01:18:02 +0200
+
 zsh (5.0.7-5) unstable; urgency=medium
 
   * [ab70e9dc] Pre-Depend on dpkg >= 1.17.14 explicitly for using
