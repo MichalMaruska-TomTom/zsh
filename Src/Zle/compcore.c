@@ -1524,7 +1524,7 @@ set_comp_sep(void)
     ol = zlemetaline;
     addedx = 1;
     noerrs = 1;
-    lexsave();
+    zcontext_save();
     lexflags = LEXFLAGS_ZLE;
     /*
      * tl is the length of the temporary string including
@@ -1671,9 +1671,9 @@ set_comp_sep(void)
     noaliases = ona;
     strinend();
     inpop();
-    errflag = 0;
+    errflag &= ~ERRFLAG_ERROR;
     noerrs = ne;
-    lexrestore();
+    zcontext_restore();
     wb = owb;
     we = owe;
     zlemetaline = ol;
@@ -3492,7 +3492,7 @@ freematch(Cmatch m, int nbeg, int nend)
     if (m->brsl)
 	zfree(m->brsl, nend * sizeof(int));
 
-    zfree(m, sizeof(m));
+    zfree(m, sizeof(*m));
 }
 
 /* This frees the groups of matches. */

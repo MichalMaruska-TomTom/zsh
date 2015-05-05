@@ -1061,6 +1061,9 @@ for arrays which keep only the first occurrence of duplicated values
 item(tt(hide))(
 for parameters with the `hide' flag
 )
+item(tt(hideval))(
+for parameters with the `hideval' flag
+)
 item(tt(special))(
 for special parameters defined by the shell
 )
@@ -1124,6 +1127,19 @@ item(tt(p))(
 Recognize the same escape sequences as the tt(print) builtin
 in string arguments to any of the flags described below that
 follow this argument.
+
+Alternatively, with this option string arguments may be in the form
+tt($)var(var) in which case the value of the variable is substituted.
+Note this form is strict; the string argument does not undergo general
+parameter expansion.
+
+For example,
+
+example(sep=:
+val=a:b:c
+print ${+LPAR()ps.$sep.+RPAR()val})
+
+splits the variable on a tt(:).
 )
 item(tt(~))(
 Strings inserted into the expansion by any of the flags below are to
@@ -2372,7 +2388,7 @@ item(tt(p))(
 named pipes (FIFOs)
 )
 item(tt(*))(
-executable plain files (0100)
+executable plain files (0100 or 0010 or 0001)
 )
 item(tt(%))(
 device files (character or block special)
@@ -2694,6 +2710,10 @@ example(ls *(-/))
 
 lists all directories and symbolic links that point to directories,
 and
+
+example(ls *(-@))
+
+lists all broken symbolic links, and
 
 example(ls *(%W))
 

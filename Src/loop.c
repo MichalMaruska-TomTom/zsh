@@ -102,7 +102,10 @@ execfor(Estate state, int do_exec)
 		addlinknode(args, dupstring(*x));
 	}
     }
-    /* lastval = 0; */
+
+    if (!args || empty(args))
+	lastval = 0;
+
     loops++;
     pushheap();
     cmdpush(CS_FOR);
@@ -238,10 +241,10 @@ execselect(Estate state, UNUSED(int do_exec))
     }
     if (!args || empty(args)) {
 	state->pc = end;
-	return 1;
+	return 0;
     }
     loops++;
-    /* lastval = 0; */
+
     pushheap();
     cmdpush(CS_SELECT);
     usezle = interact && SHTTY != -1 && isset(USEZLE);
@@ -259,13 +262,14 @@ execselect(Estate state, UNUSED(int do_exec))
 				   0, ZLCON_SELECT);
 		    if (errflag)
 			str = NULL;
-		    errflag = oef;
+		    /* Keep any user interrupt error status */
+		    errflag = oef | (errflag & ERRFLAG_INT);
 	    	} else {
 		    str = promptexpand(prompt3, 0, NULL, NULL, NULL);
 		    zputs(str, stderr);
 		    free(str);
 		    fflush(stderr);
-		    str = fgets(zalloc(256), 256, inp);
+		    str = fgets(zhalloc(256), 256, inp);
 	    	}
 	    } else
 		str = (char *)getlinknode(bufstack);
@@ -518,14 +522,17 @@ execif(Estate state, int do_exec)
 	s = 1;
 	state->pc = next;
     }
-    noerrexit = olderrexit;
 
     if (run) {
+	/* we need to ignore lastval until we reach execcmd() */
+	noerrexit = olderrexit ? olderrexit : lastval ? 2 : 0;
 	cmdpush(run == 2 ? CS_ELSE : (s ? CS_ELIFTHEN : CS_IFTHEN));
 	execlist(state, 1, do_exec);
 	cmdpop();
-    } else
+    } else {
+	noerrexit = olderrexit;
 	lastval = 0;
+    }
     state->pc = end;
 
     return lastval;
@@ -632,6 +639,14 @@ execcase(Estate state, int do_exec)
 zlong
 try_errflag = -1;
 
+/**
+ * Corresponding interrupt error status form `try' block.
+ */
+
+/**/
+zlong
+try_interrupt = -1;
+
 /**/
 zlong
 try_tryflag = 0;
@@ -643,7 +658,7 @@ exectry(Estate state, int do_exec)
     Wordcode end, always;
     int endval;
     int save_retflag, save_breaks, save_contflag;
-    zlong save_try_errflag, save_try_tryflag;
+    zlong save_try_errflag, save_try_tryflag, save_try_interrupt;
 
     end = state->pc + WC_TRY_SKIP(state->pc[-1]);
     always = state->pc + 1 + WC_TRY_SKIP(*state->pc);
@@ -659,8 +674,9 @@ exectry(Estate state, int do_exec)
 
     try_tryflag = save_try_tryflag;
 
-    /* Don't record errflag here, may be reset. */
-    endval = lastval;
+    /* Don't record errflag here, may be reset.  However, */
+    /* endval should show failure when there is an error. */
+    endval = lastval ? lastval : errflag;
 
     freeheap();
 
@@ -669,7 +685,10 @@ exectry(Estate state, int do_exec)
 
     /* The always clause. */
     save_try_errflag = try_errflag;
-    try_errflag = (zlong)errflag;
+    save_try_interrupt = try_interrupt;
+    try_errflag = (zlong)(errflag & ERRFLAG_ERROR);
+    try_interrupt = (zlong)((errflag & ERRFLAG_INT) ? 1 : 0);
+    /* We need to reset all errors to allow the block to execute */
     errflag = 0;
     save_retflag = retflag;
     retflag = 0;
@@ -681,8 +700,16 @@ exectry(Estate state, int do_exec)
     state->pc = always;
     execlist(state, 1, do_exec);
 
-    errflag = try_errflag ? 1 : 0;
+    if (try_errflag)
+	errflag |= ERRFLAG_ERROR;
+    else
+	errflag &= ~ERRFLAG_ERROR;
+    if (try_interrupt)
+	errflag |= ERRFLAG_INT;
+    else
+	errflag &= ~ERRFLAG_INT;
     try_errflag = save_try_errflag;
+    try_interrupt = save_try_interrupt;
     if (!retflag)
 	retflag = save_retflag;
     if (!breaks)

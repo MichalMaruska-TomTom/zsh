@@ -31,7 +31,7 @@
 #include "parse.pro"
 
 /* != 0 if we are about to read a command word */
- 
+
 /**/
 mod_export int incmdpos;
 
@@ -71,13 +71,14 @@ struct heredocs *hdocs;
 
 #define YYERROR(O)  { tok = LEXERR; ecused = (O); return 0; }
 #define YYERRORV(O) { tok = LEXERR; ecused = (O); return; }
-#define COND_ERROR(X,Y) do { \
-  zwarn(X,Y); \
-  herrflush(); \
-  if (noerrs != 2) \
-    errflag = 1; \
-  YYERROR(ecused) \
-} while(0)
+#define COND_ERROR(X,Y) \
+    do {					\
+	zwarn(X,Y);				\
+	herrflush();				\
+	if (noerrs != 2)			\
+	    errflag |= ERRFLAG_ERROR;		\
+	YYERROR(ecused)				\
+	    } while(0)
 
 
 /* 
@@ -241,6 +242,67 @@ int ecsoffs, ecssub, ecnfunc;
 #define EC_DOUBLE_THRESHOLD  32768
 #define EC_INCREMENT         1024
 
+/* save parse context */
+
+/**/
+void
+parse_context_save(struct parse_stack *ps, int toplevel)
+{
+    (void)toplevel;
+
+    ps->incmdpos = incmdpos;
+    ps->aliasspaceflag = aliasspaceflag;
+    ps->incond = incond;
+    ps->inredir = inredir;
+    ps->incasepat = incasepat;
+    ps->isnewlin = isnewlin;
+    ps->infor = infor;
+
+    ps->hdocs = hdocs;
+    ps->eclen = eclen;
+    ps->ecused = ecused;
+    ps->ecnpats = ecnpats;
+    ps->ecbuf = ecbuf;
+    ps->ecstrs = ecstrs;
+    ps->ecsoffs = ecsoffs;
+    ps->ecssub = ecssub;
+    ps->ecnfunc = ecnfunc;
+    ecbuf = NULL;
+    hdocs = NULL;
+}
+
+/* restore parse context */
+
+/**/
+void
+parse_context_restore(const struct parse_stack *ps, int toplevel)
+{
+    (void)toplevel;
+
+    if (ecbuf)
+	zfree(ecbuf, eclen);
+
+    incmdpos = ps->incmdpos;
+    aliasspaceflag = ps->aliasspaceflag;
+    incond = ps->incond;
+    inredir = ps->inredir;
+    incasepat = ps->incasepat;
+    incasepat = ps->incasepat;
+    isnewlin = ps->isnewlin;
+    infor = ps->infor;
+
+    hdocs = ps->hdocs;
+    eclen = ps->eclen;
+    ecused = ps->ecused;
+    ecnpats = ps->ecnpats;
+    ecbuf = ps->ecbuf;
+    ecstrs = ps->ecstrs;
+    ecsoffs = ps->ecsoffs;
+    ecssub = ps->ecssub;
+    ecnfunc = ps->ecnfunc;
+
+    errflag &= ~ERRFLAG_ERROR;
+}
 
 /* Adjust pointers in here-doc structs. */
 
@@ -358,9 +420,25 @@ ecstrcode(char *s)
     } while (0)
 
 
+/**/
+mod_export void
+init_parse_status(void)
+{
+    /*
+     * These variables are currently declared by the parser, so we
+     * initialise them here.  Possibly they are more naturally declared
+     * by the lexical anaylser; however, as they are used for signalling
+     * between the two it's a bit ambiguous.  We clear them when
+     * using the lexical analyser for strings as well as here.
+     */
+    incasepat = incond = inredir = infor = 0;
+    incmdpos = 1;
+}
+
 /* Initialise wordcode buffer. */
 
-static void
+/**/
+void
 init_parse(void)
 {
     if (ecbuf) zfree(ecbuf, eclen);
@@ -371,6 +449,8 @@ init_parse(void)
     ecsoffs = ecnpats = 0;
     ecssub = 0;
     ecnfunc = 0;
+
+    init_parse_status();
 }
 
 /* Build eprog. */
@@ -442,11 +522,15 @@ clear_hdocs()
  * event	: ENDINPUT
  *			| SEPER
  *			| sublist [ SEPER | AMPER | AMPERBANG ]
+ *
+ * cmdsubst indicates our event is part of a command-style
+ * substitution terminated by the token indicationg, usual closing
+ * parenthesis.  In other cases endtok is ENDINPUT.
  */
 
 /**/
 Eprog
-parse_event(void)
+parse_event(int endtok)
 {
     tok = ENDINPUT;
     incmdpos = 1;
@@ -454,36 +538,42 @@ parse_event(void)
     zshlex();
     init_parse();
 
-    if (!par_event()) {
+    if (!par_event(endtok)) {
         clear_hdocs();
         return NULL;
+    }
+    if (endtok != ENDINPUT) {
+	/* don't need to build an eprog for this */
+	return &dummy_eprog;
     }
     return bld_eprog(1);
 }
 
 /**/
-static int
-par_event(void)
+int
+par_event(int endtok)
 {
     int r = 0, p, c = 0;
 
     while (tok == SEPER) {
-	if (isnewlin > 0)
+	if (isnewlin > 0 && endtok == ENDINPUT)
 	    return 0;
 	zshlex();
     }
     if (tok == ENDINPUT)
 	return 0;
+    if (tok == endtok)
+	return 0;
 
     p = ecadd(0);
 
     if (par_sublist(&c)) {
-	if (tok == ENDINPUT) {
+	if (tok == ENDINPUT || tok == endtok) {
 	    set_list_code(p, Z_SYNC, c);
 	    r = 1;
 	} else if (tok == SEPER) {
 	    set_list_code(p, Z_SYNC, c);
-	    if (isnewlin <= 0)
+	    if (isnewlin <= 0 || endtok != ENDINPUT)
 		zshlex();
 	    r = 1;
 	} else if (tok == AMPER) {
@@ -506,15 +596,16 @@ par_event(void)
 	yyerror(1);
 	herrflush();
 	if (noerrs != 2)
-	    errflag = 1;
+	    errflag |= ERRFLAG_ERROR;
 	ecused--;
 	return 0;
     } else {
 	int oec = ecused;
 
-	if (!par_event()) {
+	if (!par_event(endtok)) {
 	    ecused = oec;
 	    ecbuf[p] |= wc_bdata(Z_END);
+	    return errflag ? 0 : 1;
 	}
     }
     return 1;
@@ -527,9 +618,8 @@ parse_list(void)
     int c = 0;
 
     tok = ENDINPUT;
-    incmdpos = 1;
-    zshlex();
     init_parse();
+    zshlex();
     par_list(&c);
     if (tok != ENDINPUT) {
         clear_hdocs();
@@ -2330,7 +2420,7 @@ yyerror(int noerr)
     for (t0 = 0; t0 != 20; t0++)
 	if (!t || !t[t0] || t[t0] == '\n')
 	    break;
-    if (!(histdone & HISTFLAG_NOEXEC)) {
+    if (!(histdone & HISTFLAG_NOEXEC) && !(errflag & ERRFLAG_INT)) {
 	if (t0 == 20)
 	    zwarn("parse error near `%l...'", t, 20);
 	else if (t0)
@@ -2339,7 +2429,7 @@ yyerror(int noerr)
 	    zwarn("parse error");
     }
     if (!noerr && noerrs != 2)
-	errflag = 1;
+	errflag |= ERRFLAG_ERROR;
 }
 
 /*
@@ -2590,7 +2680,7 @@ eccopyredirs(Estate s)
 {
     Wordcode pc = s->pc;
     wordcode code = *pc;
-    int ncode, ncodes = 0, r, type;
+    int ncode, ncodes = 0, r;
 
     if (wc_code(code) != WC_REDIR)
 	return NULL;
@@ -2598,7 +2688,9 @@ eccopyredirs(Estate s)
     init_parse();
 
     while (wc_code(code) == WC_REDIR) {
-	type = WC_REDIR_TYPE(code);
+#ifdef DEBUG
+	int type = WC_REDIR_TYPE(code);
+#endif
 
 	DPUTS(type == REDIR_HEREDOC || type == REDIR_HEREDOCDASH,
 	      "unexpanded here document");
@@ -3029,7 +3121,7 @@ build_dump(char *nam, char *dump, char **files, int ali, int map, int flags)
 	file = metafy(file, flen, META_REALLOC);
 
 	if (!(prog = parse_string(file, 1)) || errflag) {
-	    errflag = 0;
+	    errflag &= ~ERRFLAG_ERROR;
 	    close(dfd);
 	    zfree(file, flen);
 	    zwarnnam(nam, "can't read file: %s", *files);
@@ -3139,7 +3231,7 @@ build_cur_dump(char *nam, char *dump, char **names, int match, int map,
 	    for (hn = shfunctab->nodes[i]; hn; hn = hn->next)
 		if (cur_add_func(nam, (Shfunc) hn, lnames, progs,
 				 &hlen, &tlen, what)) {
-		    errflag = 0;
+		    errflag &= ~ERRFLAG_ERROR;
 		    close(dfd);
 		    unlink(dump);
 		    return 1;
@@ -3164,7 +3256,7 @@ build_cur_dump(char *nam, char *dump, char **names, int match, int map,
 			pattry(pprog, hn->nam) &&
 			cur_add_func(nam, (Shfunc) hn, lnames, progs,
 				     &hlen, &tlen, what)) {
-			errflag = 0;
+			errflag &= ~ERRFLAG_ERROR;
 			close(dfd);
 			unlink(dump);
 			return 1;
@@ -3175,13 +3267,13 @@ build_cur_dump(char *nam, char *dump, char **names, int match, int map,
 	    if (errflag ||
 		!(shf = (Shfunc) shfunctab->getnode(shfunctab, *names))) {
 		zwarnnam(nam, "unknown function: %s", *names);
-		errflag = 0;
+		errflag &= ~ERRFLAG_ERROR;
 		close(dfd);
 		unlink(dump);
 		return 1;
 	    }
 	    if (cur_add_func(nam, shf, lnames, progs, &hlen, &tlen, what)) {
-		errflag = 0;
+		errflag &= ~ERRFLAG_ERROR;
 		close(dfd);
 		unlink(dump);
 		return 1;
@@ -3190,7 +3282,7 @@ build_cur_dump(char *nam, char *dump, char **names, int match, int map,
     }
     if (empty(progs)) {
 	zwarnnam(nam, "no functions");
-	errflag = 0;
+	errflag &= ~ERRFLAG_ERROR;
 	close(dfd);
 	unlink(dump);
 	return 1;

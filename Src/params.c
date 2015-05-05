@@ -331,6 +331,7 @@ IPDEF5("SHLVL", &shlvl, varinteger_gsu),
 #define IPDEF6(A,B,F) {{NULL,A,PM_INTEGER|PM_SPECIAL|PM_DONTIMPORT},BR((void *)B),GSU(F),10,0,NULL,NULL,NULL,0}
 IPDEF6("OPTIND", &zoptind, varinteger_gsu),
 IPDEF6("TRY_BLOCK_ERROR", &try_errflag, varinteger_gsu),
+IPDEF6("TRY_BLOCK_INTERRUPT", &try_interrupt, varinteger_gsu),
 
 #define IPDEF7(A,B) {{NULL,A,PM_SCALAR|PM_SPECIAL},BR((void *)B),GSU(varscalar_gsu),0,0,NULL,NULL,NULL,0}
 #define IPDEF7U(A,B) {{NULL,A,PM_SCALAR|PM_SPECIAL|PM_UNSET},BR((void *)B),GSU(varscalar_gsu),0,0,NULL,NULL,NULL,0}
@@ -641,8 +642,16 @@ split_env_string(char *env, char **name, char **value)
 	return 0;
 
     tenv = strcpy(zhalloc(strlen(env) + 1), env);
-    for (str = tenv; *str && *str != '='; str++)
-	;
+    for (str = tenv; *str && *str != '='; str++) {
+	if (STOUC(*str) >= 128) {
+	    /*
+	     * We'll ignore environment variables with names not
+	     * from the portable character set since we don't
+	     * know of a good reason to accept them.
+	     */
+	    return 0;
+	}
+    }
     if (str != tenv && *str == '=') {
 	*str = '\0';
 	*name = tenv;
@@ -865,10 +874,14 @@ createparam(char *name, int flags)
 	DPUTS(oldpm && oldpm->level > locallevel,
 	      "BUG: old local parameter not deleted");
 	if (oldpm && (oldpm->level == locallevel || !(flags & PM_LOCAL))) {
+	    if (isset(POSIXBUILTINS) && (oldpm->node.flags & PM_READONLY)) {
+		zerr("read-only variable: %s", name);
+		return NULL;
+	    }
 	    if (!(oldpm->node.flags & PM_UNSET) || (oldpm->node.flags & PM_SPECIAL)) {
 		oldpm->node.flags &= ~PM_UNSET;
 		if ((oldpm->node.flags & PM_SPECIAL) && oldpm->ename) {
-		    Param altpm = 
+		    Param altpm =
 			(Param) paramtab->getnode(paramtab, oldpm->ename);
 		    if (altpm)
 			altpm->node.flags &= ~PM_UNSET;
@@ -918,7 +931,15 @@ shempty(void)
 {
 }
 
-/* Create a simple special hash parameter. */
+/*
+ * Create a simple special hash parameter.
+ *
+ * This is for hashes added internally --- it's not possible to add
+ * special hashes from shell commands.  It's currently used
+ * - by addparamdef() for special parameters in the zsh/parameter
+ *   module
+ * - by ztie for special parameters tied to databases.
+ */
 
 /**/
 mod_export Param
@@ -930,7 +951,22 @@ createspecialhash(char *name, GetNodeFunc get, ScanTabFunc scan, int flags)
     if (!(pm = createparam(name, PM_SPECIAL|PM_HASHED|flags)))
 	return NULL;
 
-    pm->level = pm->old ? locallevel : 0;
+    /*
+     * If there's an old parameter, we'll put the new one at
+     * the current locallevel, so that the old parameter is
+     * exposed again after leaving the function.  Otherwise,
+     * we'll leave it alone.  Usually this means the parameter
+     * will stay in place until explicitly unloaded, however
+     * if the parameter was previously unset within a function
+     * we'll inherit the level of that function and follow the
+     * standard convention that the parameter remains local
+     * even if unset.
+     *
+     * These semantics are similar to those of a normal parameter set
+     * within a function without a local definition.
+     */
+    if (pm->old)
+	pm->level = locallevel;
     pm->gsu.h = (flags & PM_READONLY) ? &stdhash_gsu :
 	&nullsethash_gsu;
     pm->u.hash = ht = newhashtable(0, name, NULL);
@@ -1251,7 +1287,8 @@ getarg(char **str, int *inv, Value v, int a2, zlong *w,
     if (ishash && (keymatch || !rev))
 	remnulargs(s);
     if (needtok) {
-	if (parsestr(s))
+	s = dupstring(s);
+	if (parsestr(&s))
 	    return 0;
 	singsub(&s);
     } else if (rev)
@@ -2654,7 +2691,7 @@ assignsparam(char *s, char *val, int flags)
     if (!isident(s)) {
 	zerr("not an identifier: %s", s);
 	zsfree(val);
-	errflag = 1;
+	errflag |= ERRFLAG_ERROR;
 	return NULL;
     }
     queue_signals();
@@ -2783,7 +2820,7 @@ assignaparam(char *s, char **val, int flags)
     if (!isident(s)) {
 	zerr("not an identifier: %s", s);
 	freearray(val);
-	errflag = 1;
+	errflag |= ERRFLAG_ERROR;
 	return NULL;
     }
     queue_signals();
@@ -2799,7 +2836,7 @@ assignaparam(char *s, char **val, int flags)
 	    zerr("%s: attempt to set slice of associative array",
 		 v->pm->node.nam);
 	    freearray(val);
-	    errflag = 1;
+	    errflag |= ERRFLAG_ERROR;
 	    return NULL;
 	}
 	v = NULL;
@@ -2870,13 +2907,13 @@ sethparam(char *s, char **val)
     if (!isident(s)) {
 	zerr("not an identifier: %s", s);
 	freearray(val);
-	errflag = 1;
+	errflag |= ERRFLAG_ERROR;
 	return NULL;
     }
     if (strchr(s, '[')) {
 	freearray(val);
 	zerr("nested associative arrays not yet supported");
-	errflag = 1;
+	errflag |= ERRFLAG_ERROR;
 	return NULL;
     }
     if (unset(EXECOPT))
@@ -2916,7 +2953,7 @@ setnparam(char *s, mnumber val)
 
     if (!isident(s)) {
 	zerr("not an identifier: %s", s);
-	errflag = 1;
+	errflag |= ERRFLAG_ERROR;
 	return NULL;
     }
     if (unset(EXECOPT))
@@ -4368,9 +4405,18 @@ zputenv(char *str)
     char *ptr;
     int ret;
 
-    for (ptr = str; *ptr && *ptr != '='; ptr++)
+    for (ptr = str; *ptr && STOUC(*ptr) < 128 && *ptr != '='; ptr++)
 	;
-    if (*ptr) {
+    if (STOUC(*ptr) >= 128) {
+	/*
+	 * Environment variables not in the portable character
+	 * set are non-standard and we don't really know of
+	 * a use for them.
+	 *
+	 * We'll disable until someone complains.
+	 */
+	return 1;
+    } else if (*ptr) {
 	*ptr = '\0';
 	ret = setenv(str, ptr+1, 1);
 	*ptr = '=';

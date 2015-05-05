@@ -40,6 +40,17 @@ the following setting:
 
 example(zle_highlight=(none))
 
+In many places, references are made to the tt(numeric argument).  This can
+by default be entered in emacs mode by holding the alt key and typing
+a number, or pressing escape before each number, and in vi command mode
+by typing the number before entering a command.  Generally the numeric
+argument causes the next command entered to be repeated the specified
+number of times, unless otherwise noted below. See also
+ifzman(the em(Arguments) subsection of the em(Widgets) section )\
+ifnzman(noderef(Arguments) )\
+for some other ways the numeric argument can be modified. The default
+bindings mentioned here use the tt(digit-argument) widget.
+
 startmenu()
 menu(Keymaps)
 menu(Zle Builtins)
@@ -60,12 +71,14 @@ or more names.  If all of a keymap's names are deleted, it disappears.
 findex(bindkey, use of)
 tt(bindkey) can be used to manipulate keymap names.
 
-Initially, there are six keymaps:
+Initially, there are eight keymaps:
 
 startsitem()
 sitem(tt(emacs))(EMACS emulation)
 sitem(tt(viins))(vi emulation - insert mode)
 sitem(tt(vicmd))(vi emulation - command mode)
+sitem(tt(viopp))(vi emulation - operator pending)
+sitem(tt(visual))(vi emulation - selection active)
 sitem(tt(isearch))(incremental search mode)
 sitem(tt(command))(read a command name)
 sitem(tt(.safe))(fallback keymap)
@@ -122,6 +135,21 @@ in user-defined widgets with the tt(read-command) widget, described
 ifzman(below)\
 ifnzman(in noderef(Miscellaneous) below)\
 .
+subsect(Local Keymaps)
+cindex(local keymaps)
+While for normal editing a single keymap is used exclusively, in many
+modes a local keymap allows for some keys to be customised. For example,
+in an incremental search mode, a binding in the tt(isearch) keymap will
+override a binding in the tt(main) keymap but all keys that are not
+overriden can still be used.
+
+If a key sequence is defined in a local keymap, it will hide a key
+sequence in the global keymap that is a prefix of that sequence. An
+example of this occurs with the binding of tt(iw) in tt(viopp) as this
+hides the binding of tt(i) in tt(vicmd). However, a longer sequence in
+the global keymap that shares the same prefix can still apply so for
+example the binding of tt(^Xa) in the global keymap will be unaffected
+by the binding of tt(^Xb) in the local keymap.
 
 texinode(Zle Builtins)(Zle Widgets)(Keymaps)(Zsh Line Editor)
 sect(Zle Builtins)
@@ -295,6 +323,8 @@ sitem(tt(\t))(horizontal tab)
 sitem(tt(\v))(vertical tab)
 sitem(tt(\)var(NNN))(character code in octal)
 sitem(tt(\x)var(NN))(character code in hexadecimal)
+sitem(tt(\u)var(NNNN))(unicode character code in hexadecimal)
+sitem(tt(\U)var(NNNNNNNN))(unicode character code in hexadecimal)
 sitem(tt(\M)[tt(-)]var(X))(character with meta bit set)
 sitem(tt(\C)[tt(-)]var(X))(control character)
 sitem(tt(^)var(X))(control character)
@@ -630,9 +660,9 @@ item(var(widget) tt([ -n) var(num) tt(]) tt([ -Nw ] [ -K) var(keymap) tt(]) var(
 Invoke the specified widget.  This can only be done when ZLE is
 active; normally this will be within a user-defined widget.
 
-With the options tt(-n) and tt(-N), the current numerical argument will be
+With the options tt(-n) and tt(-N), the current numeric argument will be
 saved and then restored after the call to tt(widget); `tt(-n) var(num)'
-sets the numerical argument temporarily to var(num), while `tt(-N)' sets it
+sets the numeric argument temporarily to var(num), while `tt(-N)' sets it
 to the default, i.e. as if there were none.
 
 With the option tt(-K), var(keymap) will be used as the current keymap
@@ -712,6 +742,21 @@ local scope, like parameters created in a function using tt(local).
 
 Inside completion widgets and traps called while ZLE is active, these
 parameters are available read-only.
+
+Note that the parameters appear as local to any ZLE widget in
+which they appear.  Hence if it is desired to override them this needs
+to be done within a nested function:
+
+example(widget-function+LPAR()+RPAR() {
+  # $WIDGET here refers to the special variable
+  # that is local inside widget-function
+  +LPAR()+RPAR() {
+     # This anonymous nested function allows WIDGET
+     # to be used as a local variable.  The -h
+     # removes the special status of the variable.
+     local -h WIDGET
+  }
+})
 
 startitem()
 vindex(BUFFER)
@@ -817,7 +862,10 @@ cursor remains between the new tt($LBUFFER) and the old tt($RBUFFER).
 )
 vindex(MARK)
 item(tt(MARK) (integer))(
-Like tt(CURSOR), but for the mark.
+Like tt(CURSOR), but for the mark. With vi-mode operators that wait for
+a movement command to select a region of text, setting tt(MARK) allows
+the selection to extend in both directions from the the initial cursor
+position.
 )
 vindex(NUMERIC)
 item(tt(NUMERIC) (integer))(
@@ -863,7 +911,9 @@ cursor remains between the old tt($LBUFFER) and the new tt($RBUFFER).
 vindex(REGION_ACTIVE)
 item(tt(REGION_ACTIVE) (integer))(
 Indicates if the region is currently active.  It can be assigned 0 or 1
-to deactivate and activate the region respectively;
+to deactivate and activate the region respectively. A value of 2
+activates the region in line-wise mode with the highlighted text
+extending for whole lines only;
 ifzman(see em(Character Highlighting) below)\
 ifnzman(noderef(Character Highlighting)).
 )
@@ -1040,6 +1090,7 @@ menu(Modifying Text)
 menu(Arguments)
 menu(Completion)
 menu(Miscellaneous)
+menu(Text Objects)
 endmenu()
 texinode(Movement)(History Control)()(Zle Widgets)
 subsect(Movement)
@@ -1048,6 +1099,11 @@ tindex(vi-backward-blank-word)
 item(tt(vi-backward-blank-word) (unbound) (B) (unbound))(
 Move backward one word, where a word is defined as a series of
 non-blank characters.
+)
+tindex(vi-backward-blank-word-end)
+item(tt(vi-backward-blank-word-end) (unbound) (gE) (unbound))(
+Move to the end of the previous word, where a word is defined as a
+series of non-blank characters.
 )
 tindex(backward-char)
 item(tt(backward-char) (^B ESC-[D) (unbound) (unbound))(
@@ -1069,6 +1125,10 @@ tindex(vi-backward-word)
 item(tt(vi-backward-word) (unbound) (b) (unbound))(
 Move to the beginning of the previous word, vi-style.
 )
+tindex(vi-backward-word-end)
+item(tt(vi-backward-word-end) (unbound) (ge) (unbound))(
+Move to the end of the previous word, vi-style.
+)
 tindex(beginning-of-line)
 item(tt(beginning-of-line) (^A) (unbound) (unbound))(
 Move to the beginning of the line.  If already at the beginning
@@ -1077,6 +1137,10 @@ of the line, move to the beginning of the previous line, if any.
 tindex(vi-beginning-of-line)
 item(tt(vi-beginning-of-line))(
 Move to the beginning of the line, without changing lines.
+)
+tindex(down-line)
+item(tt(down-line) (unbound) (unbound) (unbound))(
+Move down a line in the buffer.
 )
 tindex(end-of-line)
 item(tt(end-of-line) (^E) (unbound) (unbound))(
@@ -1170,12 +1234,16 @@ tindex(vi-rev-repeat-find)
 item(tt(vi-rev-repeat-find) (unbound) (,) (unbound))(
 Repeat the last tt(vi-find) command in the opposite direction.
 )
+tindex(up-line)
+item(tt(up-line) (unbound) (unbound) (unbound))(
+Move up a line in the buffer.
+)
 enditem()
 texinode(History Control)(Modifying Text)(Movement)(Zle Widgets)
 subsect(History Control)
 startitem()
 tindex(beginning-of-buffer-or-history)
-item(tt(beginning-of-buffer-or-history) (ESC-<) (unbound) (unbound))(
+item(tt(beginning-of-buffer-or-history) (ESC-<) (gg) (unbound))(
 Move to the beginning of the buffer, or if already there,
 move to the first event in the history list.
 )
@@ -1450,7 +1518,7 @@ reexamined.  Note that negative numbers should be preceded by a
 
 If two arguments are given, the second specifies the word on the command
 line in normal array index notation (as a more natural alternative to the
-prefix argument).  Hence 1 is the first word, and -1 (the default) is the
+numeric argument).  Hence 1 is the first word, and -1 (the default) is the
 last word.
 
 If a third argument is given, its value is ignored, but it is used to
@@ -1565,6 +1633,13 @@ Read a movement command from the keyboard, and kill
 from the cursor position to the endpoint of the movement.
 Then enter insert mode.
 If the command is tt(vi-change), change the current line.
+
+For compatibility with vi, if the command is tt(vi-forward-word)
+or tt(vi-forward-blank-word), the whitespace after the word is not
+included. If you prefer the more consistent behaviour with the
+whitespace included use the following key binding:
+
+example(bindkey -a -s cw dwi)
 )
 tindex(vi-change-eol)
 item(tt(vi-change-eol) (unbound) (C) (unbound))(
@@ -1681,7 +1756,7 @@ item(tt(vi-open-line-below) (unbound) (o) (unbound))(
 Open a line below the cursor and enter insert mode.
 )
 tindex(vi-oper-swap-case)
-item(tt(vi-oper-swap-case))(
+item(tt(vi-oper-swap-case) (unbound) (g~) (unbound))(
 Read a movement command from the keyboard, and swap
 the case of all characters
 from the cursor position to the endpoint of the movement.
@@ -1703,6 +1778,13 @@ item(tt(vi-put-after) (unbound) (p) (unbound))(
 Insert the contents of the kill buffer after the cursor.
 If the kill buffer contains a sequence of lines (as opposed to characters),
 paste it below the current line.
+)
+tindex(put-replace-selection)
+item(tt(put-replace-selection) (unbound) (unbound) (unbound))(
+Replace the contents of the current region or selection with the
+contents of the kill buffer. If the kill buffer contains a sequence of
+lines (as opposed to characters), the current line will be split by the
+pasted lines.
 )
 tindex(quoted-insert)
 item(tt(quoted-insert) (^V) (unbound) (unbound))(
@@ -1786,7 +1868,7 @@ tindex(yank-pop)
 item(tt(yank-pop) (ESC-y) (unbound) (unbound))(
 Remove the text just yanked, rotate the kill-ring (the history of
 previously killed text) and yank the new top.  Only works following
-tt(yank) or tt(yank-pop).
+tt(yank), tt(vi-put-before), tt(vi-put-after) or tt(yank-pop).
 )
 tindex(vi-yank)
 item(tt(vi-yank) (unbound) (y) (unbound))(
@@ -1833,14 +1915,14 @@ spaces; if instead it is followed by tt(-2), then tt(forward-char),
 move backward two spaces.
 
 Inside a widget function, if passed an argument, i.e. `tt(zle
-universal-argument) var(num)', the numerical argument will be set to
+universal-argument) var(num)', the numeric argument will be set to
 var(num); this is equivalent to `tt(NUMERIC=)var(num)'.
 )
 tindex(argument-base)
 item(tt(argument-base))(
 Use the existing numeric argument as a numeric base, which must be in the
 range 2 to 36 inclusive.  Subsequent use of tt(digit-argument) and
-tt(universal-argument) will input a new prefix in the given base.
+tt(universal-argument) will input a new numeric argument in the given base.
 The usual hexadecimal convention is used: the letter tt(a) or tt(A)
 corresponds to 10, and so on.  Arguments in bases requiring digits from 10
 upwards are more conveniently input with tt(universal-argument), since
@@ -1929,7 +2011,7 @@ When a previous completion displayed a list below the prompt, this
 widget can be used to move the prompt below the list.
 )
 enditem()
-texinode(Miscellaneous)()(Completion)(Zle Widgets)
+texinode(Miscellaneous)(Text Objects)(Completion)(Zle Widgets)
 subsect(Miscellaneous)
 startitem()
 tindex(accept-and-hold)
@@ -1997,9 +2079,9 @@ Reads a key sequence, then prints the function bound to that sequence.
 tindex(exchange-point-and-mark)
 item(tt(exchange-point-and-mark) (^X^X) (unbound) (unbound))(
 Exchange the cursor position (point) with the position of the mark.
-Unless a negative prefix argument is given, the region between
+Unless a negative numeric argument is given, the region between
 point and mark is activated so that it can be highlighted.
-If a zero prefix argument is given, the region is activated but
+If a zero numeric argument is given, the region is activated but
 point and mark are not swapped.
 )
 tindex(execute-named-cmd)
@@ -2169,7 +2251,8 @@ item(tt(send-break) (^G ESC-^G) (unbound) (unbound))(
 Abort the current editor function, e.g. tt(execute-named-command), or the
 editor itself, e.g. if you are in tt(vared). Otherwise abort the parsing of
 the current line; in this case the aborted line is available in the shell
-variable tt(ZLE_LINE_ABORTED).
+variable tt(ZLE_LINE_ABORTED).  If the editor is aborted from within
+tt(vared), the variable tt(ZLE_VARED_ABORTED) is set.
 )
 tindex(run-help)
 item(tt(run-help) (ESC-H ESC-h) (unbound) (unbound))(
@@ -2180,19 +2263,29 @@ command.  tt(run-help) is normally aliased to tt(man).
 tindex(vi-set-buffer)
 item(tt(vi-set-buffer) (unbound) (") (unbound))(
 Specify a buffer to be used in the following command.
-There are 35 buffers that can be specified:
-the 26 `named' buffers tt("a) to tt("z)
-and the nine `queued' buffers tt("1) to tt("9).  The named buffers can also
-be specified as tt("A) to tt("Z).
+There are 37 buffers that can be specified:
+the 26 `named' buffers tt("a) to tt("z), the `yank' buffer tt("0),
+the nine `queued' buffers tt("1) to tt("9) and the `black hole' buffer
+tt("_).  The named buffers can also be specified as tt("A) to tt("Z).
 
-When a buffer is specified for a cut command, the text being cut replaces
-the previous contents of the specified buffer.  If a named buffer
-is specified using a capital, the newly cut text is appended to the buffer
-instead of overwriting it.
+When a buffer is specified for a cut, change or yank command, the text
+concerned replaces the previous contents of the specified buffer. If
+a named buffer is specified using a capital, the newly cut text is
+appended to the buffer instead of overwriting it. When using the tt("_)
+buffer, nothing happens. This can be useful for deleting text without
+affecting the normal registers.
 
-If no buffer is specified for a cut command, tt("1) is used, and the
-contents of tt("1) to tt("8) are each shifted along one buffer; the contents of
-tt("9) is lost.
+If no buffer is specified for a cut or change command, tt("1) is used, and
+the contents of tt("1) to tt("8) are each shifted along one buffer;
+the contents of tt("9) is lost. If no buffer is specified for a yank
+command, tt("0") is used. Finally, a paste command without a specified
+buffer will paste the text from the most recent command regardless of any
+buffer that might have been used with that command.
+
+When called from a widget function by the tt(zle) command, the buffer
+can optionally be specified with an argument. For example,
+
+example(zle vi-set-buffer A)
 )
 tindex(vi-set-mark)
 item(tt(vi-set-mark) (unbound) (m) (unbound))(
@@ -2201,7 +2294,7 @@ Set the specified mark at the cursor position.
 tindex(set-mark-command)
 item(tt(set-mark-command) (^@) (unbound) (unbound))(
 Set the mark at the cursor position.  If called with a negative
-prefix argument, do not set the mark but deactivate the region so that
+numeric argument, do not set the mark but deactivate the region so that
 it is no longer highlighted (it is still usable for other purposes).
 Otherwise the region is marked as active.
 )
@@ -2222,7 +2315,7 @@ This command is executed when a key sequence that is not bound to any
 command is typed.  By default it beeps.
 )
 tindex(undo)
-item(tt(undo) (^_ ^Xu ^X^U) (unbound) (unbound))(
+item(tt(undo) (^_ ^Xu ^X^U) (u) (unbound))(
 Incrementally undo the last text modification.  When called from a
 user-defined widget, takes an optional argument indicating a previous state
 of the undo history as returned by the tt(UNDO_CHANGE_NO) variable;
@@ -2233,16 +2326,30 @@ insert mode is reverted, the changes having been merged when command mode was
 selected.
 )
 tindex(redo)
-item(tt(redo))(
+item(tt(redo) (unbound) (^R) (unbound))(
 Incrementally redo undone text modifications.
 )
 tindex(vi-undo-change)
-item(tt(vi-undo-change) (unbound) (u) (unbound))(
+item(tt(vi-undo-change) (unbound) (unbound) (unbound))(
 Undo the last text modification.
 If repeated, redo the modification.
 )
+tindex(visual-mode)
+item(tt(visual-mode) (unbound) (v) (unbound))(
+Toggle vim-style visual selection mode. If line-wise visual mode is
+currently enabled then it is changed to being character-wise. If used
+following an operator, it forces the subsequent movement command to be
+treated as a character-wise movement.
+)
+tindex(visual-line-mode)
+item(tt(visual-line-mode) (unbound) (V) (unbound))(
+Toggle vim-style line-wise visual selection mode. If character-wise
+visual mode is currently enabled then it is changed to being line-wise. If used
+following an operator, it forces the subsequent movement command to be
+treated as a line-wise movement.
+)
 tindex(what-cursor-position)
-item(tt(what-cursor-position) (^X=) (unbound) (unbound))(
+item(tt(what-cursor-position) (^X=) (ga) (unbound))(
 Print the character under the cursor, its code as an octal, decimal and
 hexadecimal number, the current cursor position within the buffer and the
 column of the cursor in the current line.
@@ -2265,6 +2372,50 @@ tindex(vi-digit-or-beginning-of-line)
 item(tt(vi-digit-or-beginning-of-line) (unbound) (0) (unbound))(
 If the last command executed was a digit as part of an argument,
 continue the argument.  Otherwise, execute vi-beginning-of-line.
+)
+enditem()
+texinode(Text Objects)()(Miscellaneous)(Zle Widgets)
+subsect(Text Objects)
+cindex(text objects)
+Text objects are commands that can be used to select a block of text
+according to some criteria. They are a feature of the vim text editor
+and so are primarily intended for use with vi operators or from visual
+selection mode. However, they can also be used from vi-insert or emacs
+mode. Key bindings listed below apply to the tt(viopp) and tt(visual)
+keymaps.
+
+startitem()
+tindex(select-a-blank-word)
+item(tt(select-a-blank-word) (aW))(
+Select a word including adjacent blanks, where a word is defined as a
+series of non-blank characters. With a numeric argument, multiple words
+will be selected.
+)
+tindex(select-a-shell-word)
+item(tt(select-a-shell-word) (aa))(
+Select the current command argument applying the normal rules for
+quoting.
+)
+tindex(select-a-word)
+item(tt(select-a-word) (aw))(
+Select a word including adjacent blanks, using the normal vi-style word
+definition. With a numeric argument, multiple words will be selected.
+)
+tindex(select-in-blank-word)
+item(tt(select-in-blank-word) (iW))(
+Select a word, where a word is defined as a series of non-blank
+characters. With a numeric argument, multiple words will be selected.
+)
+tindex(select-in-shell-word)
+item(tt(select-in-shell-word) (ia))(
+Select the current command argument applying the normal rules for
+quoting. If the argument begins and ends with matching quote characters,
+these are not included in the selection.
+)
+tindex(select-in-word)
+item(tt(select-in-word) (iw))(
+Select a word, using the normal vi-style word definition. With a numeric
+argument, multiple words will be selected.
 )
 enditem()
 
@@ -2301,8 +2452,8 @@ tt(set-mark-command).  The region is only highlighted if it is active,
 which is the case if tt(set-mark-command) or tt(exchange-point-and-mark)
 has been called and the line has not been subsequently modified.  The
 region can be deactivated by calling tt(set-mark-command) with a
-negative prefix argument, or reactivated by calling
-tt(exchange-point-and-mark) with a zero prefix argument.  Note
+negative numeric argument, or reactivated by calling
+tt(exchange-point-and-mark) with a zero numeric argument.  Note
 that whether or not the region is active has no effect on its
 use within widgets, it simply determines whether it is highlighted.
 )

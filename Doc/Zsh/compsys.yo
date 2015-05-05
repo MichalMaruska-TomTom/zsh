@@ -354,7 +354,7 @@ tt(all): no further completion is attempted; a string
 containing the substring tt(patterns): no pattern completion functions
 will be called; a string containing tt(default): the
 function for the `tt(-default-)' context will not be called, but
-functions defined for commands will
+functions defined for commands will be.
 )
 kindex(-math-, completion context)
 item(tt(-math-))(
@@ -533,21 +533,41 @@ generated.
 subsect(Overview)
 
 When completion is attempted somewhere on the command line the
-completion system first works out the context.  This takes account of a
+completion system begins building the context.  The context represents
+everything that the shell knows about the meaning of the command line
+and the significance of the cursor position.  This takes account of a
 number of things including the command word (such as `tt(grep)' or
 `tt(zsh)') and options to which the current word may be an argument
 (such as the `tt(-o)' option to tt(zsh) which takes a shell option as an
 argument).
 
-This context information is condensed into a string consisting of
-multiple fields separated by colons, referred to simply as `the context'
-in the remainder of the documentation.  This is used to look up
-em(styles), context-sensitive options that can be used to configure the
-completion system.  The context used for lookup may vary during the same
-call to the completion system.
+The context starts out very generic ("we are beginning a completion")
+and becomes more specific as more is learned ("the current word is in a
+position that is usually a command name" or "the current word might be a
+variable name" and so on).  Therefore the context will vary during the
+same call to the completion system.
+
+This context information is condensed into a string consisting of multiple
+fields separated by colons, referred to simply as `the context' in the
+remainder of the documentation.  Note that a user of the completion system
+rarely needs to compose a context string, unless for example a new
+function is being written to perform completion for a new command.  What a
+user may need to do is compose a em(style) pattern, which is matched
+against a context when needed to look up context-sensitive options that
+configure the completion system.
+
+The next few paragraphs explain how a context is composed within the
+completion function suite.  Following that is discussion of how em(styles)
+are defined.  Styles determine such things as how the matches are
+generated, similarly to shell options but with much more control.  They
+are defined with the tt(zstyle) builtin command (\
+ifzman(see zmanref(zshmodules))\
+ifnzman(noderef(The zsh/zutil Module))).
 
 The context string always consists of a fixed set of fields, separated
-by colons and with a leading colon before the first, in the form
+by colons and with a leading colon before the first.  Fields which are
+not yet known are left empty, but the surrounding colons appear anyway.
+The fields are always in the order
 tt(:completion:)var(function)tt(:)var(completer)tt(:)var(command)tt(:)var(argument)tt(:)tt(tag).  These have the following meaning:
 
 startitemize()
@@ -628,17 +648,13 @@ described in
 ifzman(the section `Bindable Commands' below)\
 ifnzman(noderef(Bindable Commands)).
 
-Styles determine such things as how the matches are generated, similarly
-to shell options but with much more control.  They can have any number
-of strings as their value.  They are defined with the tt(zstyle) builtin
-command (\
-ifzman(see zmanref(zshmodules))\
-ifnzman(noderef(The zsh/zutil Module))).
-
 When looking up styles the completion system uses full context names,
-including the tag.  Looking up the value of a style therefore consists
-of two things:  the context, which may be matched as a pattern, and the
-name of the style itself, which must be given exactly.
+including the tag.  Looking up the value of a style therefore consists of
+two things: the context, which is matched to the most specific (best
+fitting) style pattern, and the name of the style itself, which must be
+matched exactly.  The following examples demonstrate that style patterns
+may be loosely defined for styles that apply broadly, or as tightly
+defined as desired for styles that apply in narrower circumstances.
 
 For example, many completion functions can generate matches in a
 simple and a verbose form and use the tt(verbose) style to decide
@@ -661,7 +677,7 @@ completion for the tt(kill) builtin.  If the style is set, the builtin
 lists full job texts and process command lines; otherwise it shows the
 bare job numbers and PIDs.  To turn the style off for this use only:
 
-example(zstyle ':completion:*:*:kill:*' verbose no)
+example(zstyle ':completion:*:*:kill:*:*' verbose no)
 
 For even more control, the style can use one of the tags `tt(jobs)' or
 `tt(processes)'.  To turn off verbose display only for jobs:
@@ -688,9 +704,14 @@ as tt(menu) and tt(list-rows-first).
 Note that the order in which styles are em(defined) does not matter; the
 style mechanism uses the most specific possible match for a particular
 style to determine the set of values.  More precisely, strings are
-preferred over patterns (for example, `tt(:completion::complete:foo)' is
-more specific than `tt(:completion::complete:*')), and longer patterns are
+preferred over patterns (for example, `tt(:completion::complete:::foo)' is
+more specific than `tt(:completion::complete:::*')), and longer patterns are
 preferred over shorter patterns.
+
+A good rule of thumb is that any completion style pattern that needs to
+include more than one wildcard (tt(*)) and that does not end in a tag
+name, should include all six colons (tt(:)), possibly surrounding
+additional wildcards.
 
 Style names like those of tags are arbitrary and depend on the completion
 function.  However, the following two sections list some of the most
@@ -1491,7 +1512,7 @@ For example, to make the tt(rm) command first complete only names of
 object files and then the names of all files if there is no matching
 object file:
 
-example(zstyle ':completion:*:*:rm:*' file-patterns \ 
+example(zstyle ':completion:*:*:rm:*:*' file-patterns \ 
     '*.o:object-files' '%p:all-files')
 
 To alter the default behaviour of file completion DASH()- offer files
@@ -1643,7 +1664,7 @@ For example, to have names of builtin commands, shell functions and
 external commands appear in that order when completing in command
 position:
 
-example(zstyle ':completion:*:*:-command-:*' group-order \ 
+example(zstyle ':completion:*:*:-command-:*:*' group-order \ 
        builtins functions commands)
 )
 kindex(groups, completion style)
@@ -1839,7 +1860,7 @@ tested for all tags valid for the current completion, then the
 tt(default) tag.  The cursor will be moved back to the
 previous line if this style is `true' for all types of match.  Note
 that unlike the tt(ALWAYS_LAST_PROMPT) option this is independent of the
-numeric prefix argument.
+numeric argument.
 )
 kindex(known-hosts-files)
 item(tt(known-hosts-files))(
@@ -2029,7 +2050,7 @@ use the completers tt(_complete) and tt(_prefix) but allow
 case-insensitive completion only with tt(_complete):
 
 example(zstyle ':completion:*' completer _complete _prefix
-zstyle ':completion:*:complete:*' matcher-list \ 
+zstyle ':completion:*:complete:*:*:*' matcher-list \ 
        '' 'm:{a-zA-Z}={A-Za-z}')
 
 User-defined names, as explained for the tt(completer) style, are
@@ -2040,9 +2061,9 @@ with case-insensitive matching, then correction, and finally
 partial-word completion:
 
 example(zstyle ':completion:*' completer _complete _correct _complete:foo
-zstyle ':completion:*:complete:*' matcher-list \ 
+zstyle ':completion:*:complete:*:*:*' matcher-list \ 
     '' 'm:{a-zA-Z}={A-Za-z}'
-zstyle ':completion:*:foo:*' matcher-list \ 
+zstyle ':completion:*:foo:*:*:*' matcher-list \ 
     'm:{a-zA-Z}={A-Za-z} r:|[-_./]=* r:|=*')
 
 If the style is unset in any context no match specification is applied.
@@ -2565,7 +2586,7 @@ an exception to this behavior.)
 
 For example:
 
-example(zstyle ':completion:*:complete:-command-:*' tag-order \ 
+example(zstyle ':completion:*:complete:-command-:*:*' tag-order \ 
     'commands functions')
 
 specifies that completion in command position first offers
@@ -2624,7 +2645,7 @@ repeat them all.  For example, to make completion of function names in
 command position ignore all the completion functions starting with an
 underscore the first time completion is tried:
 
-example(zstyle ':completion:*:*:-command-:*' tag-order \ 
+example(zstyle ':completion:*:*:-command-:*:*' tag-order \ 
     'functions:-non-comp *' functions
 zstyle ':completion:*:functions-non-comp' ignored-patterns '_*')
 
@@ -2660,7 +2681,7 @@ try normal completion without any match specification and, if that
 generates no matches, try again with case-insensitive matching, restricting
 the effect to arguments of the command tt(foo):
 
-example(zstyle ':completion:*:*:foo:*' tag-order '*' '*:-case'
+example(zstyle ':completion:*:*:foo:*:*' tag-order '*' '*:-case'
 zstyle ':completion:*-case' matcher 'm:{a-z}={A-Z}')
 
 First, all the tags offered when completing after tt(foo) are tried using
@@ -4119,7 +4140,7 @@ tt(compadd) when generating matches from the style value, or to
 the functions for the fields if they are called.
 )
 findex(_describe)
-item(tt(_describe) [ tt(-oO) | tt(-t) var(tag) ] var(descr) var(name1) [ var(name2) ] var(opts) ... tt(-)tt(-) ...)(
+item(tt(_describe) [tt(-12JVx)] [ tt(-oO) | tt(-t) var(tag) ] var(descr) var(name1) [ var(name2) ] var(opts) ... tt(-)tt(-) ...)(
 This function associates completions with descriptions.
 Multiple groups separated by tt(-)tt(-) can be supplied, potentially with
 different completion options var(opts).
@@ -4149,6 +4170,9 @@ tt(prefix-needed) style.
 
 With the tt(-t) option a var(tag) can be specified.  The default is
 `tt(values)' or, if the tt(-o) option is given, `tt(options)'.
+
+The options tt(-1), tt(-2), tt(-J), tt(-V), tt(-x) are passed to
+tt(_next_label).
 
 If selected by the tt(list-grouped) style, strings with the same
 description will appear together in the list.
@@ -4257,12 +4281,12 @@ option `tt(-)tt(-help)'.
 )
 findex(_guard)
 item(tt(_guard) [ var(options) ] var(pattern descr))(
-This function is intended to be used in the var(action) for
-the specifications passed to tt(_arguments) and similar functions.  It
-returns immediately with a non-zero return status if
-the string to be completed does not match the var(pattern).  If the
-pattern matches, the var(descr) is displayed; the function then returns
-status zero if the word to complete is not empty, non-zero otherwise.
+This function displays var(descr) if var(pattern) matches the string to
+be completed.  It is intended to be used in the var(action) for the
+specifications passed to tt(_arguments) and similar functions.
+
+The return status is zero if the message was displayed and the word to
+complete is not empty, and non-zero otherwise.
 
 The var(pattern) may be preceded by any of the options understood by
 tt(compadd) that are passed down from tt(_description), namely tt(-M),

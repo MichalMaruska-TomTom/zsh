@@ -1,28 +1,29 @@
 # function zfget_match {
 
 emulate -L zsh
+zmodload -F zsh/files b:zf_ln || return 1
 
 # the zfcd hack:  this may not be necessary here
 if [[ $1 == $HOME || $1 == $HOME/* ]]; then
   1="~${1#$HOME}"
 fi
 
-local tmpf=${TMPPREFIX}zfgm$$
-
 if [[ $ZFTP_SYSTEM == UNIX* && $1 == */* ]]; then
+  setopt localoptions clobber
+  local tmpf=${TMPPREFIX}zfgm$$
+  zf_ln -fn =(<<<'') $tmpf || return 1
+
   if [[ -n $WIDGET ]]; then
     local dir=${1:h}
     [[ $dir = */ ]] || dir="$dir/"
     zftp ls -LF $dir >$tmpf
     local reply
     reply=(${${${(f)"$(<$tmpf)"}##$dir}%\*})
-    rm -f $tmpf
     _wanted files expl 'remote file' compadd -P $dir - $reply
   else
     # On the first argument to ls, we usually get away with a glob.
     zftp ls "$1*$2" >$tmpf
     reply=($(<$tmpf))
-    rm -f $tmpf
   fi
 else
   local fcache_name
