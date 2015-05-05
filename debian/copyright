@@ -32,10 +32,6 @@ Comment: This applies to portions of Src/compat.c, the remainder is
 Copyright: 1990, 1993 The Regents of the University of California
 License: BSD-3
 
-Files: Completion/Linux/Command/_docker
-Copyright: 2013, Felix Riedel
-License: BSD-3
-
 Files: Completion/Unix/Command/_hg
 Copyright: 2005, 2006 Steve Borho <steve@borho.org>
            2006-2009 Brendan Cully <brendan@kublai.com>
