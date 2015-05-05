@@ -217,12 +217,6 @@ enforced as follows:
     % git checkout upstream
     % git reset --hard zsh-$version
 
-### Create the fake orig tar ball (until we can work with upstream's tarball)
-
-This requires the upstream release to be properly tagged.
-
-    % make -f debian/rules get-orig-source
-
 ### Remove all quilt patches which are applied upstream
 
 All patches applied should be removed from `debian/patches` directory,
@@ -303,6 +297,11 @@ prefix the commit message with `[dch-ignore] ` or add `-m "Gbp-Dch:
 Ignore"` to the commit command so it doesn't come up in later `gbp dch`
 runs.
 
+### Create the fake orig tar ball (until we can work with upstream's tarball)
+
+This requires the upstream release to be properly tagged.
+
+    % make -f debian/rules get-orig-source
 
 ### Fix outstanding bugs
 
