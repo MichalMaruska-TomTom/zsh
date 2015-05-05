@@ -1,4 +1,4 @@
-zsh (5.0.7-7) unstable; urgency=low
+zsh (5.0.7-dev-2-1) experimental; urgency=low
 
   * zsh-static will go away soon. Object now if you need it and tell us
     why at pkg-zsh-devel@lists.alioth.debian.org.  See also
