@@ -1,14 +1,16 @@
-zsh (5.0.7-dev-2-1) UNRELEASED; urgency=medium
+zsh (5.0.7-dev-2-1) experimental; urgency=low
 
   * [db38e167] New upstream release candidate
     + [4e6f0762] Remove all cherry-picked patches
     + [bcf6f70a] Remove no more needed debian/copyright entries.
+    + [e0c83ff9,6b5231e4] Add patch to fix test suite failures related to
+      "setopt PROMPT_SP"
   * [01eea476] Add debian/zsh-static.NEWS with note about upcoming
     zsh-static removal.
   * [f58cddea] debian/pkg-zsh-workflow.md: Update order when importing a
     new upstream release.
 
- -- Axel Beckert <abe@debian.org>  Tue, 05 May 2015 23:30:25 +0200
+ -- Axel Beckert <abe@debian.org>  Fri, 08 May 2015 01:35:13 +0200
 
 zsh (5.0.7-6) unstable; urgency=medium
 
