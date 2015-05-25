@@ -8481,7 +8481,7 @@ _git_third_party_commands=()
 local file input
 for file in ${^fpath}/_git-*~(*~|*.zwc)(-.N); do
   local name=${${file:t}#_git-}
-  if (( $+_git_third_party_commands[$name] )); then
+  if [[ -n ${(M)_git_third_party:#${name}*} ]]; then
     continue
   fi
 
