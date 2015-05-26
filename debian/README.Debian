@@ -12,6 +12,15 @@ folders in MAIL and MAILPATH.
  -- Clint Adams <schizo@debian.org>
 
 
+Using bash completion scripts with zsh
+--------------------------------------
+
+See http://zshwiki.org/home/convert/bash for instructions and example
+code on how to use bash completion scripts with zsh.
+
+ -- Axel Beckert <abe@debian.org>, Tue, 26 May 2015 14:46:31 +0200
+
+
 How to use the zsh-dbg package
 ------------------------------
 
