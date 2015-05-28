@@ -1,3 +1,1 @@
-replace-texi2html-with-makeinfo
 further-mitigate-test-suite-hangs.patch
-fix-test-suite-failures-related-to-setopt-PROMPT_SP.patch
