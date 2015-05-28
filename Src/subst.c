@@ -259,10 +259,19 @@ stringsubst(LinkList list, LinkNode node, int pf_flags, int asssub)
 #endif
 		str--;
 	    } else if (c == Inparmath) {
-		/* Math substitution of the form $((...)) */
+		/*
+		 * Math substitution of the form $((...)).
+		 * These can be nested, for goodness sake...
+		 */
+		int mathpar = 1;
 		str[-1] = '\0';
-		while (*str != Outparmath && *str)
+		while (mathpar && *str) {
 		    str++;
+		    if (*str == Outparmath)
+			mathpar--;
+		    else if (*str == Inparmath)
+			mathpar++;
+		}
 		if (*str != Outparmath) {
 		    zerr("failed to find end of math substitution");
 		    return NULL;
@@ -1592,7 +1601,7 @@ paramsubst(LinkList l, LinkNode n, char **str, int qt, int pf_flags)
     /* combination of (L), (U) and (C) flags. */
     int casmod = CASMOD_NONE;
     /*
-     * quotemod says we are doing either (q) (positive), (Q) (negative)
+     * quotemod says we are doing either (q/b) (positive), (Q) (negative)
      * or not (0).  quotetype counts the q's for the first case.
      * quoterr is simply (X) but gets passed around a lot because the
      * combination (eX) needs it.
@@ -1845,7 +1854,8 @@ paramsubst(LinkList l, LinkNode n, char **str, int qt, int pf_flags)
 		    break;
 
 		case 'q':
-		    if (quotetype == QT_DOLLARS)
+		    if (quotetype == QT_DOLLARS ||
+			quotetype == QT_BACKSLASH_PATTERN)
 			goto flagerr;
 		    if (s[1] == '-') {
 			if (quotemod)
@@ -1860,6 +1870,12 @@ paramsubst(LinkList l, LinkNode n, char **str, int qt, int pf_flags)
 			}
 			quotemod++, quotetype++;
 		    }
+		    break;
+		case 'b':
+		    if (quotemod || quotetype != QT_NONE)
+			goto flagerr;
+		    quotemod = 1;
+		    quotetype = QT_BACKSLASH_PATTERN;
 		    break;
 		case 'Q':
 		    quotemod--;
@@ -3460,7 +3476,7 @@ paramsubst(LinkList l, LinkNode n, char **str, int qt, int pf_flags)
     if (quotemod) {
 	int pre = 0, post = 0;
 
-	if (quotemod > 0 && quotetype > QT_BACKSLASH) {
+	if (quotemod > 0) {
 	    switch (quotetype)
 	    {
 	    case QT_DOLLARS:
@@ -3471,6 +3487,9 @@ paramsubst(LinkList l, LinkNode n, char **str, int qt, int pf_flags)
 
 	    case QT_SINGLE_OPTIONAL:
 		/* quotes will be added for us */
+	    case QT_BACKSLASH:
+	    case QT_BACKSLASH_PATTERN:
+		/* no quotes */
 		break;
 
 	    default:

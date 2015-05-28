@@ -111,7 +111,7 @@ indent(tt(typeset -A) var(name))
 When var(name) refers to an associative array, the list in an assignment
 is interpreted as alternating keys and values:
 ifzman()
-indent(set -A var(name) var(key) var(value) ...)
+indent(tt(set -A) var(name) var(key) var(value) ...)
 indent(var(name)tt(=LPAR())var(key) var(value) ...tt(RPAR()))
 
 Every var(key) must have a var(value) in this case.  Note that this
@@ -282,14 +282,14 @@ pattern and the result is the first matching array element, substring or
 word (if the parameter is an array, if it is a scalar, or if it is a
 scalar and the `tt(w)' flag is given, respectively).  The subscript used
 is the number of the matching element, so that pairs of subscripts such as
-`tt($foo[(r))var(??)tt(,3])' and `tt($foo[(r))var(??)tt(,(r)f*])' are
+`tt($foo[(r)??,3])' and `tt($foo[(r)??,(r)f*])' are
 possible if the parameter is not an associative array.  If the
 parameter is an associative array, only the value part of each pair is
 compared to the pattern, and the result is that value.
 
 If a search through an ordinary array failed, the search sets the
 subscript to one past the end of the array, and hence
-tt(${array[(r)pattern]}) will substitute the empty string.  Thus the
+tt(${array[(r))var(pattern)tt(]}) will substitute the empty string.  Thus the
 success of a search can be tested by using the tt((i)) flag, for
 example (assuming the option tt(KSH_ARRAYS) is not in effect):
 
@@ -642,6 +642,9 @@ privileges, you may change the effective group ID of the shell
 process by assigning to this parameter.  Also (assuming sufficient
 privileges), you may start a single command with a different
 effective group ID by `tt(LPAR()EGID=)var(gid)tt(; command+RPAR())'
+
+If this is made local, it is not implicitly set to 0, but may be
+explicitly set locally.
 )
 vindex(EUID)
 item(tt(EUID) <S>)(
@@ -650,6 +653,9 @@ privileges, you may change the effective user ID of the shell process
 by assigning to this parameter.  Also (assuming sufficient privileges),
 you may start a single command with a different
 effective user ID by `tt(LPAR()EUID=)var(uid)tt(; command+RPAR())'
+
+If this is made local, it is not implicitly set to 0, but may be
+explicitly set locally.
 )
 vindex(ERRNO)
 item(tt(ERRNO) <S>)(
@@ -666,6 +672,9 @@ you may change the group ID of the shell process by assigning to this
 parameter.  Also (assuming sufficient privileges), you may start a single
 command under a different
 group ID by `tt(LPAR()GID=)var(gid)tt(; command+RPAR())'
+
+If this is made local, it is not implicitly set to 0, but may be
+explicitly set locally.
 )
 vindex(HISTCMD)
 item(tt(HISTCMD))(
@@ -801,6 +810,9 @@ you may change the user ID of the shell by assigning to this parameter.
 Also (assuming sufficient privileges), you may start a single command
 under a different
 user ID by `tt(LPAR()UID=)var(uid)tt(; command+RPAR())'
+
+If this is made local, it is not implicitly set to 0, but may be
+explicitly set locally.
 )
 vindex(USERNAME)
 item(tt(USERNAME) <S>)(
@@ -1075,8 +1087,8 @@ example, if the value is `tt(fc *)' then commands that invoke the
 interactive history editor are never written to the history file.
 
 Note that tt(HISTORY_IGNORE) defines a single pattern: to
-specify alternatives use the `tt(+LPAR()first|second|...+RPAR())'
-syntax.
+specify alternatives use the
+`tt(LPAR())var(first)tt(|)var(second)tt(|)var(...)tt(RPAR())' syntax.
 
 Compare the tt(HIST_NO_STORE) option or the tt(zshaddhistory) hook,
 either of which would prevent such commands from being added to the
@@ -1098,6 +1110,9 @@ The maximum number of events stored in the internal history list.
 If you use the tt(HIST_EXPIRE_DUPS_FIRST) option, setting this value
 larger than the tt(SAVEHIST) size will give you the difference as a
 cushion for saving duplicated history events.
+
+If this is made local, it is not implicitly set to 0, but may be
+explicitly set locally.
 )
 vindex(HOME)
 item(tt(HOME) <S>)(
@@ -1392,6 +1407,9 @@ It is expanded in the same way as tt(PS2).
 vindex(SAVEHIST)
 item(tt(SAVEHIST))(
 The maximum number of history events to save in the history file.
+
+If this is made local, it is not implicitly set to 0, but may be
+explicitly set locally.
 )
 vindex(SPROMPT)
 item(tt(SPROMPT) <S>)(
@@ -1450,7 +1468,7 @@ sitem(tt(%W))(Number of times the process was swapped.)
 sitem(tt(%X))(The average amount in (shared) text space used in kilobytes.)
 sitem(tt(%D))(The average amount in (unshared) data/stack space used in
 kilobytes.)
-sitem(tt(%K))(The total space used (%X+%D) in kilobytes.)
+sitem(tt(%K))(The total space used (tt(%X)PLUS()tt(%D)) in kilobytes.)
 sitem(tt(%M))(The  maximum memory the process had in use at any time in
 megabytes.)
 sitem(tt(%F))(The number of major page faults (page needed to be brought
@@ -1675,7 +1693,7 @@ ifzman(zmanref(zshcompsys))\
 ifnzman(noderef(Completion System)).
 )
 vindex(ZLE_RPROMPT_INDENT)
-item(tt(ZLE_RPROMPT_INDENT <S>))(
+item(tt(ZLE_RPROMPT_INDENT) <S>)(
 If set, used to give the indentation between the right hand side of
 the right prompt in the line editor as given by tt(RPS1) or tt(RPROMPT)
 and the right hand side of the screen.  If not set, the value 1 is used.

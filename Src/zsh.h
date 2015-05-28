@@ -215,6 +215,10 @@ struct mathfunc {
 
 #define SPECCHARS "#$^*()=|{}[]`<>?~;&\n\t \\\'\""
 
+/* chars that need to be quoted for pattern matching */
+
+#define PATCHARS "#^*()|[]<>?~\\"
+
 /*
  * Types of quote.  This is used in various places, so care needs
  * to be taken when changing them.  (Oooh, don't you look surprised.)
@@ -248,6 +252,12 @@ enum {
      * This is only useful as an argument to quotestring().
      */
     QT_SINGLE_OPTIONAL,
+    /*
+     * Only quote pattern characters.
+     * ${(b)foo} guarantees that ${~foo} matches the string
+     * contained in foo.
+     */
+    QT_BACKSLASH_PATTERN,
     /*
      * As QT_BACKSLASH, but a NULL string is shown as ''.
      */
@@ -2978,9 +2988,9 @@ typedef wint_t convchar_t;
  * We can't be quite sure the wcwidth we've provided is entirely
  * in agreement with the system's, so be extra safe.
  */
-#define IS_COMBINING(wc)	(WCWIDTH(wc) == 0 && !iswcntrl(wc))
+#define IS_COMBINING(wc)	(wc != 0 && WCWIDTH(wc) == 0 && !iswcntrl(wc))
 #else
-#define IS_COMBINING(wc)	(WCWIDTH(wc) == 0)
+#define IS_COMBINING(wc)	(wc != 0 && WCWIDTH(wc) == 0)
 #endif
 /*
  * Test for the base of a combining character.

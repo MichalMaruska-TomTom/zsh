@@ -714,12 +714,14 @@ _git-diff () {
   local curcontext=$curcontext state line ret=1
   declare -A opt_args
 
-  local -a diff_options
+  local -a diff_options diff_stage_options
   __git_setup_diff_options
+  __git_setup_diff_stage_options
 
   _arguments -w -C -s \
     $* \
     $diff_options \
+    $diff_stage_options \
     '(--cached --staged)'{--cached,--staged}'[show diff between index and named commit]' \
     '(-)--[start file arguments]' \
     '*:: :->from-to-file' && ret=0
@@ -1081,12 +1083,10 @@ _git-log () {
   local -a log_options revision_options diff_options
   __git_setup_log_options
   __git_setup_revision_options
-  __git_setup_diff_options
 
   _arguments -w -C -s \
     $log_options \
     $revision_options \
-    $diff_options \
     '-L+[trace the evolution of a line range or regex within a file]:range' \
     '(-)--[start file arguments]' \
     '*:: :->commit-range-or-file' && ret=0
@@ -1484,10 +1484,9 @@ _git-show () {
   local curcontext=$curcontext state line ret=1
   typeset -A opt_args
 
-  local -a log_options revision_options diff_options
+  local -a log_options revision_options
   __git_setup_log_options
   __git_setup_revision_options
-  __git_setup_diff_options
 
   _arguments -w -C -s \
     $log_options \
@@ -1794,7 +1793,7 @@ _tig () {
 (( $+functions[_git-config] )) ||
 _git-config () {
   local name_arg value_arg
-  local curcontext=$curcontext state line ret=1
+  local curcontext=$curcontext state line expl ret=1
   declare -A opt_args
 
   if (( words[(I)--get-regexp] )); then
@@ -2554,7 +2553,7 @@ _git-config () {
         options -M 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' && ret=0
       ;;
     (gettable-option)
-      _describe -t git-options option \
+      _wanted git-options expl option compadd -M 'r:|.=* r:|=*' - \
         ${${${(0)"$(_call_program gettable-options git config -z --list)"}%%$'\n'*}//:/\\:} && ret=0
       ;;
     (gettable-colorbool-option)
@@ -2948,7 +2947,8 @@ _git-fast-export () {
     '--progress=[insert progress statements]: :__git_guard_number interval' \
     '--signed-tags=[specify how to handle signed tags]:action:((verbatim\:"silently export"
                                                                 warn\:"export, but warn"
-                                                                strip\:"export unsigned tags instead"
+                                                                warn-strip\:"export as unsigned tags, but warn"
+                                                                strip\:"export as unsigned tags instead"
                                                                 abort\:"abort on signed tags (default)"))' \
     '--tag-of-filtered-object=[specify how to handle tags whose tagged object is filtered out]:action:((abort\:"abort on such tags"
                                                                                                         drop\:"omit such tags"
@@ -3733,7 +3733,9 @@ _git-send-email () {
     '(           --no-validate)--validate[perform sanity checks on patches]' \
     '(--validate              )--no-validate[do not perform sanity checks on patches]' \
     '--force[send emails even if safety checks would prevent it]' \
-    '*: :_files'
+    '*: : _alternative -O expl
+      "files:file:_files"
+      "commits:recent commit object name:__git_commit_objects_prefer_recent"'
 }
 
 (( $+functions[_git-svn] )) ||
@@ -4341,11 +4343,13 @@ _git-cat-file () {
 
 (( $+functions[_git-diff-files] )) ||
 _git-diff-files () {
-  declare -a revision_options
+  local -a revision_options diff_stage_options
   __git_setup_revision_options
+  __git_setup_diff_stage_options
 
   _arguments -w -S -s \
     $revision_options \
+    $diff_stage_options \
     ': :__git_changed-in-working-tree_files' \
     ': :__git_changed-in-working-tree_files' \
     '*: :__git_changed-in-working-tree_files'
@@ -5532,7 +5536,7 @@ __git_stashes () {
   local expl
   declare -a stashes
 
-  stashes=(${${(f)"$(_call_program stashes git stash list 2>/dev/null)"}/: */})
+  stashes=(${(f)"$(_call_program stashes git stash list --pretty=format:%gd 2>/dev/null)"})
   __git_command_successful $pipestatus || return 1
 
   _wanted stashes expl stash compadd "$@" -a - stashes
@@ -5585,7 +5589,7 @@ __git_remote_branch_names () {
   branch_names=(${${(f)"$(_call_program remote-branch-refs git for-each-ref --format='"%(refname)"' refs/remotes 2>/dev/null)"}#refs/remotes/})
   __git_command_successful $pipestatus || return 1
 
-  _wanted remote-branch-names expl 'remote branch name' compadd "$@" -a - branch_names
+  _wanted remote-branch-names expl 'remote branch name' compadd -M 'r:|/=**' "$@" -a - branch_names
 }
 
 (( $+functions[__git_remote_branch_names_noprefix] )) ||
@@ -5596,7 +5600,12 @@ __git_remote_branch_names_noprefix () {
   branch_names=(${${${(f)"$(_call_program remote-branch-refs-noprefix git for-each-ref --format='"%(refname)"' refs/remotes 2>/dev/null)"}##*/}:#HEAD})
   __git_command_successful $pipestatus || return 1
 
-  _wanted remote-branch-names-noprefix expl 'remote branch name' compadd "$@" -a - branch_names
+  _wanted remote-branch-names-noprefix expl 'remote branch name' compadd -M 'r:|/=**' "$@" -a - branch_names
+}
+
+(( $+functions[__git_commit_objects_prefer_recent] )) ||
+__git_commit_objects_prefer_recent () {
+  __git_recent_commits || __git_commit_objects
 }
 
 (( $+functions[__git_commits] )) ||
@@ -5609,15 +5618,21 @@ __git_commits () {
   _alternative \
     "heads::__git_heads $sopts" \
     "commit-tags::__git_commit_tags $sopts" \
-    'commit-objects::__git_commit_objects'
+    'commit-objects::__git_commit_objects_prefer_recent'
 }
 
 (( $+functions[__git_heads] )) ||
 __git_heads () {
+  __git_heads_local
+  __git_heads_remote
+}
+
+(( $+functions[__git_heads_local] )) ||
+__git_heads_local () {
   local gitdir expl start
   declare -a heads
 
-  heads=(${${(f)"$(_call_program headrefs git for-each-ref --format='"%(refname)"' refs/heads refs/remotes 2>/dev/null)"}#refs/(heads|remotes)/})
+  heads=(${(f)"$(_call_program headrefs git for-each-ref --format='"%(refname:short)" refs/heads' 2>/dev/null)"})
   gitdir=$(_call_program gitdir git rev-parse --git-dir 2>/dev/null)
   if __git_command_successful $pipestatus; then
     for f in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
@@ -5626,7 +5641,17 @@ __git_heads () {
     [[ -f $gitdir/refs/stash ]] && heads+=stash
   fi
 
-  _wanted heads expl head compadd "$@" -a - heads
+  _wanted heads-local expl "local head" compadd -M 'r:|/=**' "$@" -a - heads
+}
+
+(( $+functions[__git_heads_remote] )) ||
+__git_heads_remote () {
+  local gitdir expl start
+  declare -a heads
+
+  heads=(${(f)"$(_call_program headrefs git for-each-ref --format='"%(refname:short)" refs/remotes' 2>/dev/null)"})
+
+  _wanted heads-remote expl "remote head" compadd -M 'r:|/=**' "$@" -a - heads
 }
 
 (( $+functions[__git_commit_objects] )) ||
@@ -5634,29 +5659,47 @@ __git_commit_objects () {
   local gitdir expl start
   declare -a commits
 
+  # Abort if the argument does not match a commit hash (including empty).
+  [[ "$PREFIX$SUFFIX" == [[:xdigit:]](#c1,40) ]] || return 1
+
   # Note: the after-the-colon part must be unique across the entire array;
   # see workers/34768
-  : ${(A)commits::=${(f)"$(_call_program commits git --no-pager log -20 --format='%h:\\\[%h\\\]\ %s')"}}
+  commits=(${(f)"$(_call_program commits git --no-pager log -1000 --all --reflog --format='%h:\[%h\]\ %s\ \(%cr\)')"})
   __git_command_successful $pipestatus || return 1
 
-  _describe -V -t commits 'commit object name' commits || _guard '[[:xdigit:]](#c,40)' 'commit object name'
+  _describe -V -t commits 'commit object name' commits
 }
 
 (( $+functions[__git_recent_commits] )) ||
 __git_recent_commits () {
   local gitdir expl start
   declare -a descr tags heads commits
-  local i j k
+  local i j k ret
+  integer distance_from_head
 
   # Careful: most %d will expand to the empty string.  Quote properly!
-  : "${(A)commits::=${(@f)"$(_call_program commits git --no-pager log -20 --format='%h%n%d%n%s')"}}"
+  # NOTE: we could use %D directly, but it's not available in git 1.9.1 at least.
+  commits=("${(f)"$(_call_program commits git --no-pager log -20 --format='%h%n%d%n%s\ \(%cr\)')"}")
   __git_command_successful $pipestatus || return 1
 
   for i j k in "$commits[@]" ; do
     # Note: the after-the-colon part must be unique across the entire array;
     # see workers/34768
-    descr+=("$i:[$i] $k")
+    if (( distance_from_head == 0 )); then
+      descr+=($i:"[HEAD]    $k")
+    elif (( distance_from_head == 1 )); then
+      descr+=($i:"[HEAD^]   $k")
+    elif (( distance_from_head == 2 )); then
+      descr+=($i:"[HEAD^^]  $k")
+    elif (( distance_from_head < 10 )); then
+      descr+=($i:"[HEAD~$distance_from_head]  $k")
+    else
+      descr+=($i:"[HEAD~$distance_from_head] $k")
+    fi
+    (( ++distance_from_head ))
+
     j=${${j# \(}%\)} # strip leading ' (' and trailing ')'
+    j=${j/ ->/,}  # Convert " -> master, origin/master".
     for j in ${(s:, :)j}; do
       if [[ $j == 'tag: '* ]] ; then
         tags+=( ${j#tag: } )
@@ -5673,7 +5716,8 @@ __git_recent_commits () {
   expl=()
   _wanted heads expl 'head' compadd "$@" -a - heads && ret=0
   expl=()
-  _describe -2Vx -t commits 'commit object name' descr && ret=0
+  _describe -Vx -t commits 'recent commit object name' descr && ret=0
+  return $ret
 }
 
 (( $+functions[__git_blob_objects] )) ||
@@ -6214,14 +6258,20 @@ __git_setup_diff_options () {
     '(--no-prefix)--dst-prefix=[use given prefix for destination]:prefix'
     '(--src-prefix --dst-prefix)--no-prefix[do not show any source or destination prefix]'
 
+    '(-c,--cc)'{-c,--cc}'[combined diff format for merge commits]'
+
+    # TODO: --output is undocumented.
+    '--output[undocumented]:undocumented')
+}
+
+(( $+functions[__git_setup_diff_stage_options] )) ||
+__git_setup_diff_stage_options () {
+  diff_stage_options=(
     '(-0 -1 -2 -3 --base --ours --theirs -c --cc --no-index)'{-1,--base}'[diff against "base" version]'
     '(-0 -1 -2 -3 --base --ours --theirs -c --cc --no-index)'{-2,--ours}'[diff against "our branch" version]'
     '(-0 -1 -2 -3 --base --ours --theirs -c --cc --no-index)'{-3,--theirs}'[diff against "their branch" version]'
     '(-0 -1 -2 -3 --base --ours --theirs -c --cc --no-index)-0[omit diff output for unmerged entries]'
-    '(-0 -1 -2 -3 --base --ours --theirs -c --cc --no-index)'{-c,--cc}'[compare "our branch", "their branch" and working tree files]'
-
-    # TODO: --output is undocumented.
-    '--output[undocumented]:undocumented')
+  )
 }
 
 (( $+functions[__git_setup_revision_options] )) ||

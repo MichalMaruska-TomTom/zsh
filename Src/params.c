@@ -4580,17 +4580,21 @@ addenv(Param pm, char *value)
 static char *
 mkenvstr(char *name, char *value, int flags)
 {
-    char *str, *s;
-    int len_name, len_value;
+    char *str, *s = value;
+    int len_name, len_value = 0;
 
     len_name = strlen(name);
-    for (len_value = 0, s = value;
-	 *s && (*s++ != Meta || *s++ != 32); len_value++);
+    if (s)
+	while (*s && (*s++ != Meta || *s++ != 32))
+	    len_value++;
     s = str = (char *) zalloc(len_name + len_value + 2);
     strcpy(s, name);
     s += len_name;
     *s = '=';
-    copyenvstr(s, value, flags);
+    if (value)
+	copyenvstr(s, value, flags);
+    else
+	*++s = '\0';
     return str;
 }
 
@@ -5032,66 +5036,10 @@ static const struct paramtypes pmtypes[] = {
 
 #define PMTYPES_SIZE ((int)(sizeof(pmtypes)/sizeof(struct paramtypes)))
 
-/**/
-mod_export void
-printparamnode(HashNode hn, int printflags)
+static void
+printparamvalue(Param p, int printflags)
 {
-    Param p = (Param) hn;
     char *t, **u;
-
-    if (p->node.flags & PM_UNSET)
-	return;
-
-    if (printflags & PRINT_TYPESET)
-	printf("typeset ");
-
-    /* Print the attributes of the parameter */
-    if (printflags & (PRINT_TYPE|PRINT_TYPESET)) {
-	int doneminus = 0, i;
-	const struct paramtypes *pmptr;
-
-	for (pmptr = pmtypes, i = 0; i < PMTYPES_SIZE; i++, pmptr++) {
-	    int doprint = 0;
-	    if (pmptr->flags & PMTF_TEST_LEVEL) {
-		if (p->level)
-		    doprint = 1;
-	    } else if (p->node.flags & pmptr->binflag)
-		doprint = 1;
-
-	    if (doprint) {
-		if (printflags & PRINT_TYPESET) {
-		    if (pmptr->typeflag) {
-			if (!doneminus) {
-			    putchar('-');
-			    doneminus = 1;
-			}
-			putchar(pmptr->typeflag);
-		    }
-		} else {
-		    printf("%s ", pmptr->string);
-		}
-		if ((pmptr->flags & PMTF_USE_BASE) && p->base) {
-		    printf("%d ", p->base);
-		    doneminus = 0;
-		}
-		if ((pmptr->flags & PMTF_USE_WIDTH) && p->width) {
-		    printf("%d ", p->width);
-		    doneminus = 0;
-		}
-	    }
-	}
-	if (doneminus)
-	    putchar(' ');
-    }
-
-    if ((printflags & PRINT_NAMEONLY) ||
-	((p->node.flags & PM_HIDEVAL) && !(printflags & PRINT_INCLUDEVALUE))) {
-	zputs(p->node.nam, stdout);
-	putchar('\n');
-	return;
-    }
-
-    quotedzputs(p->node.nam, stdout);
 
     if (p->node.flags & PM_AUTOLOAD) {
 	putchar('\n');
@@ -5101,7 +5049,7 @@ printparamnode(HashNode hn, int printflags)
 	putchar(' ');
     else if ((printflags & PRINT_TYPESET) &&
 	     (PM_TYPE(p->node.flags) == PM_ARRAY || PM_TYPE(p->node.flags) == PM_HASHED))
-	printf("\n%s=", p->node.nam);
+	printf("%s=", p->node.nam);
     else
 	putchar('=');
 
@@ -5159,4 +5107,109 @@ printparamnode(HashNode hn, int printflags)
 	putchar(' ');
     else
 	putchar('\n');
+}
+
+/**/
+mod_export void
+printparamnode(HashNode hn, int printflags)
+{
+    Param p = (Param) hn;
+    int array_typeset;
+
+    if (p->node.flags & PM_UNSET) {
+	if (isset(POSIXBUILTINS) && (p->node.flags & PM_READONLY) &&
+	    (printflags & PRINT_TYPESET))
+	{
+	    /*
+	     * Special POSIX rules: show the parameter as readonly
+	     * even though it's unset, but with no value.
+	     */
+	    printflags |= PRINT_NAMEONLY;
+	}
+	else
+	    return;
+    }
+
+    if (printflags & PRINT_TYPESET) {
+	if ((p->node.flags & (PM_READONLY|PM_SPECIAL)) ==
+	    (PM_READONLY|PM_SPECIAL)) {
+	    /*
+	     * It's not possible to restore the state of
+	     * these, so don't output.
+	     */
+	    return;
+	}
+	/*
+	 * Printing the value of array: this needs to be on
+	 * a separate line so more care is required.
+	 */
+	array_typeset = (PM_TYPE(p->node.flags) == PM_ARRAY ||
+			 PM_TYPE(p->node.flags) == PM_HASHED) &&
+	    !(printflags & PRINT_NAMEONLY);
+	if (array_typeset && (p->node.flags & PM_READONLY)) {
+	    /*
+	     * We need to create the array before making it
+	     * readonly.
+	     */
+	    printf("typeset -a ");
+	    zputs(p->node.nam, stdout);
+	    putchar('\n');
+	    printparamvalue(p, printflags);
+	    printflags |= PRINT_NAMEONLY;
+	}
+	printf("typeset ");
+    }
+    else
+	array_typeset = 0;
+
+    /* Print the attributes of the parameter */
+    if (printflags & (PRINT_TYPE|PRINT_TYPESET)) {
+	int doneminus = 0, i;
+	const struct paramtypes *pmptr;
+
+	for (pmptr = pmtypes, i = 0; i < PMTYPES_SIZE; i++, pmptr++) {
+	    int doprint = 0;
+	    if (pmptr->flags & PMTF_TEST_LEVEL) {
+		if (p->level)
+		    doprint = 1;
+	    } else if (p->node.flags & pmptr->binflag)
+		doprint = 1;
+
+	    if (doprint) {
+		if (printflags & PRINT_TYPESET) {
+		    if (pmptr->typeflag) {
+			if (!doneminus) {
+			    putchar('-');
+			    doneminus = 1;
+			}
+			putchar(pmptr->typeflag);
+		    }
+		} else {
+		    printf("%s ", pmptr->string);
+		}
+		if ((pmptr->flags & PMTF_USE_BASE) && p->base) {
+		    printf("%d ", p->base);
+		    doneminus = 0;
+		}
+		if ((pmptr->flags & PMTF_USE_WIDTH) && p->width) {
+		    printf("%d ", p->width);
+		    doneminus = 0;
+		}
+	    }
+	}
+	if (doneminus)
+	    putchar(' ');
+    }
+
+    if ((printflags & PRINT_NAMEONLY) ||
+	((p->node.flags & PM_HIDEVAL) && !(printflags & PRINT_INCLUDEVALUE))) {
+	zputs(p->node.nam, stdout);
+	putchar('\n');
+    } else {
+	quotedzputs(p->node.nam, stdout);
+
+	if (array_typeset)
+	    putchar('\n');
+	printparamvalue(p, printflags);
+    }
 }
