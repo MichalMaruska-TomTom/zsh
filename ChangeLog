@@ -1,4 +1,58 @@
+2015-05-31  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted: Config/version.mk: release 5.0.8, finally.
+
+	* 35343: Doc/Zsh/expn.yo, Doc/Zsh/options.yo, Src/subst.c,
+	Test/D04parameter.ztst: $#foo for any valid identifier
+	is only the length of foo if POSIX_IDENTIFIERS is not set.
+
+2015-05-30  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* users/20238: Doc/Zsh/builtins.yo, Src/builtin.c: add "fc -L" to
+	operate only on the local shell history when history sharing is
+	in effect.  Also avoid invoking the editor on empty results.
+
+2015-05-30  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* Han Pingtian: 35324: Functions/Zftp/zfget_match: better zfget
+	completion with paths.
+
+	* Han Pingtian: 35311: Doc/Zsh/zftpsys.yo: typo in zfuput
+	behaviour.
+
+2015-05-30  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* Oliver Kiddle: 35310 (plus undo 35268 (git 899613f)):
+	Completion/Base/Utility/_store_cache: fix quoting of cached arrays
+
+2015-05-29  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* 35326: Src/subst.c, Test/D04parameter.ztst: $#- was misparsed
+	as ${#-}.
+
+	* users/20237: Src/Modules/parameter.c: $functions[foo]
+	shouldn't be unmetafied when passed as parameter body.
+
+2015-05-28  Daniel Hahler  <zsh@thequod.de>
+
+	* 35098: Completion/Unix/Command/_git: provide --amend also with
+	"message" group.
+
+2015-05-28  Oliver Kiddle  <opk@zsh.org>
+
+	* 35315: Completion/Unix/Command/_git, Completion/X/Command/_matlab;
+	replace inappropriate uses of _path_commands
+
+2015-05-28  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* 35318: Doc/Zsh/builtins.yo, Doc/Zsh/options.yo, Src/builtin.c,
+	Src/exec.c: POSIX_BUILTINS compatibility for OPTIND processing
+	in getopts.
+
 2015-05-27  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* 35306: Src/parse.c, Test/C02cond.ztst: "test -z \("
+	failed owing to overeager parsing.
 
 	* unposted: Config/version.mk: 5.0.7-dev-4.
 
@@ -25,9 +79,10 @@
 
 2015-05-26  Peter Stephenson  <p.stephenson@samsung.com>
 
-	* see 35268: revert 34476 (ae7dcab) as it seems to be having
-	effects beyond the intended optimisation of completion caching.
-	To be investigated further after the release.
+	* see 35268: Completion/Base/Utility/_store_cache: revert 34476
+	(ae7dcab) as it seems to be having effects beyond the intended
+	optimisation of completion caching.  To be investigated further
+	after the release.
 
 	* Han Pingtian: 35295: Functions/Zftp/zfcd_match: be more
 	inventive zftp directory listing.

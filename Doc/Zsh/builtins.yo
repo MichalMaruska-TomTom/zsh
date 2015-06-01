@@ -662,8 +662,8 @@ findex(fc)
 cindex(history, editing)
 cindex(editing history)
 redef(SPACES)(0)(tt(ifztexi(NOTRANS(@ @ @ @ @ @ ))ifnztexi(      )))
-xitem(tt(fc) [ tt(-e) var(ename) ] [ tt(-m) var(match) ] [ var(old)tt(=)var(new) ... ] [ var(first) [ var(last) ] ])
-xitem(tt(fc -l )[ tt(-nrdfEiD) ] [ tt(-t) var(timefmt) ] [ tt(-m) var(match) ])
+xitem(tt(fc) [ tt(-e) var(ename) ] [-L] [ tt(-m) var(match) ] [ var(old)tt(=)var(new) ... ] [ var(first) [ var(last) ] ])
+xitem(tt(fc -l )[ tt(-LnrdfEiD) ] [ tt(-t) var(timefmt) ] [ tt(-m) var(match) ])
 xitem(SPACES()[ var(old)tt(=)var(new) ... ] [ var(first) [ var(last) ] ])
 xitem(tt(fc -p )[ tt(-a) ] [ var(filename) [ var(histsize) [ var(savehistsize) ] ] ])
 xitem(tt(fc) tt(-P))
@@ -683,11 +683,15 @@ A string specifies the most recent event beginning with the given string.
 All substitutions var(old)tt(=)var(new), if any, are then performed
 on the commands.
 
-If the tt(-l) flag is given, the resulting commands are listed on
-standard output.
-If the tt(-m) flag is also given the first argument is taken as a
+If the tt(-L) flag is given, only the local history is considered (see
+tt(SHARE_HISTORY) in ifzman(zmanref(zshoptions))\
+ifnzman(noderef(Description of Options))).
+If the tt(-m) flag is given, the first argument is taken as a
 pattern (should be quoted) and only the history events matching this
-pattern will be shown.
+pattern are considered.
+
+When the tt(-l) flag is given, the resulting commands are listed on
+standard output.
 Otherwise the editor program var(ename) is invoked on a file containing
 these history events.  If var(ename) is not given, the value
 of the parameter tt(FCEDIT) is used; if that is not set the value of the
@@ -866,7 +870,8 @@ vindex(OPTARG, use of)
 
 The first option to be examined may be changed by explicitly assigning
 to tt(OPTIND).  tt(OPTIND) has an initial value of tt(1), and is
-normally reset to tt(1) upon exit from a shell function.  tt(OPTARG)
+normally set to tt(1) upon entry to a shell function and restored
+upon exit (this is disabled by the tt(POSIX_BUILTINS) option).  tt(OPTARG)
 is not reset and retains its value from the most recent call to
 tt(getopts).  If either of tt(OPTIND) or tt(OPTARG) is explicitly
 unset, it remains unset, and the index or option argument is not
