@@ -16,6 +16,11 @@ zsh (5.0.7-dev-2-1) experimental; urgency=low
     + [bcf6f70a] Remove no more needed debian/copyright entries.
     + [e0c83ff9,6b5231e4] Add patch to fix test suite failures related to
       "setopt PROMPT_SP"
+    + [2d4743ce] uses correct command name in error messages about
+      "ulimit" failure; restores internal copy of limits if setrlimit()
+      fails, so the error won't repeat. (Closes: 765410)
+    + [691547cd] fixes thinko in status message for INT/QUIT signals;
+      checks errflag in output loops. (Closes: #767005)
   * [01eea476] Add debian/zsh-static.NEWS with note about upcoming
     zsh-static removal.
   * [f58cddea] debian/pkg-zsh-workflow.md: Update order when importing a
