@@ -1,13 +1,15 @@
-zsh (5.0.8-1) UNRELEASED; urgency=medium
+zsh (5.0.8-1) unstable; urgency=low
 
-  [ Axel Beckert ]
   * [fd2ef9a8,752cbfd4] New upstream release
     + [640212e7] Drop patches replace-texi2html-with-makeinfo and
       fix-test-suite-failures-related-to-setopt-PROMPT_SP (fixed upstream)
+    + Upload to unstable again.
   * [f14d3594] Mention how to use bash completion with zsh in
     README.Debian (c.f. #786881)
+  * [253c84df] Add git commit IDs and Debian bug numbers of bugs fixed
+    upstream in the last upload to the previous changelog entry.
 
- -- Axel Beckert <abe@debian.org>  Tue, 02 Jun 2015 00:45:31 +0200
+ -- Axel Beckert <abe@debian.org>  Sat, 13 Jun 2015 00:37:17 +0200
 
 zsh (5.0.7-dev-2-1) experimental; urgency=low
 
