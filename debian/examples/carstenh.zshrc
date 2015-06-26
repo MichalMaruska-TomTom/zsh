@@ -293,12 +293,11 @@ PS1='%(!..%n@)%m:%~%# '
 # ### ####################################################################{{{1
 
 # ### Start(), Restart(), Stop(), Reload(), Force-Reload():
-# ###             Start, restart, stop, reload or force-reload a System-V
-# ###             style init script.
+# ###             Start, restart, stop, reload or force-reload a service.
 # eval {Start,Restart,Stop,Reload,Force-Reload}'() { (
 #     builtin cd -q / || { echo >&2 "E: Could not chdir to /"; return 1; }
 #     env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-#     "/etc/init.d/${1:?}" "${0:l}"
+#     service "${1:?}" "${0:l}"
 # ) };'
 # compctl -g "/etc/init.d/*(:t)" Start Restart Stop Reload Force-Reload
 
