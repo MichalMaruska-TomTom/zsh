@@ -1,3 +1,15 @@
+zsh (5.0.8-2) unstable; urgency=medium
+
+  * [5808540c] Use "service" instead of "/etc/init.d" in
+    debian/examples/carsten.zshrc for init system compatibility.
+  * Cherry-pick multiple patches from upstream:
+    + [e79f2175] fix signal queueing in zcontext_save_partial()
+      (Closes: #790282)
+    + [143736da] handle failure of gettempname() in namedpipe()
+    + [724f974f] avoid warnings in prompt adam1 with Perl 5.22
+
+ -- Axel Beckert <abe@debian.org>  Mon, 29 Jun 2015 21:33:46 +0200
+
 zsh (5.0.8-1) unstable; urgency=low
 
   * [fd2ef9a8,752cbfd4] New upstream release
