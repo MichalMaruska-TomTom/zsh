@@ -212,6 +212,8 @@ binary-arch-dev: build-arch
 
 	dh_installdirs -pzsh-dev
 	dh_install     -pzsh-dev
+	find debian/zsh-dev/usr/include/zsh -name '*.h' -o -name '*.mdh' | \
+	  xargs sed -e 's@\.\./config\.h@config.h@;s@#\(\s*\)include "\([^"]\+\)"@#\1include <zsh/\2>@' -i
 
 	cd debian/zsh-dev/usr/share/aclocal; mv aczshoot.m4 zshoot.m4
 
