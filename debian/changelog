@@ -1,3 +1,12 @@
+zsh (5.0.8-3) unstable; urgency=medium
+
+  * [e04cb7a0] Include all .h and .mdh files including generated ones in
+    zsh-dev. (Closes: #776964)
+  * [5c13d857] Adjust include paths in /usr/include/zsh/ as suggested in
+    #776964.
+
+ -- Axel Beckert <abe@debian.org>  Mon, 20 Jul 2015 23:12:30 +0200
+
 zsh (5.0.8-2) unstable; urgency=medium
 
   * [5808540c] Use "service" instead of "/etc/init.d" in
