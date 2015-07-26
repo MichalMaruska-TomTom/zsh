@@ -1,0 +1,21 @@
+Origin: commit b3aa3b77916007703b341bfd30c3647bdc355bc8
+Author: Peter Stephenson <p.w.stephenson@ntlworld.com>
+Description: 35910: Don't add to raw lex buffer if lex stopped.
+ This was causing a segmentation violation in completion when parsing
+ an incomplete math expression, e.g. 'echo $((3*4)<TAB>'.
+Acked-By: Axel Beckert <abe@debian.org>
+
+diff --git a/Src/input.c b/Src/input.c
+index 613f89a..1efabad 100644
+--- a/Src/input.c
++++ b/Src/input.c
+@@ -222,7 +222,8 @@ ingetc(void)
+ 	if (inputline())
+ 	    break;
+     }
+-    zshlex_raw_add(lastc);
++    if (!lexstop)
++	zshlex_raw_add(lastc);
+     return lastc;
+ }
+ 
