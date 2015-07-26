@@ -1,0 +1,38 @@
+Description: 35809: fix $((...)) completion by _expand widget.
+ This changes internal quoting of the form still including tokens
+ not to add unnecessary internal backslashes.
+Origin: commit dd8079e0415cf213d9bb5d41d1ad95c04b774f3a
+Author: Peter Stephenson <p.w.stephenson@ntlworld.com>
+Bug-Debian: https://bugs.debian.org/793168
+
+Index: zsh/Src/utils.c
+===================================================================
+--- zsh.orig/Src/utils.c	2015-07-26 19:50:39.037207942 +0200
++++ zsh/Src/utils.c	2015-07-26 19:50:39.037207942 +0200
+@@ -5301,7 +5301,25 @@
+ 		/* Needs to be passed straight through. */
+ 		if (dobackslash)
+ 		    *v++ = '\\';
+-		*v++ = *u++;
++		if (*u == Inparmath) {
++		    /*
++		     * Already syntactically quoted: don't
++		     * add more.
++		     */
++		    int inmath = 1;
++		    *v++ = *u++;
++		    for (;;) {
++			char uc = *u;
++			*v++ = *u++;
++			if (uc == '\0')
++			    break;
++			else if (uc == Outparmath && !--inmath)
++			    break;
++			else if (uc == Inparmath)
++			    ++inmath;
++		    }
++		} else
++		    *v++ = *u++;
+ 		continue;
+ 	    }
+ 
