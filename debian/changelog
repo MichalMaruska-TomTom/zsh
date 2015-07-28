@@ -1,3 +1,13 @@
+zsh (5.0.8-4) unstable; urgency=medium
+
+  * [92f59b31] Cherry-pick 771381c2+dd8079e0 to fix $((…)) completion.
+    (Closes: #793168)
+  * [d46446e2] Cherry-pick upstream fix for segfault upon $((…)<Tab>.
+  * [e7302971] Add thefuck to bug-script's fallback list of packages with
+    code to be sourced in .zshrc.
+
+ -- Axel Beckert <abe@debian.org>  Tue, 28 Jul 2015 23:44:49 +0200
+
 zsh (5.0.8-3) unstable; urgency=medium
 
   * [e04cb7a0] Include all .h and .mdh files including generated ones in
