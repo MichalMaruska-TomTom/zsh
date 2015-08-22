@@ -1,3 +1,15 @@
+zsh (5.0.8-test-2-1) UNRELEASED; urgency=medium
+
+  * [02f6e25b] New upstream release candidate
+    + [171196a8] Remove all cherry-picked patches.
+    + [290354ff] Fixes segfault in __strlen_sse2_bsf (Closes: #793475)
+  * [a248c1e0] Set $(VENDOR) to sanitized output of "dpkg-vendor --query vendor"
+    (Closes: #794696)
+  * [e04a1973] Clint Adams prefers to be removed from Uploaders. Thanks to
+    Clint for maintaining Debian's zsh package for so long!
+
+ -- Axel Beckert <abe@debian.org>  Sat, 22 Aug 2015 02:10:47 +0200
+
 zsh (5.0.8-4) unstable; urgency=medium
 
   * [92f59b31] Cherry-pick 771381c2+dd8079e0 to fix $((…)) completion.
