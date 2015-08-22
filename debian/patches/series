@@ -1,7 +1,1 @@
 further-mitigate-test-suite-hangs.patch
-cherry-pick-ef080283-handle-failure-of-gettempname-in-namedpipe.patch
-cherry-pick-811027a2-fix-signal-queueing-in-zcontext_save_partial-790282.patch
-cherry-pick-7bc47c91-prompt_adam1_setup-fix-perl-5.22-warnings.patch
-cherry-pick-771381c2-fix-$((...))-completion-in-expand-or-complete-widget.patch
-cherry-pick-dd8079e0-fix-$((...))-completion-by-_expand-widget.patch
-cherry-pick-b3aa3b77-dont-add-to-raw-lex-buffer-if-lex-stopped.patch
