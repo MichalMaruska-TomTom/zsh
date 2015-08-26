@@ -1,16 +1,19 @@
 Origin: http://www.zsh.org/mla/workers/2014/msg01250.html
+        http://www.zsh.org/mla/workers/2015/msg02205.html
 Author: Bart Schaefer <schaefer@brasslantern.com>
 Bug-Debian: https://bugs.debian.org/759870
 Description: Add a sleep call which should prevent a race condition in coproc
 
-diff --git a/Test/A05execution.ztst b/Test/A05execution.ztst
-index ca97f4f..0b40a73 100644
---- a/Test/A05execution.ztst
-+++ b/Test/A05execution.ztst
-@@ -208,6 +208,7 @@ F:This similar test was triggering a reproducible failure with pipestatus.
+Index: zsh/Test/A05execution.ztst
+===================================================================
+--- zsh.orig/Test/A05execution.ztst	2015-08-26 23:00:54.942370669 +0200
++++ zsh/Test/A05execution.ztst	2015-08-26 23:09:35.562131142 +0200
+@@ -207,7 +207,8 @@
+   coproc { read -et 5 || { print -u $ZTST_fd KILLED; kill -HUP -$$ } }
    print -u $ZTST_fd 'This test takes 5 seconds to fail...'
    { printf "%d\n" {1..20000} } | ( read -e )
-   hang(){ printf "%d\n" {2..20000} | cat }; hang | ( read -e )
+-  hang(){ printf "%d\n" {2..20000} | cat }; hang | ( read -e )
++  hang(){ printf "%d\n" {2..20000} | cat }; hang 2>/dev/null | ( read -e )
 +  sleep 1 ;: avoid coproc exit race condition
    print -p done
    read -et 6 -p
