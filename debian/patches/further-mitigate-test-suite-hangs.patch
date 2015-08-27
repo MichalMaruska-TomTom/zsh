@@ -6,13 +6,15 @@ Description: Add a sleep call which should prevent a race condition in coproc
 
 Index: zsh/Test/A05execution.ztst
 ===================================================================
---- zsh.orig/Test/A05execution.ztst	2015-08-26 23:00:54.942370669 +0200
-+++ zsh/Test/A05execution.ztst	2015-08-26 23:09:35.562131142 +0200
-@@ -207,7 +207,8 @@
+--- zsh.orig/Test/A05execution.ztst	2015-08-27 15:48:53.624802242 +0200
++++ zsh/Test/A05execution.ztst	2015-08-27 15:48:53.616802043 +0200
+@@ -206,8 +206,9 @@
+   { unsetopt MONITOR } 2>/dev/null
    coproc { read -et 5 || { print -u $ZTST_fd KILLED; kill -HUP -$$ } }
    print -u $ZTST_fd 'This test takes 5 seconds to fail...'
-   { printf "%d\n" {1..20000} } | ( read -e )
+-  { printf "%d\n" {1..20000} } | ( read -e )
 -  hang(){ printf "%d\n" {2..20000} | cat }; hang | ( read -e )
++  { printf "%d\n" {1..20000} } 2>/dev/null | ( read -e )
 +  hang(){ printf "%d\n" {2..20000} | cat }; hang 2>/dev/null | ( read -e )
 +  sleep 1 ;: avoid coproc exit race condition
    print -p done
