@@ -1,4 +1,4 @@
-zsh (5.0.8-test-3-1) UNRELEASED; urgency=medium
+zsh (5.0.8-test-3-1) experimental; urgency=low
 
   * [6f1dd991] New upstream release candidate
     + [171196a8] Remove all cherry-picked patches.
@@ -7,8 +7,9 @@ zsh (5.0.8-test-3-1) UNRELEASED; urgency=medium
     (Closes: #794696)
   * [e04a1973] Clint Adams prefers to be removed from Uploaders. Thanks to
     Clint for maintaining Debian's zsh package for so long!
+  * [bfda86c5,5c3b312c] Update sole patch to integrate further test suite fixes.
 
- -- Axel Beckert <abe@debian.org>  Sat, 22 Aug 2015 02:10:47 +0200
+ -- Axel Beckert <abe@debian.org>  Thu, 27 Aug 2015 23:17:07 +0200
 
 zsh (5.0.8-4) unstable; urgency=medium
 
