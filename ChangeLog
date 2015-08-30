@@ -1,3 +1,58 @@
+2015-08-30  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted: Config/version.mk: Release version 5.1
+
+2015-08-29  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 36321: Completion/Debian/Command/_debcheckout: _debcheckout:
+	New completion.
+
+2015-08-28  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 36306: Completion/Unix/Command/_subversion: _subversion:
+	Complete --show-item values
+
+2015-08-28  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* users/20475: Doc/Zsh/contrib.yo: mention that cdr mechanism
+	keeps unique list with most recent use first.
+
+	* users/20466: Test/V09datetime.ztst: make test for skipping
+	strftime extention tests one that is known to fail on
+	Solaris.  Reason is not yet known, but there's no current
+	evidence for a shell bug so replace the failure by skipping
+	test for the release.
+
+2015-08-28  Mikael Magnusson  <mikachu@gmail.com>
+
+	* 36302: Src/Modules/attr.c: Fix compilation with libcap 2.24
+
+	* 36314: Functions/Prompts/prompt_bart_setup: Avoid using
+	short_loops syntax in distributed files
+
+2015-08-27  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* unposted: Completion/Unix/Command/_subversion: _subversion:
+	Avoid SHORT_LOOPS
+
+	* 36304: Completion/Unix/Command/_git: _git-cat-file: Fix
+	regression in 36237
+
+2015-08-27  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* unposted (cf. Axel Beckert 36292): Test/A05execution.ztst:
+	discard even more extraneous stderr in "hang" test
+
+2015-08-26  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* 36288: Src/Zle/zle_tricky.c: refine 36825, slightly different
+	test for redirect context
+
+	* 36285: Src/Zle/zle_tricky.c: update 36025, context cannot be
+	command and redirect at the same time, redirect wins
+
+	* 36282: Test/A05execution.ztst: discard stderr of "hang" test
+
 2015-08-25  Peter Stephenson  <p.w.stephenson@ntlworld.com>
 
 	* unposted: Config/version.mk: 5.0.8-test-3.
