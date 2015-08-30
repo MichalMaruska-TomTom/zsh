@@ -15,14 +15,6 @@ case "$1" in
     ;;
 esac
 
-# Replace documentation directory with symlink
-docdir="/usr/share/doc/zsh-dbg"
-if [ -d $docdir -a ! -L $docdir ]; then
-    if rmdir $docdir 2>/dev/null; then
-        ln -sf zsh-common $docdir
-    fi
-fi
-
 #DEBHELPER#
 
 exit 0

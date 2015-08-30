@@ -28,14 +28,6 @@ update-alternatives --install /bin/rzsh rzsh /bin/zsh5 51 \
 update-alternatives --remove zsh /bin/zsh4
 update-alternatives --remove rzsh /bin/zsh4
 
-# Replace documentation directory with symlink
-docdir="/usr/share/doc/zsh"
-if [ -d $docdir -a ! -L $docdir ]; then
-    if rmdir $docdir 2>/dev/null; then
-        ln -sf zsh-common $docdir
-    fi
-fi
-
 #DEBHELPER#
 
 exit 0
