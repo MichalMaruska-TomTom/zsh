@@ -1,8 +1,14 @@
-zsh (5.1-1) UNRELEASED; urgency=medium
+zsh (5.1-1) unstable; urgency=low
 
-  * New upstream release.
+  * [2a4475bb] New upstream release.
+    + [f3aebf0b] Update further-mitigate-test-suite-hangs.patch to remove
+      additional cherry-picked fixes added with the previous upload.
+    + Upload to unstable again.
+  * [20b7952e] Remove no more emitted spelling-error-in-binary false
+    positives from lintian overrides.
+  * [6fad76ca] Remove pre-#768937 legacy code from multiple postinsts.
 
- -- Axel Beckert <abe@debian.org>  Sun, 30 Aug 2015 21:58:49 +0200
+ -- Axel Beckert <abe@debian.org>  Tue, 01 Sep 2015 01:09:25 +0200
 
 zsh (5.0.8-test-3-1) experimental; urgency=low
 
