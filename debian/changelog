@@ -1,3 +1,10 @@
+zsh (5.1-test-1-1) UNRELEASED; urgency=medium
+
+  * [22cf83b3c] New upstream release candidate
+    + [9f5dffa1] process queued signals during dotrap() (Closes: #797721)
+
+ -- Axel Beckert <abe@debian.org>  Tue, 08 Sep 2015 22:53:29 +0200
+
 zsh (5.1-1) unstable; urgency=low
 
   * [2a4475bb] New upstream release.
