@@ -1,12 +1,14 @@
 Origin: http://www.zsh.org/mla/workers/2014/msg01250.html
-Author: Bart Schaefer <schaefer@brasslantern.com>
+        http://www.zsh.org/mla/workers/2015/msg02382.html
+Author: Bart Schaefer <schaefer@brasslantern.com>,
+        Peter Stephenson <p.stephenson@samsung.com>
 Bug-Debian: https://bugs.debian.org/759870
 Description: Add a sleep call which should prevent a race condition in coproc
 
 Index: zsh/Test/A05execution.ztst
 ===================================================================
---- zsh.orig/Test/A05execution.ztst	2015-08-30 22:03:54.257198175 +0200
-+++ zsh/Test/A05execution.ztst	2015-08-30 22:03:54.257198175 +0200
+--- zsh.orig/Test/A05execution.ztst	2015-09-09 20:44:09.944160810 +0200
++++ zsh/Test/A05execution.ztst	2015-09-09 20:44:09.940160826 +0200
 @@ -208,6 +208,7 @@
    print -u $ZTST_fd 'This test takes 5 seconds to fail...'
    { printf "%d\n" {1..20000} } 2>/dev/null | ( read -e )
@@ -15,3 +17,16 @@ Index: zsh/Test/A05execution.ztst
    print -p done
    read -et 6 -p
  0:Bug regression: piping a shell construct to an external process may hang
+Index: zsh/Test/E01options.ztst
+===================================================================
+--- zsh.orig/Test/E01options.ztst	2015-09-08 23:39:06.098975526 +0200
++++ zsh/Test/E01options.ztst	2015-09-09 20:48:47.998938558 +0200
+@@ -995,7 +995,7 @@
+   print this is bar >bar
+   fn() {
+     local NULLCMD=cat READNULLCMD=cat
+-    echo hello | >foo
++    { echo hello | >foo } 2>/dev/null
+     cat foo
+     <bar
+   }
