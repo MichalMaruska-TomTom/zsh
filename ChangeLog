@@ -1,3 +1,60 @@
+2015-09-11  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted: Config/version.mk: 5.1.1
+
+	*  Sebastian Gniazdowski: 36489: Src/Modules/curses.c: fix bug
+	with hash table for colours.
+
+	* 36483: Functions/Zle/bracketed-paste-magic: use
+	[[:INCOMPLETE:]] to get rest of multibyte character.
+
+2015-09-11  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* unposted: NEWS, README: update for minor new features that
+	have just appeared.
+
+2015-09-10  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 36445: Doc/Zsh/zle.yo Src/Zle/zle_params.c: Expose yankb,
+	yanke, ZLE_YANK to widgets.
+
+2015-09-10  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* 36478: Src/pattern.c, Src/zsh.h, Src/Zle/comp.h,
+	Doc/Zsh/expn.yo, Test/D07multibyte.ztst: add [[:INCOMPLETE:]] and
+	[[:INVALID:]] pattern tests.
+
+2015-09-10  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* 36470: Src/Zle/zle_main.c: Auxiliary to 36468, return an empty
+	buffer from zleread() if a widget exits
+
+2015-09-10  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* 36468: Src/hist.c: Infinite loop if we tried to exit from a
+	Zle widget but the lexer thought the current lexical expression
+	needed finishing.
+
+	* 36460: Test/E01options.ztst: Discard benign error on failure
+	to write to pipe with no one reading.
+
+2015-09-08  Oliver Kiddle  <opk@zsh.org>
+
+	36422: Src/compat.c: add missing unmeta()
+
+2015-09-07  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 36437: Doc/Zsh/zle.yo Src/Zle/zle.h: Document interaction of
+	$region_highlight and $zle_highlight.
+
+	* unposted: Doc/Zsh/zle.yo: ZLE_STATE: fix obvious documentation
+	typo.
+
+2015-09-07  James Clarke  <jrtc27@jrtc27.com>
+
+	* 36441: Completion/Unix/Command/_git: _git: Fixed typo in
+	--author-date-order description
+
 2015-09-06  Peter Stephenson  <p.w.stephenson@ntlworld.com>
 
 	* unposted: Config/versiom.mk, Etc/FAQ.yo, NEWS, README: make
