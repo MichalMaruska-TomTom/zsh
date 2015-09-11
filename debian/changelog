@@ -1,9 +1,12 @@
-zsh (5.1.1-1) UNRELEASED; urgency=medium
+zsh (5.1.1-1) unstable; urgency=low
 
   * [7534dfa8] New upstream release
     + [bcea5a1c] Revert 0867ec1f from 5.1-test-1-1, applied upstream.
+    + [f5e8527a] Handles incomplete multibyte characters in
+      bracketed-paste-magic (Closes: #798195)
+    + Upload to unstable again.
 
- -- Axel Beckert <abe@debian.org>  Fri, 11 Sep 2015 21:52:05 +0200
+ -- Axel Beckert <abe@debian.org>  Fri, 11 Sep 2015 23:19:31 +0200
 
 zsh (5.1-test-1-1) experimental; urgency=low
 
