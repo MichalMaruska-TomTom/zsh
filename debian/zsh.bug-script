@@ -33,9 +33,12 @@ else
                       fizsh \
                       oh-my-zsh \
                       python-powerline \
+                      python3-powerline \
                       thefuck \
                       zec \
+                      zgen \
                       zsh-antigen \
+                      zsh-syntax-highlighting \
                       'grml-*' \
            2>/dev/null)
 fi
