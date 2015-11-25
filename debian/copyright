@@ -51,10 +51,6 @@ Copyright: 2009 Holger Macht <holger@homac.de>
            2014 Mariusz Fik <fisiu@opensuse.org>
 License: GPL-2
 
-Files: Completion/Unix/Command/_systemd
-Copyright: 2011 Foudil Bre'tel <foudil.newbie+zshsystemctl@gmail.com>
-License: GPL-3
-
 Files: Misc/make-zsh-urls
 Copyright: 1999 Adam Spiers <adam@spiers.net>
 License: Artistic or GPL-1+ or Zsh
@@ -139,10 +135,6 @@ License: BSD-3
  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-License: GPL-3
- On Debian systems, the full text of the GNU General Public License
- version 3 can be found in `/usr/share/common-licenses/GPL-3'.
 
 License: GPL-2+
  This program is free software; you can redistribute it and/or modify
