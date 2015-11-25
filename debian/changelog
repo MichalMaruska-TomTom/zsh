@@ -1,3 +1,12 @@
+zsh (5.1.1-test-1-1) UNRELEASED; urgency=medium
+
+  * [317ec32c] New upstream beta release
+  * [58f4d1d1] Make list of packages which provide code for .zshrc more
+    readable and sort it
+  * [1637291a] Update list of packages which provide code for .zshrc
+
+ -- Axel Beckert <abe@debian.org>  Wed, 25 Nov 2015 18:52:15 +0100
+
 zsh (5.1.1-1) unstable; urgency=low
 
   * [7534dfa8] New upstream release
