@@ -1,3 +1,67 @@
+2015-11-25  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted: Config/version.mk: 5.1.1-test-2
+
+2015-11-23  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* 37208: Src/params.c: check for restricted parameter before
+	changing from unset to set; return NULL from setnparam() on
+	failure to retrieve value (avoids null-pointer dereference);
+	add some expository comments
+
+	* 37208: Test/V10parameter.ztst: re-run the "typeset" tests with
+	the private module loaded
+
+	* 37208: Src/Modules/param_private.c: assignment in a nested scope
+	should not change private parameters in the outer scope from unset
+	to set; bug remains that the attempt does not generate a warning
+
+	* 37206: Src/subst.c: fix ${(t)param} for "typeset -H param"
+
+	* 37205: Test/B01cd.ztst: update documentary comment
+
+2015-11-23  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* 37203: Src/params.c: WARN_CREATE_GLOBAL test in wrong place
+	for associative array.
+
+2015-11-22  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* Matthew Martin: 37201: Completion/Unix/Type/_groups: change
+	quoting to handle group names with spaces
+
+2015-11-22  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* 37192: Functions/Prompts/prompt_adam1_setup,
+	Functions/Prompts/prompt_adam2_setup,
+	Functions/Prompts/prompt_bart_setup,
+	Functions/Prompts/prompt_clint_setup,
+	Functions/Prompts/prompt_oliver_setup,
+	Functions/Prompts/prompt_special_chars,
+	Functions/Prompts/promptinit: silence WARN_CREATE_GLOBAL
+
+2015-11-22  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* 37191: Src/utils.c: some locales prduce valid empty output for
+	strtfime escapes %p and %P.
+
+	* 37188: Test/B09hash.ztst: new test.
+
+	* 37187: Src/builtin.c: infinite loop in "hash -m".
+
+	* 37186: Functions/VCS_Info/VCS_INFO_nvcsformats,
+	Src/Zle/zle_main.c: a couple of WARN_CREATE_GLOBAL fixes.
+
+2015-11-21  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* 37181: Test/C02cond.ztst, Test/D07multibyte.ztst,
+	Test/V01zmodload.ztst, Test/V02zregexparse.ztst,
+	Test/V03mathfunc.ztst, Test/V04features.ztst, Test/V05styles.ztst,
+	Test/V09datetime.ztst, Test/V10private.ztst, Test/X02zlevi.ztst,
+	Test/Y01completion.ztst, Test/Y02compmatch.ztst,
+	Test/Y03arguments.ztst, Test/comptest, Test/ztst.zsh: consistent
+	use of zmodload and corresponding ZTST_unimplemented or ZTST_skip
+
 2015-11-21  Peter Stephenson  <p.w.stephenson@ntlworld.com>
 
 	* unposted: Config/version.mk, Etc/FAQ.yo, README: make
@@ -20,7 +84,7 @@
 
 	* 37168: Src/params.c: no WARN_CREATE_GLOBAL on special parameters.
 
-	* 20974: Src/builtin.c, Test/D04parameter.ztst: fix bug
+	* users/20974: Src/builtin.c, Test/D04parameter.ztst: fix bug
 	when scalar value assigned to special array in typeset.
 
 2015-11-20  Daniel Shahaf  <d.s@daniel.shahaf.name>

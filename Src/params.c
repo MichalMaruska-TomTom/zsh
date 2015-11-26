@@ -880,6 +880,10 @@ createparam(char *name, int flags)
 		zerr("read-only variable: %s", name);
 		return NULL;
 	    }
+	    if ((oldpm->node.flags & PM_RESTRICTED) && isset(RESTRICTED)) {
+		zerr("%s: restricted", name);
+		return NULL;
+	    }
 	    if (!(oldpm->node.flags & PM_UNSET) || (oldpm->node.flags & PM_SPECIAL)) {
 		oldpm->node.flags &= ~PM_UNSET;
 		if ((oldpm->node.flags & PM_SPECIAL) && oldpm->ename) {
@@ -888,10 +892,6 @@ createparam(char *name, int flags)
 		    if (altpm)
 			altpm->node.flags &= ~PM_UNSET;
 		}
-		return NULL;
-	    }
-	    if ((oldpm->node.flags & PM_RESTRICTED) && isset(RESTRICTED)) {
-		zerr("%s: restricted", name);
 		return NULL;
 	    }
 
@@ -2777,6 +2777,7 @@ assignsparam(char *s, char *val, int flags)
     if (!v && !(v = getvalue(&vbuf, &t, 1))) {
 	unqueue_signals();
 	zsfree(val);
+	/* errflag |= ERRFLAG_ERROR; */
 	return NULL;
     }
     if (flags & ASSPM_WARN_CREATE)
@@ -2926,6 +2927,7 @@ assignaparam(char *s, char **val, int flags)
 	if (!(v = fetchvalue(&vbuf, &t, 1, SCANPM_ASSIGNING))) {
 	    unqueue_signals();
 	    freearray(val);
+	    /* errflag |= ERRFLAG_ERROR; */
 	    return NULL;
 	}
 
@@ -2970,6 +2972,7 @@ sethparam(char *s, char **val)
     struct value vbuf;
     Value v;
     char *t = s;
+    int checkcreate = 0;
 
     if (!isident(s)) {
 	zerr("not an identifier: %s", s);
@@ -2987,9 +2990,9 @@ sethparam(char *s, char **val)
 	return NULL;
     queue_signals();
     if (!(v = fetchvalue(&vbuf, &s, 1, SCANPM_ASSIGNING))) {
+	DPUTS(!v, "BUG: assigning to undeclared associative array");
 	createparam(t, PM_HASHED);
-	if (isset(WARNCREATEGLOBAL) && locallevel > 0)
-	    check_warn_create(v->pm, "associative array");
+	checkcreate = isset(WARNCREATEGLOBAL) && locallevel > 0;
     } else if (!(PM_TYPE(v->pm->node.flags) & PM_HASHED) &&
 	     !(v->pm->node.flags & PM_SPECIAL)) {
 	unsetparam(t);
@@ -3000,8 +3003,11 @@ sethparam(char *s, char **val)
     if (!v)
 	if (!(v = fetchvalue(&vbuf, &t, 1, SCANPM_ASSIGNING))) {
 	    unqueue_signals();
+	    /* errflag |= ERRFLAG_ERROR; */
 	    return NULL;
 	}
+    if (checkcreate)
+	check_warn_create(v->pm, "associative array");
     setarrvalue(v, val);
     unqueue_signals();
     return v->pm;
@@ -3059,8 +3065,11 @@ setnparam(char *s, mnumber val)
 	} else if (val.type & MN_INTEGER) {
 	    pm->base = outputradix;
 	}
-	v = getvalue(&vbuf, &t, 1);
-	DPUTS(!v, "BUG: value not found for new parameter");
+	if (!(v = getvalue(&vbuf, &t, 1))) {
+	    DPUTS(!v, "BUG: value not found for new parameter");
+	    /* errflag |= ERRFLAG_ERROR; */
+	    return NULL;
+	}
 	if (!was_unset && isset(WARNCREATEGLOBAL) && locallevel > 0)
 	    check_warn_create(v->pm, "numeric");
     }
@@ -3217,6 +3226,10 @@ unsetparam_pm(Param pm, int altflag, int exp)
  *
  * This could usefully be made type-specific, but then we need
  * to be more careful when calling the unset method directly.
+ *
+ * The "exp"licit parameter should be nonzero for assignments and the
+ * unset command, and zero for implicit unset (e.g., end of scope).
+ * Currently this is used only by some modules.
  */
 
 /**/
@@ -5103,8 +5116,11 @@ freeparamnode(HashNode hn)
 {
     Param pm = (Param) hn;
  
-    /* Since the second flag to unsetfn isn't used, I don't *
-     * know what its value should be.                       */
+    /* The second argument of unsetfn() is used by modules to
+     * differentiate "exp"licit unset from implicit unset, as when
+     * a parameter is going out of scope.  It's not clear which
+     * of these applies here, but passing 1 has always worked.
+     */
     if (delunset)
 	pm->gsu.s->unsetfn(pm, 1);
     zsfree(pm->node.nam);
