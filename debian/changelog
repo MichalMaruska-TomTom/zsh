@@ -1,13 +1,15 @@
-zsh (5.1.1-test-2-3-g2bab9f0-1) UNRELEASED; urgency=medium
+zsh (5.1.1-test-2-3-g2bab9f0-1) experimental; urgency=low
 
-  * [b3541722] New upstream pre-release snapshot
+  * [b3541722] New upstream pre-release snapshot (git commit 2bab9f03)
   * [58f4d1d1] Make list of packages which provide code for .zshrc more
     readable and sort it
   * [1637291a] Update list of packages which provide code for .zshrc
   * [e439a99f] Remove debian/copyright stanza for systemd completion, no
     more included upstream
+  * [bb897996] get-orig-source target: Support git snapshots between
+    tagged releases
 
- -- Axel Beckert <abe@debian.org>  Thu, 26 Nov 2015 21:47:28 +0100
+ -- Axel Beckert <abe@debian.org>  Thu, 26 Nov 2015 22:17:06 +0100
 
 zsh (5.1.1-1) unstable; urgency=low
 
