@@ -1,4 +1,44 @@
+2015-11-29  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted; Config/version.mk: 5.1.1-test-3.
+
+2015-11-28  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* unposted (after 37243): Test/B02typeset.ztst: Explain the
+	breadcrumb by adding a comment.
+
+2015-11-27  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* unposted: Test/V10private.ztst: %cleanup block is not called when
+	%prep sets ZTST_unimplemented, so avoid leaving a mess
+
+	* 37243: Test/B02typeset.ztst, Test/V10private.ztst: too many
+	problems with inserting a line into B02, instead add a placeholder
+	and substitute for it.
+
+2015-11-27  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* unposted: Functions/Misc/zcalc: ZCALCPROMPT created globally.
+
+2015-11-27  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 37214: Functions/Prompts/prompt_walters_setup: 'prompt
+	walters': Don't export PS1
+
+	* 37163: Completion/Unix/Command/_curl,
+	Completion/Unix/Type/_urls: Remove curl completion
+
+	* 37215: Completion/Base/Utility/_regex_words: _regex_words:
+	Don't add mismatched parentheses
+
 2015-11-26  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* 37229: Src/Modules/param_private.c, Test/V10private.ztst: non-
+	local assignment to a parameter name whose outermost declaration
+	is private, is an error rather than a silent no-op.  Fix %prep
+	from 37225 for Solaris.
+
+	* unposted (cf. 37226): Test/B02typeset.ztst: export == typeset -xg
 
 	* 37225: Test/V10private.ztst: fix test from 37208
 
