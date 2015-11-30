@@ -1,9 +1,10 @@
-zsh (5.1.1-test-3-1) UNRELEASED; urgency=medium
+zsh (5.1.1-test-3-1) experimental; urgency=low
 
   * [86bb6a7e] New upstream release candidate
-  * [e6d23bf3] debian/{watch,upstream/signing-key.asc}: Verify upstream GPG signatures
+  * [e6d23bf3] debian/{watch,upstream/signing-key.asc}: Verify upstream
+    GPG signatures
 
- -- Axel Beckert <abe@debian.org>  Mon, 30 Nov 2015 01:48:46 +0100
+ -- Axel Beckert <abe@debian.org>  Mon, 30 Nov 2015 04:04:13 +0100
 
 zsh (5.1.1-test-2-3-g2bab9f0-1) experimental; urgency=low
 
