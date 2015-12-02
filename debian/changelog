@@ -1,3 +1,9 @@
+zsh (5.2-1) UNRELEASED; urgency=medium
+
+  * [2a9cd3d2] New upstream release.
+
+ -- Axel Beckert <abe@debian.org>  Thu, 03 Dec 2015 00:19:28 +0100
+
 zsh (5.1.1-test-3-1) experimental; urgency=low
 
   * [86bb6a7e] New upstream release candidate
