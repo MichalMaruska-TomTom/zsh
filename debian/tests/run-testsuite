@@ -22,7 +22,7 @@ cp -pvr Test "$ZTST_testdir"
 cp -pvr Misc "$ADTTMP/Misc"
 cd "$ADTTMP"
 
-ln -vfs /usr/lib/*/zsh/*.*.* "$ZTST_testdir/Modules"
+ln -vfs /usr/lib/*/zsh/[0-9]* "$ZTST_testdir/Modules"
 ln -vfs /usr/share/zsh/functions Functions
 ln -vfs /usr/share/zsh/functions/Completion .
 mkdir -pv Src
