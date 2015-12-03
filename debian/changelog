@@ -1,3 +1,10 @@
+zsh (5.2-2) unstable; urgency=low
+
+  * [104c10b3] autopkgtest: Don't assume at least two dots in zsh's
+    version number.
+
+ -- Axel Beckert <abe@debian.org>  Fri, 04 Dec 2015 00:32:04 +0100
+
 zsh (5.2-1) unstable; urgency=low
 
   * [2a9cd3d2] New upstream release.
