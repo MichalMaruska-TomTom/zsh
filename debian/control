@@ -35,6 +35,7 @@ Pre-Depends: ${misc:Pre-Depends}
 Replaces: zsh (<= 5.0.2-1)
 Recommends: zsh
 Suggests: zsh-doc
+Multi-Arch: foreign
 Description: architecture independent files for Zsh
  Zsh is a UNIX command interpreter (shell) usable as an
  interactive login shell and as a shell script command
