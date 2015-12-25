@@ -169,7 +169,7 @@ binary-arch-dynamic: build-arch
 	dh_testdir
 	dh_testroot
 
-	dh_installdirs -pzsh             -pzsh-dbg
+	dh_installdirs -pzsh
 
 # modules
 	cd obj && $(MAKE) install.bin     DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
@@ -179,14 +179,14 @@ binary-arch-dynamic: build-arch
 	rm debian/zsh/bin/zsh-5.[0-9]*
 
 	dh_bugfiles    -pzsh
-	dh_strip       -pzsh --dbg-package=zsh-dbg
-	dh_install     -pzsh             -pzsh-dbg
+	dh_strip       -pzsh
+	dh_install     -pzsh
 
-	dh_shlibdeps   -pzsh             -pzsh-dbg -- \
+	dh_shlibdeps   -pzsh -- \
 		-dDepends    debian/zsh/bin/*   \
 		-dRecommends debian/zsh/usr/lib/*/zsh/*/zsh/*.so
 
-	dh_installdocs -pzsh             -pzsh-dbg --link-doc=zsh
+	dh_installdocs -pzsh --link-doc=zsh
 	dh_installchangelogs -pzsh
 
 binary-arch-static: build-static
