@@ -1,6 +1,7 @@
 Description: Also parse --help output of aptitude 0.7.5 and later
 Author: Axel Beckert <abe@debian.org>
 Bug-Debian: https://bugs.debian.org/807906
+Forwarded: http://www.zsh.org/mla/workers/2015/msg03350.html
 
 Index: zsh/Completion/Debian/Command/_aptitude
 ===================================================================
