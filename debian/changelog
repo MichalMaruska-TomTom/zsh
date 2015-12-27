@@ -1,3 +1,18 @@
+zsh (5.2-3) unstable; urgency=medium
+
+  [ Axel Beckert ]
+  * [c766a858] Make zsh-common "Multi-Arch: foreign". (Closes: #808977)
+  * [20a0c01c] Remove zsh-dbg, there are automatic dbgsym packages now.
+  * [d3bb50ba] Add patch to fix parsing of aptitude 0.7.5's --help/-h
+    output without stopping to be able to parse older aptitude versions'
+    output. (Closes: #807906) Thanks to Micha Moskovic for the bug report!
+
+  [ Felipe Sateler ]
+  * [c3e50a0f] Add patch to add missing apt purge and autoremove
+    subcommands. (Closes: #808317)
+
+ -- Axel Beckert <abe@debian.org>  Sun, 27 Dec 2015 15:56:57 +0100
+
 zsh (5.2-2) unstable; urgency=low
 
   * [104c10b3] autopkgtest: Don't assume at least two dots in zsh's
