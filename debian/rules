@@ -179,7 +179,7 @@ binary-arch-dynamic: build-arch
 	rm debian/zsh/bin/zsh-5.[0-9]*
 
 	dh_bugfiles    -pzsh
-	dh_strip       -pzsh
+	dh_strip       -pzsh --ddeb-migration=zsh-dbg
 	dh_install     -pzsh
 
 	dh_shlibdeps   -pzsh -- \
