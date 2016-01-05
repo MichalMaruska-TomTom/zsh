@@ -11,7 +11,7 @@ READNULLCMD=${PAGER:-/usr/bin/pager}
 # An array to note missing features to ease diagnosis in case of problems.
 typeset -ga debian_missing_features
 
-if [[ -z "$DEBIAN_PREVENT_KEYBOARD_CHANGES" ]] &&
+if [[ -z "${DEBIAN_PREVENT_KEYBOARD_CHANGES-}" ]] &&
    [[ "$TERM" != 'emacs' ]]
 then
 
