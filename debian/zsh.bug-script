@@ -34,6 +34,7 @@ else
                       oh-my-zsh \
                       python-powerline \
                       python3-powerline \
+                      rosbash \
                       thefuck \
                       zec \
                       zgen \
