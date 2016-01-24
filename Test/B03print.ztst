@@ -301,3 +301,12 @@
 >one two three   four
 >    one two three   four
 >        one     two     three       four
+
+ unset foo
+ print -v foo once more
+ typeset -p foo
+ printf -v foo "%s\0%s-" into the breach
+ typeset -p foo
+0:print and printf into a variable
+>typeset foo='once more'
+>typeset foo=$'into\C-@the-breach\C-@-'

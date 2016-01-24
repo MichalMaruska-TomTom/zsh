@@ -387,6 +387,7 @@ putshout(int c)
     return 0;
 }
 
+#ifdef MULTIBYTE_SUPPORT
 /*
  * Turn a character into a visible representation thereof.  The visible
  * string is put together in a static buffer, and this function returns
@@ -409,9 +410,9 @@ putshout(int c)
 
 /**/
 mod_export char *
-nicechar(int c)
+nicechar_sel(int c, int quotable)
 {
-    static char buf[6];
+    static char buf[10];
     char *s = buf;
     c &= 0xff;
     if (ZISPRINT(c))
@@ -427,7 +428,12 @@ nicechar(int c)
 	    goto done;
     }
     if (c == 0x7f) {
-	*s++ = '^';
+	if (quotable) {
+	    *s++ = '\\';
+	    *s++ = 'C';
+	    *s++ = '-';
+	} else
+	    *s++ = '^';
 	c = '?';
     } else if (c == '\n') {
 	*s++ = '\\';
@@ -436,7 +442,12 @@ nicechar(int c)
 	*s++ = '\\';
 	c = 't';
     } else if (c < 0x20) {
-	*s++ = '^';
+	if (quotable) {
+	    *s++ = '\\';
+	    *s++ = 'C';
+	    *s++ = '-';
+	} else
+	    *s++ = '^';
 	c += 0x40;
     }
     done:
@@ -453,6 +464,85 @@ nicechar(int c)
 	*s++ = c;
     *s = 0;
     return buf;
+}
+
+/**/
+mod_export char *
+nicechar(int c)
+{
+    return nicechar_sel(c, 0);
+}
+
+#else /* MULTIBYTE_SUPPORT */
+
+/**/
+mod_export char *
+nicechar(int c)
+{
+    static char buf[10];
+    char *s = buf;
+    c &= 0xff;
+    if (ZISPRINT(c))
+	goto done;
+    if (c & 0x80) {
+	if (isset(PRINTEIGHTBIT))
+	    goto done;
+	*s++ = '\\';
+	*s++ = 'M';
+	*s++ = '-';
+	c &= 0x7f;
+	if(ZISPRINT(c))
+	    goto done;
+    }
+    if (c == 0x7f) {
+	*s++ = '\\';
+	*s++ = 'C';
+	*s++ = '-';
+	c = '?';
+    } else if (c == '\n') {
+	*s++ = '\\';
+	c = 'n';
+    } else if (c == '\t') {
+	*s++ = '\\';
+	c = 't';
+    } else if (c < 0x20) {
+	*s++ = '\\';
+	*s++ = 'C';
+	*s++ = '-';
+	c += 0x40;
+    }
+    done:
+    /*
+     * The resulting string is still metafied, so check if
+     * we are returning a character in the range that needs metafication.
+     * This can't happen if the character is printed "nicely", so
+     * this results in a maximum of two bytes total (plus the null).
+     */
+    if (imeta(c)) {
+	*s++ = Meta;
+	*s++ = c ^ 32;
+    } else
+	*s++ = c;
+    *s = 0;
+    return buf;
+}
+
+#endif /* MULTIBYTE_SUPPORT */
+
+/*
+ * Return 1 if nicechar() would reformat this character.
+ */
+
+/**/
+mod_export int
+is_nicechar(int c)
+{
+    c &= 0xff;
+    if (ZISPRINT(c))
+	return 0;
+    if (c & 0x80)
+	return !isset(PRINTEIGHTBIT);
+    return (c == 0x7f || c == '\n' || c == '\t' || c < 0x20);
 }
 
 /**/
@@ -507,7 +597,7 @@ mb_charinit(void)
 
 /**/
 mod_export char *
-wcs_nicechar(wchar_t c, size_t *widthp, char **swidep)
+wcs_nicechar_sel(wchar_t c, size_t *widthp, char **swidep, int quotable)
 {
     static char *buf;
     static int bufalloc = 0, newalloc;
@@ -532,7 +622,12 @@ wcs_nicechar(wchar_t c, size_t *widthp, char **swidep)
     s = buf;
     if (!iswprint(c) && (c < 0x80 || !isset(PRINTEIGHTBIT))) {
 	if (c == 0x7f) {
-	    *s++ = '^';
+	    if (quotable) {
+		*s++ = '\\';
+		*s++ = 'C';
+		*s++ = '-';
+	    } else
+		*s++ = '^';
 	    c = '?';
 	} else if (c == L'\n') {
 	    *s++ = '\\';
@@ -541,7 +636,12 @@ wcs_nicechar(wchar_t c, size_t *widthp, char **swidep)
 	    *s++ = '\\';
 	    c = 't';
 	} else if (c < 0x20) {
-	    *s++ = '^';
+	    if (quotable) {
+		*s++ = '\\';
+		*s++ = 'C';
+		*s++ = '-';
+	    } else
+		*s++ = '^';
 	    c += 0x40;
 	} else if (c >= 0x80) {
 	    ret = -1;
@@ -609,6 +709,30 @@ wcs_nicechar(wchar_t c, size_t *widthp, char **swidep)
     }
     *s = 0;
     return buf;
+}
+
+/**/
+mod_export char *
+wcs_nicechar(wchar_t c, size_t *widthp, char **swidep)
+{
+    return wcs_nicechar_sel(c, widthp, swidep, 0);
+}
+
+/*
+ * Return 1 if wcs_nicechar() would reformat this character for display.
+ */
+
+/**/
+mod_export int is_wcs_nicechar(wchar_t c)
+{
+    if (!iswprint(c) && (c < 0x80 || !isset(PRINTEIGHTBIT))) {
+	if (c == 0x7f || c == L'\n' || c == L'\t' || c < 0x20)
+	    return 1;
+	if (c >= 0x80) {
+	    return (c >= 0x100);
+	}
+    }
+    return 0;
 }
 
 /**/
@@ -1326,6 +1450,9 @@ time_t lastwatch;
  * If "retval" is not NULL, the return value of the first hook function to
  * return non-zero is stored in *"retval".  The return value is not otherwise
  * available as the calling context is restored.
+ *
+ * Returns 0 if at least one function was called (regardless of that function's
+ * exit status), and 1 otherwise.
  */
 
 /**/
@@ -2861,11 +2988,12 @@ spckword(char **s, int hist, int cmd, int ask)
 		if (strncmp(guess, best, preflen))
 		    return;
 		/* replace the temporarily expanded prefix with the original */
-		u = (char *) hcalloc(t - *s + strlen(best + preflen) + 1);
+		u = (char *) zhalloc(t - *s + strlen(best + preflen) + 1);
 		strncpy(u, *s, t - *s);
 		strcpy(u + (t - *s), best + preflen);
 	    } else {
-		u = (char *) hcalloc(strlen(best) + 2);
+		u = (char *) zhalloc(strlen(best) + 2);
+		*u = '\0';
 		strcpy(u + 1, best);
 	    }
 	    best = u;
@@ -3204,7 +3332,7 @@ zjoin(char **arr, int delim, int heap)
 	len += strlen(*s) + 1 + (imeta(delim) ? 1 : 0);
     if (!len)
 	return heap? "" : ztrdup("");
-    ptr = ret = (heap ? (char *) hcalloc(len) : (char *) zshcalloc(len));
+    ptr = ret = (char *) (heap ? zhalloc(len) : zalloc(len));
     for (s = arr; *s; s++) {
 	strucpy(&ptr, *s);
 	    if (imeta(delim)) {
@@ -3290,7 +3418,8 @@ spacesplit(char *s, int allownull, int heap, int quote)
     int l = sizeof(*ret) * (wordcount(s, NULL, -!allownull) + 1);
     char *(*dup)(const char *) = (heap ? dupstring : ztrdup);
 
-    ptr = ret = (heap ? (char **) hcalloc(l) : (char **) zshcalloc(l));
+    /* ### TODO: s/calloc/alloc/ */
+    ptr = ret = (char **) (heap ? hcalloc(l) : zshcalloc(l));
 
     if (quote) {
 	/*
@@ -3320,8 +3449,8 @@ spacesplit(char *s, int allownull, int heap, int quote)
 	t = s;
 	(void)findsep(&s, NULL, quote);
 	if (s > t || allownull) {
-	    *ptr = (heap ? (char *) hcalloc((s - t) + 1) :
-		    (char *) zshcalloc((s - t) + 1));
+	    *ptr = (char *) (heap ? zhalloc((s - t) + 1) :
+		                     zalloc((s - t) + 1));
 	    ztrncpy(*ptr++, t, s - t);
 	} else
 	    *ptr++ = dup(nulstring);
@@ -3511,7 +3640,7 @@ sepjoin(char **s, char *sep, int heap)
     }
     sl = strlen(sep);
     for (t = s, l = 1 - sl; *t; l += strlen(*t) + sl, t++);
-    r = p = (heap ? (char *) hcalloc(l) : (char *) zshcalloc(l));
+    r = p = (char *) (heap ? zhalloc(l) : zalloc(l));
     t = s;
     while (*t) {
 	strucpy(&p, *t);
@@ -3538,14 +3667,14 @@ sepsplit(char *s, char *sep, int allownull, int heap)
 
     sl = strlen(sep);
     n = wordcount(s, sep, 1);
-    r = p = (heap ? (char **) hcalloc((n + 1) * sizeof(char *)) :
-	     (char **) zshcalloc((n + 1) * sizeof(char *)));
+    r = p = (char **) (heap ? zhalloc((n + 1) * sizeof(char *)) :
+	                       zalloc((n + 1) * sizeof(char *)));
 
     for (t = s; n--;) {
 	tt = t;
 	(void)findsep(&t, sep, 0);
-	*p = (heap ? (char *) hcalloc(t - tt + 1) :
-	      (char *) zshcalloc(t - tt + 1));
+	*p = (char *) (heap ? zhalloc(t - tt + 1) :
+	                       zalloc(t - tt + 1));
 	strncpy(*p, tt, t - tt);
 	(*p)[t - tt] = '\0';
 	p++;
@@ -3759,7 +3888,7 @@ inittyptab(void)
     typtab['\0'] |= IMETA;
     typtab[STOUC(Meta)  ] |= IMETA;
     typtab[STOUC(Marker)] |= IMETA;
-    for (t0 = (int)STOUC(Pound); t0 <= (int)STOUC(Comma); t0++)
+    for (t0 = (int)STOUC(Pound); t0 <= (int)STOUC(LAST_NORMAL_TOK); t0++)
 	typtab[t0] |= ITOK | IMETA;
     for (t0 = (int)STOUC(Snull); t0 <= (int)STOUC(Nularg); t0++)
 	typtab[t0] |= ITOK | IMETA | INULL;
@@ -4832,12 +4961,15 @@ niceztrlen(char const *s)
  * If outstrp is not NULL, set *outstrp to a zalloc'd version of
  * the output (still metafied).
  *
- * If "heap" is non-zero, use the heap for *outstrp, else zalloc.
+ * If flags contains NICEFLAG_HEAP, use the heap for *outstrp, else
+ * zalloc.
+ * If flags contsins NICEFLAG_QUOTE, the output is going to be within
+ * $'...', so quote "'" with a backslash.
  */
 
 /**/
 mod_export size_t
-mb_niceformat(const char *s, FILE *stream, char **outstrp, int heap)
+mb_niceformat(const char *s, FILE *stream, char **outstrp, int flags)
 {
     size_t l = 0, newl;
     int umlen, outalloc, outleft, eol = 0;
@@ -4872,7 +5004,7 @@ mb_niceformat(const char *s, FILE *stream, char **outstrp, int heap)
 	    /* FALL THROUGH */
 	case MB_INVALID:
 	    /* The byte didn't convert, so output it as a \M-... sequence. */
-	    fmt = nicechar(*ptr);
+	    fmt = nicechar_sel(*ptr, flags & NICEFLAG_QUOTE);
 	    newl = strlen(fmt);
 	    cnt = 1;
 	    /* Get mbs out of its undefined state. */
@@ -4884,7 +5016,10 @@ mb_niceformat(const char *s, FILE *stream, char **outstrp, int heap)
 	    cnt = 1;
 	    /* FALL THROUGH */
 	default:
-	    fmt = wcs_nicechar(c, &newl, NULL);
+	    if (c == L'\'' && (flags & NICEFLAG_QUOTE))
+		fmt = "\\'";
+	    else
+		fmt = wcs_nicechar_sel(c, &newl, NULL, flags & NICEFLAG_QUOTE);
 	    break;
 	}
 
@@ -4918,11 +5053,74 @@ mb_niceformat(const char *s, FILE *stream, char **outstrp, int heap)
     if (outstrp) {
 	*outptr = '\0';
 	/* Use more efficient storage for returned string */
-	*outstrp = heap ? dupstring(outstr) : ztrdup(outstr);
-	free(outstr);
+	if (flags & NICEFLAG_NODUP)
+	    *outstrp = outstr;
+	else {
+	    *outstrp = (flags & NICEFLAG_HEAP) ? dupstring(outstr) :
+		ztrdup(outstr);
+	    free(outstr);
+	}
     }
 
     return l;
+}
+
+/*
+ * Return 1 if mb_niceformat() would reformat this string, else 0.
+ */
+
+/**/
+mod_export int
+is_mb_niceformat(const char *s)
+{
+    int umlen, eol = 0, ret = 0;
+    wchar_t c;
+    char *ums, *ptr;
+    mbstate_t mbs;
+
+    ums = ztrdup(s);
+    untokenize(ums);
+    ptr = unmetafy(ums, &umlen);
+
+    memset(&mbs, 0, sizeof mbs);
+    while (umlen > 0) {
+	size_t cnt = eol ? MB_INVALID : mbrtowc(&c, ptr, umlen, &mbs);
+
+	switch (cnt) {
+	case MB_INCOMPLETE:
+	    eol = 1;
+	    /* FALL THROUGH */
+	case MB_INVALID:
+	    /* The byte didn't convert, so output it as a \M-... sequence. */
+	    if (is_nicechar(*ptr))  {
+		ret = 1;
+		break;
+	    }
+	    cnt = 1;
+	    /* Get mbs out of its undefined state. */
+	    memset(&mbs, 0, sizeof mbs);
+	    break;
+	case 0:
+	    /* Careful:  converting '\0' returns 0, but a '\0' is a
+	     * real character for us, so we should consume 1 byte. */
+	    cnt = 1;
+	    /* FALL THROUGH */
+	default:
+	    if (is_wcs_nicechar(c))
+		ret = 1;
+	    break;
+	}
+
+	if (ret)
+	    break;
+
+	umlen -= cnt;
+	ptr += cnt;
+    }
+
+    free(ums);
+
+    return ret;
 }
 
 /* ztrdup multibyte string with nice formatting */
@@ -4933,7 +5131,7 @@ nicedup(const char *s, int heap)
 {
     char *retstr;
 
-    (void)mb_niceformat(s, NULL, &retstr, heap);
+    (void)mb_niceformat(s, NULL, &retstr, heap ? NICEFLAG_HEAP : 0);
 
     return retstr;
 }
@@ -5072,6 +5270,21 @@ mb_metastrlenend(char *ptr, int width, char *eptr)
 	ret = mbrtowc(&wc, &inchar, 1, &mb_shiftstate);
 
 	if (ret == MB_INCOMPLETE) {
+	    /*
+	     * "num_in_char" is only used for incomplete characters.
+	     * The assumption is that we will output all trailing octets
+	     * that form part of an incomplete character as a single
+	     * character (of single width) if we don't get a complete
+	     * character.  This is purely pragmatic --- I'm not aware
+	     * of a standard way of dealing with incomplete characters.
+	     *
+	     * If we do get a complete character, num_in_char
+	     * becomes irrelevant and is set to zero
+	     *
+	     * This is in contrast to "num" which counts the characters
+	     * or widths in complete characters.  The two are summed,
+	     * so we don't count characters twice.
+	     */
 	    num_in_char++;
 	} else {
 	    if (ret == MB_INVALID) {
@@ -5098,8 +5311,8 @@ mb_metastrlenend(char *ptr, int width, char *eptr)
 	}
     }
 
-    /* If incomplete, treat remainder as trailing single bytes */
-    return num + num_in_char;
+    /* If incomplete, treat remainder as trailing single character */
+    return num + (num_in_char ? 1 : 0);
 }
 
 /*
@@ -5712,25 +5925,76 @@ quotestring(const char *s, char **e, int instring)
     return v;
 }
 
-/* Unmetafy and output a string, quoted if it contains special characters. */
+/*
+ * Unmetafy and output a string, quoted if it contains special
+ * characters.
+ *
+ * If stream is NULL, return the same output with any allocation on the
+ * heap.
+ */
 
 /**/
-mod_export int
+mod_export char *
 quotedzputs(char const *s, FILE *stream)
 {
     int inquote = 0, c;
+    char *outstr, *ptr;
 
     /* check for empty string */
-    if(!*s)
-	return fputs("''", stream);
+    if(!*s) {
+	if (!stream)
+	    return dupstring("''");
+	fputs("''", stream);
+	return NULL;
+    }
 
-    if (!hasspecial(s))
-	return zputs(s, stream);
+#ifdef MULTIBYTE_SUPPORT
+    if (is_mb_niceformat(s)) {
+	if (stream) {
+	    fputs("$'", stream);
+	    mb_niceformat(s, stream, NULL, NICEFLAG_QUOTE);
+	    fputc('\'', stream);
+	    return NULL;
+	} else {
+	    char *substr;
+	    mb_niceformat(s, NULL, &substr, NICEFLAG_QUOTE|NICEFLAG_NODUP);
+	    outstr = (char *)zhalloc(4 + strlen(substr));
+	    sprintf(outstr, "$'%s'", substr);
+	    free(substr);
+	    return outstr;
+	}
+    }
+#endif /* MULTIBYTE_SUPPORT */
 
+    if (!hasspecial(s)) {
+	if (stream) {
+	    zputs(s, stream);
+	    return NULL;
+	} else {
+	    return dupstring(s);
+	}
+    }
+
+    if (!stream) {
+	const char *cptr;
+	int l = strlen(s) + 2;
+	for (cptr = s; *cptr; cptr++) {
+	    if (*cptr == Meta)
+		cptr++;
+	    else if (*cptr == '\'')
+		l += isset(RCQUOTES) ? 1 : 3;
+	}
+	ptr = outstr = zhalloc(l + 1);
+    } else {
+	ptr = outstr = NULL;
+    }
     if (isset(RCQUOTES)) {
 	/* use rc-style quotes-within-quotes for the whole string */
-	if(fputc('\'', stream) < 0)
-	    return EOF;
+	if (stream) {
+	    if (fputc('\'', stream) < 0)
+		return NULL;
+	} else
+	    *ptr++ = '\'';
 	while(*s) {
 	    if (*s == Meta)
 		c = *++s ^ 32;
@@ -5738,53 +6002,98 @@ quotedzputs(char const *s, FILE *stream)
 		c = *s;
 	    s++;
 	    if (c == '\'') {
-		if(fputc('\'', stream) < 0)
-		    return EOF;
-	    } else if(c == '\n' && isset(CSHJUNKIEQUOTES)) {
-		if(fputc('\\', stream) < 0)
-		    return EOF;
+		if (stream) {
+		    if (fputc('\'', stream) < 0)
+			return NULL;
+		} else
+		    *ptr++ = '\'';
+	    } else if (c == '\n' && isset(CSHJUNKIEQUOTES)) {
+		if (stream) {
+		    if (fputc('\\', stream) < 0)
+			return NULL;
+		} else
+		    *ptr++ = '\\';
 	    }
-	    if(fputc(c, stream) < 0)
-		return EOF;
+	    if (stream) {
+		if (fputc(c, stream) < 0)
+		    return NULL;
+	    } else {
+		if (imeta(c)) {
+		    *ptr++ = Meta;
+		    *ptr++ = c ^ 32;
+		} else
+		    *ptr++ = c;
+	    }
 	}
-	if(fputc('\'', stream) < 0)
-	    return EOF;
+	if (stream) {
+	    if (fputc('\'', stream) < 0)
+		return NULL;
+	} else
+	    *ptr++ = '\'';
     } else {
 	/* use Bourne-style quoting, avoiding empty quoted strings */
-	while(*s) {
+	while (*s) {
 	    if (*s == Meta)
 		c = *++s ^ 32;
 	    else
 		c = *s;
 	    s++;
 	    if (c == '\'') {
-		if(inquote) {
-		    if(fputc('\'', stream) < 0)
-			return EOF;
+		if (inquote) {
+		    if (stream) {
+			if (putc('\'', stream) < 0)
+			    return NULL;
+		    } else
+			*ptr++ = '\'';
 		    inquote=0;
 		}
-		if(fputs("\\'", stream) < 0)
-		    return EOF;
+		if (stream) {
+		    if (fputs("\\'", stream) < 0)
+			return NULL;
+		} else {
+		    *ptr++ = '\\';
+		    *ptr++ = '\'';
+		}
 	    } else {
 		if (!inquote) {
-		    if(fputc('\'', stream) < 0)
-			return EOF;
+		    if (stream) {
+			if (fputc('\'', stream) < 0)
+			    return NULL;
+		    } else
+			*ptr++ = '\'';
 		    inquote=1;
 		}
-		if(c == '\n' && isset(CSHJUNKIEQUOTES)) {
-		    if(fputc('\\', stream) < 0)
-			return EOF;
+		if (c == '\n' && isset(CSHJUNKIEQUOTES)) {
+		    if (stream) {
+			if (fputc('\\', stream) < 0)
+			    return NULL;
+		    } else
+			*ptr++ = '\\';
 		}
-		if(fputc(c, stream) < 0)
-		    return EOF;
+		if (stream) {
+		    if (fputc(c, stream) < 0)
+			return NULL;
+		} else {
+		    if (imeta(c)) {
+			*ptr++ = Meta;
+			*ptr++ = c ^ 32;
+		    } else
+			*ptr++ = c;
+		}
 	    }
 	}
 	if (inquote) {
-	    if(fputc('\'', stream) < 0)
-		return EOF;
+	    if (stream) {
+		if (fputc('\'', stream) < 0)
+		    return NULL;
+	    } else
+		*ptr++ = '\'';
 	}
     }
-    return 0;
+    if (!stream)
+	*ptr++ = '\0';
+
+    return outstr;
 }
 
 /* Double-quote a metafied string. */

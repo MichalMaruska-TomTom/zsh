@@ -1025,6 +1025,32 @@ getrestchar(int inchar, char *outstr, int *outcount)
 /**/
 #endif
 
+/**/
+void redrawhook(void)
+{
+    Thingy initthingy;
+    if ((initthingy = rthingy_nocreate("zle-line-pre-redraw"))) {
+	int lastcmd_prev = lastcmd;
+	int old_incompfunc = incompfunc;
+	char *args[2];
+	Thingy lbindk_save = lbindk, bindk_save = bindk;
+	refthingy(lbindk_save);
+	refthingy(bindk_save);
+	args[0] = initthingy->nam;
+	args[1] = NULL;
+	incompfunc = 0;
+	execzlefunc(initthingy, args, 0);
+	incompfunc = old_incompfunc;
+	unrefthingy(initthingy);
+	unrefthingy(lbindk);
+	unrefthingy(bindk);
+	lbindk = lbindk_save;
+	bindk = bindk_save;
+	/* we can't set ZLE_NOTCOMMAND since it's not a legit widget, so
+	 * restore lastcmd manually so that we don't mess up the global state */
+	lastcmd = lastcmd_prev;
+    }
+}
 
 /**/
 void
@@ -1084,6 +1110,8 @@ zlecore(void)
 	    errflag |= ERRFLAG_ERROR;
 	    break;
 	}
+
+	redrawhook();
 #ifdef HAVE_POLL
 	if (baud && !(lastcmd & ZLE_MENUCMP)) {
 	    struct pollfd pfd;
@@ -1113,6 +1141,7 @@ zlecore(void)
 		zrefresh();
 
 	freeheap();
+
     }
 
     region_active = 0;
@@ -1191,7 +1220,7 @@ zleread(char **lp, char **rp, int flags, int context, char *init, char *finish)
     vistartchange = -1;
     zleline = (ZLE_STRING_T)zalloc(((linesz = 256) + 2) * ZLE_CHAR_SIZE);
     *zleline = ZWC('\0');
-    virangeflag = lastcmd = done = zlecs = zlell = mark = 0;
+    virangeflag = lastcmd = done = zlecs = zlell = mark = yankb = yanke = 0;
     vichgflag = 0;
     viinsbegin = 0;
     statusline = NULL;
@@ -1344,6 +1373,8 @@ execzlefunc(Thingy func, char **args, int set_bindk)
 	    eofsent = 1;
 	    ret = 1;
 	} else {
+	    int inuse = wflags & WIDGET_INUSE;
+	    w->flags |= WIDGET_INUSE;
 	    if(!(wflags & ZLE_KEEPSUFFIX))
 		removesuffix();
 	    if(!(wflags & ZLE_MENUCMP)) {
@@ -1367,6 +1398,12 @@ execzlefunc(Thingy func, char **args, int set_bindk)
 		ret = w->u.fn(args);
 		unqueue_signals();
 	    }
+	    if (!inuse) {
+		if (w->flags & WIDGET_FREE)
+		    freewidget(w);
+		else
+		    w->flags &= ~WIDGET_INUSE;
+	    }
 	    if (!(wflags & ZLE_NOTCOMMAND))
 		lastcmd = wflags;
 	}
@@ -1387,6 +1424,8 @@ execzlefunc(Thingy func, char **args, int set_bindk)
 	    int osc = sfcontext, osi = movefd(0);
 	    int oxt = isset(XTRACE);
 	    LinkList largs = NULL;
+	    int inuse = w->flags & WIDGET_INUSE;
+	    w->flags |= WIDGET_INUSE;
 
 	    if (*args) {
 		largs = newlinklist();
@@ -1402,8 +1441,15 @@ execzlefunc(Thingy func, char **args, int set_bindk)
 	    opts[XTRACE] = oxt;
 	    sfcontext = osc;
 	    endparamscope();
-	    lastcmd = w->flags;
-	    w->flags = 0;
+	    lastcmd = w->flags & ~(WIDGET_INUSE|WIDGET_FREE);
+	    if (inuse) {
+		w->flags &= WIDGET_INUSE|WIDGET_FREE;
+	    } else {
+		if (w->flags & WIDGET_FREE)
+		    freewidget(w);
+		else
+		    w->flags = 0;
+	    }
 	    r = 1;
 	    redup(osi, 0);
 	}
@@ -1795,6 +1841,7 @@ recursiveedit(UNUSED(char **args))
 {
     int locerror;
 
+    redrawhook();
     zrefresh();
     zlecore();
 

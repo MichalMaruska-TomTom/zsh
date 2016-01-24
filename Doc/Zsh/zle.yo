@@ -802,7 +802,7 @@ item(tt(cont))(
 A continuation to a command line (at prompt tt(PS2)).
 )
 item(tt(select))(
-In a tt(select) loop.
+In a tt(select) loop (at prompt tt(PS3)).
 )
 item(tt(vared))(
 Editing a variable in tt(vared).
@@ -1086,6 +1086,11 @@ widget:
 
 example(zle-isearch-exit+LPAR()RPAR() { zle -M ""; }
 zle -N zle-isearch-exit)
+)
+tindex(zle-line-pre-redraw)
+item(tt(zle-line-pre-redraw))(
+Executed whenever the input line is about to be redrawn, providing an
+opportunity to update the region_highlight array.
 )
 tindex(zle-line-init)
 item(tt(zle-line-init))(

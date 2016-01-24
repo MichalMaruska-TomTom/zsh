@@ -62,7 +62,7 @@ static struct builtin builtins[] =
     BUILTIN("enable", 0, bin_enable, 0, -1, BIN_ENABLE, "afmprs", NULL),
     BUILTIN("eval", BINF_PSPECIAL, bin_eval, 0, -1, BIN_EVAL, NULL, NULL),
     BUILTIN("exit", BINF_PSPECIAL, bin_break, 0, 1, BIN_EXIT, NULL, NULL),
-    BUILTIN("export", BINF_PLUSOPTS | BINF_MAGICEQUALS | BINF_PSPECIAL | BINF_ASSIGN, (HandlerFunc)bin_typeset, 0, -1, BIN_EXPORT, "E:%F:%HL:%R:%TUZ:%afhi:%lprtu", "xg"),
+    BUILTIN("export", BINF_PLUSOPTS | BINF_MAGICEQUALS | BINF_PSPECIAL | BINF_ASSIGN, (HandlerFunc)bin_typeset, 0, -1, 0, "E:%F:%HL:%R:%TUZ:%afhi:%lprtu", "xg"),
     BUILTIN("false", 0, bin_false, 0, -1, 0, NULL, NULL),
     /*
      * We used to behave as if the argument to -e was optional.
@@ -99,14 +99,14 @@ static struct builtin builtins[] =
 #endif
 
     BUILTIN("popd", BINF_SKIPINVALID | BINF_SKIPDASH | BINF_DASHDASHVALID, bin_cd, 0, 1, BIN_POPD, "q", NULL),
-    BUILTIN("print", BINF_PRINTOPTS, bin_print, 0, -1, BIN_PRINT, "abcC:Df:ilmnNoOpPrRsSu:x:X:z-", NULL),
-    BUILTIN("printf", 0, bin_print, 1, -1, BIN_PRINTF, NULL, NULL),
+    BUILTIN("print", BINF_PRINTOPTS, bin_print, 0, -1, BIN_PRINT, "abcC:Df:ilmnNoOpPrRsSu:v:x:X:z-", NULL),
+    BUILTIN("printf", 0, bin_print, 1, -1, BIN_PRINTF, "v:", NULL),
     BUILTIN("pushd", BINF_SKIPINVALID | BINF_SKIPDASH | BINF_DASHDASHVALID, bin_cd, 0, 2, BIN_PUSHD, "qsPL", NULL),
     BUILTIN("pushln", 0, bin_print, 0, -1, BIN_PRINT, NULL, "-nz"),
     BUILTIN("pwd", 0, bin_pwd, 0, 0, 0, "rLP", NULL),
     BUILTIN("r", 0, bin_fc, 0, -1, BIN_R, "IlLnr", NULL),
     BUILTIN("read", 0, bin_read, 0, -1, 0, "cd:ek:%lnpqrst:%zu:AE", NULL),
-    BUILTIN("readonly", BINF_PLUSOPTS | BINF_MAGICEQUALS | BINF_PSPECIAL | BINF_ASSIGN, (HandlerFunc)bin_typeset, 0, -1, 0, "AE:%F:%HL:%R:%TUZ:%afghi:%lptux", "r"),
+    BUILTIN("readonly", BINF_PLUSOPTS | BINF_MAGICEQUALS | BINF_PSPECIAL | BINF_ASSIGN, (HandlerFunc)bin_typeset, 0, -1, BIN_READONLY, "AE:%F:%HL:%R:%TUZ:%afghi:%lptux", "r"),
     BUILTIN("rehash", 0, bin_hash, 0, 0, 0, "df", "r"),
     BUILTIN("return", BINF_PSPECIAL, bin_break, 0, 1, BIN_RETURN, NULL, NULL),
     BUILTIN("set", BINF_PSPECIAL | BINF_HANDLES_OPTS, bin_set, 0, -1, 0, NULL, NULL),
@@ -387,7 +387,7 @@ execbuiltin(LinkList args, LinkList assigns, Builtin bn)
 		if (*arg) {
 		    if(*arg == Meta)
 			*++arg ^= 32;
-		    zwarn("bad option: -%c", *arg);
+		    zwarnnam(name, "bad option: -%c", *arg);
 		    return 1;
 		}
 		arg = *++argv;
@@ -2213,6 +2213,8 @@ typeset_single(char *cname, char *pname, Param pm, UNUSED(int func),
 				 mkarray(NULL), 0)))
 		return NULL;
 	}
+	if (errflag)
+	    return NULL;
 	pm->node.flags |= (on & PM_READONLY);
 	if (OPT_ISSET(ops,'p'))
 	    paramtab->printnode(&pm->node, PRINT_TYPESET);
@@ -2532,6 +2534,10 @@ bin_typeset(char *name, char **argv, LinkList assigns, Options ops, int func)
     /* hash -f is really the builtin `functions' */
     if (OPT_ISSET(ops,'f'))
 	return bin_functions(name, argv, ops, func);
+
+    /* POSIX handles "readonly" specially */
+    if (func == BIN_READONLY && isset(POSIXBUILTINS) && !OPT_PLUS(ops, 'g'))
+	ops->ind['g'] = 1;
 
     /* Translate the options into PM_* flags.   *
      * Unfortunately, this depends on the order *
@@ -4019,18 +4025,109 @@ bin_print(char *name, char **args, Options ops, int func)
     char *start, *endptr, *c, *d, *flag, *buf = NULL, spec[14], *fmt = NULL;
     char **first, **argp, *curarg, *flagch = "'0+- #", save = '\0', nullstr = '\0';
     size_t rcount, count = 0;
+    FILE *fout = stdout;
 #ifdef HAVE_OPEN_MEMSTREAM
     size_t mcount;
-#endif
-    FILE *fout = stdout;
-    Histent ent;
+#define ASSIGN_MSTREAM(BUF,FOUT) \
+    do { \
+        if ((FOUT = open_memstream(&BUF, &mcount)) == NULL) { \
+            zwarnnam(name, "open_memstream failed"); \
+            return 1; \
+        } \
+    } while (0)
+    /*
+     * Some implementations of open_memstream() have a bug such that,
+     * if fflush() is followed by fclose(), another NUL byte is written
+     * to the buffer at the wrong position.  Therefore we must fclose()
+     * before reading.
+     */
+#define READ_MSTREAM(BUF,FOUT) \
+    ((fclose(FOUT) == 0) ? mcount : (size_t)-1)
+#define CLOSE_MSTREAM(FOUT) 0
 
+#else /* simulate HAVE_OPEN_MEMSTREAM */
+
+#define ASSIGN_MSTREAM(BUF,FOUT) \
+    do { \
+        int tempfd; \
+        char *tmpf; \
+        if ((tempfd = gettempfile(NULL, 1, &tmpf)) < 0) { \
+            zwarnnam(name, "can't open temp file: %e", errno); \
+            return 1; \
+        } \
+        unlink(tmpf); \
+        if ((fout = fdopen(tempfd, "w+")) == NULL) { \
+            close(tempfd); \
+            zwarnnam(name, "can't open temp file: %e", errno); \
+            return 1; \
+        } \
+    } while (0)
+#define READ_MSTREAM(BUF,FOUT) \
+    ((((count = ftell(FOUT)), (BUF = (char *)zalloc(count + 1))) && \
+      ((fseek(FOUT, 0L, SEEK_SET) == 0) && !(BUF[count] = '\0')) && \
+      (fread(BUF, 1, count, FOUT) == count)) ? count : (size_t)-1)
+#define CLOSE_MSTREAM(FOUT) fclose(FOUT)
+
+#endif
+
+#define IS_MSTREAM(FOUT) \
+    (FOUT != stdout && \
+     (OPT_ISSET(ops,'z') || OPT_ISSET(ops,'s') || OPT_ISSET(ops,'v')))
+
+    /* Testing EBADF special-cases >&- redirections */
+#define CLOSE_CLEANLY(FOUT) \
+    (IS_MSTREAM(FOUT) ? CLOSE_MSTREAM(FOUT) == 0 : \
+     ((FOUT == stdout) ? (fflush(FOUT) == 0 || errno == EBADF) : \
+      (fclose(FOUT) == 0)))	/* implies error for -u on a closed fd */
+
+    Histent ent;
     mnumber mnumval;
     double doubleval;
     int intval;
     zlong zlongval;
     zulong zulongval;
     char *stringval;
+
+    /* Error check option combinations and option arguments */
+
+    if (OPT_ISSET(ops, 'z') +
+	OPT_ISSET(ops, 's') + OPT_ISSET(ops, 'S') +
+	OPT_ISSET(ops, 'v') > 1) {
+	zwarnnam(name, "only one of -s, -S, -v, or -z allowed");
+	return 1;
+    }
+    if ((OPT_ISSET(ops, 'z') | OPT_ISSET(ops, 's') | OPT_ISSET(ops, 'S')) +
+	(OPT_ISSET(ops, 'c') | OPT_ISSET(ops, 'C')) > 1) {
+	zwarnnam(name, "-c or -C not allowed with -s, -S, or -z");
+	return 1;
+    }
+    if ((OPT_ISSET(ops, 'z') | OPT_ISSET(ops, 'v') |
+         OPT_ISSET(ops, 's') | OPT_ISSET(ops, 'S')) +
+	(OPT_ISSET(ops, 'p') | OPT_ISSET(ops, 'u')) > 1) {
+	zwarnnam(name, "-p or -u not allowed with -s, -S, -v, or -z");
+	return 1;
+    }
+    /*
+    if (OPT_ISSET(ops, 'f') &&
+	(OPT_ISSET(ops, 'S') || OPT_ISSET(ops, 'c') || OPT_ISSET(ops, 'C'))) {
+	zwarnnam(name, "-f not allowed with -c, -C, or -S");
+	return 1;
+    }
+    */
+
+    /* -C -- number of columns */
+    if (!fmt && OPT_ISSET(ops,'C')) {
+	char *eptr, *argptr = OPT_ARG(ops,'C');
+	nc = (int)zstrtol(argptr, &eptr, 10);
+	if (*eptr) {
+	    zwarnnam(name, "number expected after -%c: %s", 'C', argptr);
+	    return 1;
+	}
+	if (nc <= 0) {
+	    zwarnnam(name, "invalid number of columns: %s", argptr);
+	    return 1;
+	}
+    }
 
     if (func == BIN_PRINTF) {
         if (!strcmp(*args, "--") && !*++args) {
@@ -4096,7 +4193,7 @@ bin_print(char *name, char **args, Options ops, int func)
 	    }
 	}
 	/* -P option -- interpret as a prompt sequence */
-	if(OPT_ISSET(ops,'P')) {
+	if (OPT_ISSET(ops,'P')) {
 	    /*
 	     * promptexpand uses permanent storage: to avoid
 	     * messy memory management, stick it on the heap
@@ -4110,13 +4207,13 @@ bin_print(char *name, char **args, Options ops, int func)
 	    free(str);
 	}
 	/* -D option -- interpret as a directory, and use ~ */
-	if(OPT_ISSET(ops,'D')) {
+	if (OPT_ISSET(ops,'D')) {
 	    Nameddir d;
 
 	    queue_signals();
 	    /* TODO: finddir takes a metafied file */
 	    d = finddir(args[n]);
-	    if(d) {
+	    if (d) {
 		int dirlen = strlen(d->dir);
 		char *arg = zhalloc(len[n] - dirlen + strlen(d->node.nam) + 2);
 		sprintf(arg, "~%s%s", d->node.nam, args[n] + dirlen);
@@ -4139,26 +4236,12 @@ bin_print(char *name, char **args, Options ops, int func)
 	strmetasort(args, flags, len);
     }
 
-    /* -C -- number of columns */
-    if (!fmt && OPT_ISSET(ops,'C')) {
-	char *eptr, *argptr = OPT_ARG(ops,'C');
-	nc = (int)zstrtol(argptr, &eptr, 10);
-	if (*eptr) {
-	    zwarnnam(name, "number expected after -%c: %s", 'C', argptr);
-	    return 1;
-	}
-	if (nc <= 0) {
-	    zwarnnam(name, "invalid number of columns: %s", argptr);
-	    return 1;
-	}
-    }
-
     /* -u and -p -- output to other than standard output */
     if ((OPT_HASARG(ops,'u') || OPT_ISSET(ops,'p')) &&
 	/* rule out conflicting options -- historical precedence */
 	((!fmt && (OPT_ISSET(ops,'c') || OPT_ISSET(ops,'C'))) ||
-	!(OPT_ISSET(ops, 'z') ||
-	  OPT_ISSET(ops, 's') || OPT_ISSET(ops, 'S')))) {
+	 !(OPT_ISSET(ops, 'z') || OPT_ISSET(ops, 'v') ||
+	   OPT_ISSET(ops, 's') || OPT_ISSET(ops, 'S')))) {
 	int fdarg, fd;
 
 	if (OPT_ISSET(ops, 'p')) {
@@ -4179,8 +4262,7 @@ bin_print(char *name, char **args, Options ops, int func)
 	    } else {
 		fdarg = (int)zstrtol(argptr, &eptr, 10);
 		if (*eptr) {
-		    zwarnnam(name, "number expected after -%c: %s", 'u',
-			     argptr);
+		    zwarnnam(name, "number expected after -u: %s", argptr);
 		    return 1;
 		}
 	    }
@@ -4196,6 +4278,10 @@ bin_print(char *name, char **args, Options ops, int func)
 	    return 1;
 	}
     }
+
+    if (OPT_ISSET(ops, 'v') ||
+	(fmt && (OPT_ISSET(ops,'z') || OPT_ISSET(ops,'s'))))
+	ASSIGN_MSTREAM(buf,fout);
 
     /* -c -- output in columns */
     if (!fmt && (OPT_ISSET(ops,'c') || OPT_ISSET(ops,'C'))) {
@@ -4348,18 +4434,29 @@ bin_print(char *name, char **args, Options ops, int func)
 	    }
 	    fputc(OPT_ISSET(ops,'N') ? '\0' : '\n', fout);
 	}
-	/* Testing EBADF special-cases >&- redirections */
-	if ((fout != stdout) ? (fclose(fout) != 0) :
-	    (fflush(fout) != 0 && errno != EBADF)) {
+	if (IS_MSTREAM(fout) && (rcount = READ_MSTREAM(buf,fout)) == -1)
+	    ret = 1;
+	if (!CLOSE_CLEANLY(fout) || ret) {
             zwarnnam(name, "write error: %e", errno);
             ret = 1;
+	}
+	if (buf) {
+	    /* assert: we must be doing -v at this point */
+	    queue_signals();
+	    if (ret)
+		free(buf);
+	    else
+		setsparam(OPT_ARG(ops, 'v'),
+			  metafy(buf, rcount, META_REALLOC));
+	    unqueue_signals();
 	}
 	return ret;
     }
 
     /* normal output */
     if (!fmt) {
-	if (OPT_ISSET(ops, 'z') || OPT_ISSET(ops, 's')) {
+	if (OPT_ISSET(ops, 'z') || OPT_ISSET(ops, 'v') ||
+	    OPT_ISSET(ops, 's') || OPT_ISSET(ops, 'S')) {
 	    /*
 	     * We don't want the arguments unmetafied after all.
 	     */
@@ -4457,13 +4554,23 @@ bin_print(char *name, char **args, Options ops, int func)
 			  OPT_ISSET(ops,'N') ? '\0' : ' ', fout);
 	    }
 	}
-	if (!(OPT_ISSET(ops,'n') || nnl))
+	if (!(OPT_ISSET(ops,'n') || OPT_ISSET(ops, 'v') || nnl))
 	    fputc(OPT_ISSET(ops,'N') ? '\0' : '\n', fout);
-	/* Testing EBADF special-cases >&- redirections */
-	if ((fout != stdout) ? (fclose(fout) != 0) :
-	    (fflush(fout) != 0 && errno != EBADF)) {
+	if (IS_MSTREAM(fout) && (rcount = READ_MSTREAM(buf,fout)) == -1)
+	    ret = 1;
+	if (!CLOSE_CLEANLY(fout) || ret) {
             zwarnnam(name, "write error: %e", errno);
             ret = 1;
+	}
+	if (buf) {
+	    /* assert: we must be doing -v at this point */
+	    queue_signals();
+	    if (ret)
+		free(buf);
+	    else
+		setsparam(OPT_ARG(ops, 'v'),
+			  metafy(buf, rcount, META_REALLOC));
+	    unqueue_signals();
 	}
 	return ret;
     }
@@ -4473,20 +4580,6 @@ bin_print(char *name, char **args, Options ops, int func)
      * output (printf itself, or print -f).  We still have to handle
      * special cases of printing to a ZLE buffer or the history, however.
      */
-
-    if (OPT_ISSET(ops,'z') || OPT_ISSET(ops,'s')) {
-#ifdef HAVE_OPEN_MEMSTREAM
-    	if ((fout = open_memstream(&buf, &mcount)) == NULL)
-	    zwarnnam(name, "open_memstream failed");
-#else
-	int tempfd;
-	char *tmpf;
-	if ((tempfd = gettempfile(NULL, 1, &tmpf)) < 0
-	 || (fout = fdopen(tempfd, "w+")) == NULL)
-	    zwarnnam(name, "can't open temp file: %e", errno);
-	unlink(tmpf);
-#endif
-    }
 
     /* printf style output */
     *spec = '%';
@@ -4751,11 +4844,9 @@ bin_print(char *name, char **args, Options ops, int func)
 		}
 		zwarnnam(name, "%s: invalid directive", start);
 		if (*c) c[1] = save;
-		/* Testing EBADF special-cases >&- redirections */
-		if ((fout != stdout) ? (fclose(fout) != 0) :
-		    (fflush(fout) != 0 && errno != EBADF)) {
+		/* Why do we care about a clean close here? */
+		if (!CLOSE_CLEANLY(fout))
 		    zwarnnam(name, "write error: %e", errno);
-		}
 #ifdef HAVE_OPEN_MEMSTREAM
 		if (buf)
 		    free(buf);
@@ -4853,41 +4944,34 @@ bin_print(char *name, char **args, Options ops, int func)
 	/* if there are remaining args, reuse format string */
     } while (*argp && argp != first && !fmttrunc && !OPT_ISSET(ops,'r'));
 
-    if (OPT_ISSET(ops,'z') || OPT_ISSET(ops,'s')) {
-#ifdef HAVE_OPEN_MEMSTREAM
-	putc(0, fout);
-	fclose(fout);
-	fout = NULL;
-#else
-	rewind(fout);
-	buf = (char *)zalloc(count + 1);
-	fread(buf, count, 1, fout);
-	buf[count] = '\0';
-#endif
+    if (IS_MSTREAM(fout)) {
 	queue_signals();
-	if (OPT_ISSET(ops,'z')) {
-	    zpushnode(bufstack, buf);
+	if ((rcount = READ_MSTREAM(buf,fout)) == -1) {
+	    zwarnnam(name, "i/o error: %e", errno);
+	    if (buf)
+		free(buf);
 	} else {
-	    ent = prepnexthistent();
-	    ent->node.nam = buf;
-	    ent->stim = ent->ftim = time(NULL);
-	    ent->node.flags = 0;
-	    ent->words = (short *)NULL;
-	    addhistnode(histtab, ent->node.nam, ent);
+	    stringval = metafy(buf, rcount, META_REALLOC);
+	    if (OPT_ISSET(ops,'z')) {
+		zpushnode(bufstack, stringval);
+	    } else if (OPT_ISSET(ops,'v')) {
+		setsparam(OPT_ARG(ops, 'v'), stringval);
+	    } else {
+		ent = prepnexthistent();
+		ent->node.nam = stringval;
+		ent->stim = ent->ftim = time(NULL);
+		ent->node.flags = 0;
+		ent->words = (short *)NULL;
+		addhistnode(histtab, ent->node.nam, ent);
+	    }
 	}
 	unqueue_signals();
     }
 
-#ifdef HAVE_OPEN_MEMSTREAM
-    if (fout)
-#endif
+    if (!CLOSE_CLEANLY(fout))
     {
-	/* Testing EBADF special-cases >&- redirections */
-	if ((fout != stdout) ? (fclose(fout) != 0) :
-	    (fflush(fout) != 0 && errno != EBADF)) {
-	    zwarnnam(name, "write error: %e", errno);
-	    ret = 1;
-	}
+	zwarnnam(name, "write error: %e", errno);
+	ret = 1;
     }
     return ret;
 }
@@ -6463,7 +6547,13 @@ bin_test(char *name, char **argv, UNUSED(Options ops), int func)
     nargs = arrlen(argv);
     if (nargs == 3 || nargs == 4)
     {
-	if (*argv[0] == '(' && *argv[nargs-1] == ')') {
+	/*
+	 * As parentheses are an extension, we need to be careful ---
+	 * if this is a three-argument expression that could
+	 * be a binary operator, prefer that.
+	 */
+	if (!strcmp(argv[0], "(") && !strcmp(argv[nargs-1],")") &&
+	    (nargs != 3 || !is_cond_binary_op(argv[1]))) {
 	    argv[nargs-1] = NULL;
 	    argv++;
 	}

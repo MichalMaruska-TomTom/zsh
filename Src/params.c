@@ -2552,18 +2552,20 @@ setarrvalue(Value v, char **val)
 	     v->pm->node.nam);
 	return;
     } else {
-	char **old, **new, **p, **q, **r;
-	int pre_assignment_length;
+	char **const old = v->pm->gsu.a->getfn(v->pm);
+	char **new;
+	char **p, **q, **r; /* index variables */
+	const int pre_assignment_length = arrlen(old);
 	int post_assignment_length;
 	int i;
+
+	q = old;
 
 	if ((v->flags & VALFLAG_INV) && unset(KSHARRAYS)) {
 	    if (v->start > 0)
 		v->start--;
 	    v->end--;
 	}
-	q = old = v->pm->gsu.a->getfn(v->pm);
-	pre_assignment_length = arrlen(old);
 	if (v->start < 0) {
 	    v->start += pre_assignment_length;
 	    if (v->start < 0)
@@ -2703,29 +2705,17 @@ static void
 check_warn_create(Param pm, const char *pmtype)
 {
     Funcstack i;
-    const char *name;
 
     if (pm->level != 0 || (pm->node.flags & PM_SPECIAL))
 	return;
 
-    name = NULL;
     for (i = funcstack; i; i = i->prev) {
 	if (i->tp == FS_FUNC) {
 	    DPUTS(!i->name, "funcstack entry with no name");
-	    name = i->name;
+	    zwarn("%s parameter %s created globally in function %s",
+		  pmtype, pm->node.nam, i->name);
 	    break;
 	}
-    }
-
-    if (name)
-    {
-	zwarn("%s parameter %s created globally in function %s",
-	      pmtype, pm->node.nam, name);
-    }
-    else
-    {
-	zwarn("%s parameter %s created globally in function",
-	      pmtype, pm->node.nam);
     }
 }
 
@@ -2866,7 +2856,7 @@ mod_export Param
 setsparam(char *s, char *val)
 {
     return assignsparam(
-	s, val, isset(WARNCREATEGLOBAL) && locallevel > 0 ?
+	s, val, isset(WARNCREATEGLOBAL) && locallevel > forklevel ?
 	ASSPM_WARN_CREATE : 0);
 }
 
@@ -2964,7 +2954,7 @@ mod_export Param
 setaparam(char *s, char **aval)
 {
     return assignaparam(
-	s, aval, isset(WARNCREATEGLOBAL) && locallevel >0 ?
+	s, aval, isset(WARNCREATEGLOBAL) && locallevel > forklevel ?
 	ASSPM_WARN_CREATE : 0);
 }
 
@@ -2995,7 +2985,7 @@ sethparam(char *s, char **val)
     if (!(v = fetchvalue(&vbuf, &s, 1, SCANPM_ASSIGNING))) {
 	DPUTS(!v, "BUG: assigning to undeclared associative array");
 	createparam(t, PM_HASHED);
-	checkcreate = isset(WARNCREATEGLOBAL) && locallevel > 0;
+	checkcreate = isset(WARNCREATEGLOBAL) && locallevel > forklevel;
     } else if (!(PM_TYPE(v->pm->node.flags) & PM_HASHED) &&
 	     !(v->pm->node.flags & PM_SPECIAL)) {
 	unsetparam(t);
@@ -3059,6 +3049,7 @@ setnparam(char *s, mnumber val)
 	if (ss)
 	    *ss = '\0';
 	pm = createparam(t, ss ? PM_ARRAY :
+			 isset(POSIXIDENTIFIERS) ? PM_SCALAR :
 			 (val.type & MN_INTEGER) ? PM_INTEGER : PM_FFLOAT);
 	if (!pm)
 	    pm = (Param) paramtab->getnode(paramtab, t);
@@ -3073,7 +3064,7 @@ setnparam(char *s, mnumber val)
 	    /* errflag |= ERRFLAG_ERROR; */
 	    return NULL;
 	}
-	if (!was_unset && isset(WARNCREATEGLOBAL) && locallevel > 0)
+	if (!was_unset && isset(WARNCREATEGLOBAL) && locallevel > forklevel)
 	    check_warn_create(v->pm, "numeric");
     }
     setnumvalue(v, val);
@@ -3111,7 +3102,8 @@ setiparam_no_convert(char *s, zlong val)
     convbase(buf, val, 10);
     return assignsparam(
 	s, ztrdup(buf),
-	isset(WARNCREATEGLOBAL) && locallevel > 0 ? ASSPM_WARN_CREATE : 0);
+	isset(WARNCREATEGLOBAL) && locallevel > forklevel ?
+	ASSPM_WARN_CREATE : 0);
 }
 
 /* Unset a parameter */
@@ -5179,9 +5171,6 @@ printparamvalue(Param p, int printflags)
     }
     if (printflags & PRINT_KV_PAIR)
 	putchar(' ');
-    else if ((printflags & PRINT_TYPESET) &&
-	     (PM_TYPE(p->node.flags) == PM_ARRAY || PM_TYPE(p->node.flags) == PM_HASHED))
-	printf("%s=", p->node.nam);
     else
 	putchar('=');
 
@@ -5252,7 +5241,6 @@ mod_export void
 printparamnode(HashNode hn, int printflags)
 {
     Param p = (Param) hn;
-    int array_typeset;
 
     if (p->node.flags & PM_UNSET) {
 	if (isset(POSIXBUILTINS) && (p->node.flags & PM_READONLY) &&
@@ -5277,28 +5265,8 @@ printparamnode(HashNode hn, int printflags)
 	     */
 	    return;
 	}
-	/*
-	 * Printing the value of array: this needs to be on
-	 * a separate line so more care is required.
-	 */
-	array_typeset = (PM_TYPE(p->node.flags) == PM_ARRAY ||
-			 PM_TYPE(p->node.flags) == PM_HASHED) &&
-	    !(printflags & PRINT_NAMEONLY);
-	if (array_typeset && (p->node.flags & PM_READONLY)) {
-	    /*
-	     * We need to create the array before making it
-	     * readonly.
-	     */
-	    printf("typeset -a ");
-	    zputs(p->node.nam, stdout);
-	    putchar('\n');
-	    printparamvalue(p, printflags);
-	    printflags |= PRINT_NAMEONLY;
-	}
 	printf("typeset ");
     }
-    else
-	array_typeset = 0;
 
     /* Print the attributes of the parameter */
     if (printflags & (PRINT_TYPE|PRINT_TYPESET)) {
@@ -5346,8 +5314,6 @@ printparamnode(HashNode hn, int printflags)
     } else {
 	quotedzputs(p->node.nam, stdout);
 
-	if (array_typeset)
-	    putchar('\n');
 	printparamvalue(p, printflags);
     }
 }

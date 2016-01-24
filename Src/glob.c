@@ -1230,7 +1230,7 @@ zglob(LinkList list, LinkNode np, int nountok)
 	char *s;
 	int sense, qualsfound;
 	off_t data;
-	char *sdata, *newcolonmod;
+	char *sdata, *newcolonmod, *ptr;
 	int (*func) _((char *, Statptr, off_t, char *));
 
 	/*
@@ -1273,6 +1273,9 @@ zglob(LinkList list, LinkNode np, int nountok)
 	*s++ = 0;
 	if (qualsfound == 2)
 	    s += 2;
+	for (ptr = s; *ptr; ptr++)
+	    if (*ptr == Dash)
+		*ptr = '-';
 	while (*s && !newcolonmod) {
 	    func = (int (*) _((char *, Statptr, off_t, char *)))0;
 	    if (idigit(*s)) {
@@ -3512,6 +3515,7 @@ zshtokenize(char *s, int flags)
 	case ')':
 	    if (flags & ZSHTOK_SHGLOB)
 		break;
+	    /*FALLTHROUGH*/
 	case '>':
 	case '^':
 	case '#':
@@ -3521,7 +3525,9 @@ zshtokenize(char *s, int flags)
 	case '*':
 	case '?':
 	case '=':
-	    for (t = ztokens; *t; t++)
+	case '-':
+	case '!':
+	    for (t = ztokens; *t; t++) {
 		if (*t == *s) {
 		    if (bslash)
 			s[-1] = (flags & ZSHTOK_SUBST) ? Bnullkeep : Bnull;
@@ -3529,6 +3535,8 @@ zshtokenize(char *s, int flags)
 			*s = (t - ztokens) + Pound;
 		    break;
 		}
+	    }
+	    break;
 	}
 	bslash = 0;
     }
@@ -3802,13 +3810,16 @@ qualsheval(char *name, UNUSED(struct stat *buf), UNUSED(off_t days), char *str)
 
     if ((prog = parse_string(str, 0))) {
 	int ef = errflag, lv = lastval, ret;
+	int cshglob = badcshglob;
 
 	unsetparam("reply");
 	setsparam("REPLY", ztrdup(name));
+	badcshglob = 0;
 
 	execode(prog, 1, 0, "globqual");
 
-	ret = lastval;
+	if ((ret = lastval))
+	    badcshglob |= cshglob;
 	/* Retain any user interrupt error status */
 	errflag = ef | (errflag & ERRFLAG_INT);
 	lastval = lv;
