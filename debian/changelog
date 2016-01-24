@@ -1,3 +1,18 @@
+zsh (5.2-dev-1-1) UNRELEASED; urgency=low
+
+  [ Axel Beckert ]
+  * [86ca06fb] Import new upstream beta release.
+  * [a25e7f1f] Add "--ddeb-migration=zsh-dbg" to "dh_strip -pzsh" for
+    proper Breaks/Replaces. Thanks to Mattia Rizzolo!
+  * [370659ae] Add rosbash to bug-script's fallback list of packages with
+    code to be sourced in .zshrc.
+
+  [ Frank Terbeck ]
+  * [c1e9ec06] zshrc: Make expansion robust with NO_UNSET.
+    Thanks to Marc Chantreux on #pkg-zsh (freenode)
+
+ -- Axel Beckert <abe@debian.org>  Sun, 24 Jan 2016 17:21:44 +0100
+
 zsh (5.2-3) unstable; urgency=medium
 
   [ Axel Beckert ]
