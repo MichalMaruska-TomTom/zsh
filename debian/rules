@@ -127,7 +127,7 @@ binary-indep: build-indep binary-arch-dynamic
              /^#define FPATH_SUBDIRS/ { $$1=""; $$2=""; gsub(/[" ]/,""); tail=$$0; } \
              END                      { printf "%s/%s\n", head, tail; };'            \
 	    obj/Src/zshpaths.h >obj/Src/zshpaths.temp
-	debian/zsh/bin/zsh5 -fc \
+	debian/zsh/bin/zsh -fc \
             'setopt extendedglob; \
 	     for i in debian/zsh-common/'`cat obj/Src/zshpaths.temp`'; do \
 		 zcompile -U -M $$i.zwc $$i/*~*.zwc(^/);                  \
@@ -173,7 +173,6 @@ binary-arch-dynamic: build-arch
 	cd obj && $(MAKE) install.bin     DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 	cd obj && $(MAKE) install.modules DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 
-	mv debian/zsh/bin/zsh debian/zsh/bin/zsh5
 	rm debian/zsh/bin/zsh-5.[0-9]*
 
 	dh_bugfiles    -pzsh
@@ -204,7 +203,9 @@ binary-arch-static: build-static
 	dh_install           -pzsh-static
 	dh_strip             -pzsh-static
 
-	mv debian/zsh-static/bin/zsh  debian/zsh-static/bin/zsh5-static
+	mv debian/zsh-static/bin/zsh  debian/zsh-static/bin/zsh-static
+	mv debian/zsh-static/bin/zsh5 debian/zsh-static/bin/zsh5-static
+	sed -e 's:#!/bin/zsh:#!/bin/zsh-static:' -i debian/zsh-static/bin/zsh5-static
 
 	dh_installchangelogs -pzsh-static
 
