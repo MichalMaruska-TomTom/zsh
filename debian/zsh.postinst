@@ -24,7 +24,7 @@ update-alternatives --remove ksh /bin/zsh4
 
 # Remove alternatives system for zsh in general
 update-alternatives --remove zsh /bin/zsh5
-update-alternatives --remove rzsh /bin/rzsh5
+update-alternatives --remove rzsh /bin/zsh5
 
 # New hardcoded symlinks which unfortunately can't be shipped inside
 # the package itself since some people want to merge /bin and /usr/bin
