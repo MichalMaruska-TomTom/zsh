@@ -1,3 +1,10 @@
+zsh (5.2-5) unstable; urgency=low
+
+  * [f368b96e] Also remove hardcoded /usr/bin/zsh symlink in postrm
+    again. (Closes: #823730)
+
+ -- Axel Beckert <abe@debian.org>  Sun, 08 May 2016 18:25:58 +0200
+
 zsh (5.2-4) unstable; urgency=low
 
   [ Axel Beckert ]
