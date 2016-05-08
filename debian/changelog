@@ -1,3 +1,31 @@
+zsh (5.2-4) unstable; urgency=low
+
+  [ Axel Beckert ]
+  * [a25e7f1f] Add "--ddeb-migration=zsh-dbg" to "dh_strip -pzsh" for
+    proper Breaks/Replaces.  Thanks to Mattia Rizzolo
+  * [370659ae] Add rosbash to bug-script's fallback list of packages with
+    code to be sourced in .zshrc.
+  * [1922c900] Remove GCC-4.9-specific workaround on s390x from
+    debian/rules.
+  * [64eed86b] Enable hardening=+all, fixes multiple hardening-no-*
+    lintian warnings.
+  * [cafce990] Remove usage of alternatives system for zsh, rzsh and
+    zsh-static.  (Closes: #768079)
+  * [7db7f765] Switch Vcs-Git from git:// to https://, fixes lintian
+    warning vcs-field-uses-insecure-uri.
+  * [826ec19e] Declare compliance with Debian Policy 3.9.8. (No other
+    changes were required.)
+  * [a2021b04] Use "debian-stretch" as debian branch until a new upstream
+    release is out.
+  * [f9dba1a3] Update yodl build-dependency to exclude the broken 3.08.00
+    upstream release. (See #823043 for details.)
+
+  [ Frank Terbeck ]
+  * [c1e9ec06] zshrc: Make expansion robust with NO_UNSET.
+    Thanks to Marc Chantreux on #pkg-zsh (freenode)
+
+ -- Axel Beckert <abe@debian.org>  Fri, 06 May 2016 22:08:29 +0200
+
 zsh (5.2-3) unstable; urgency=medium
 
   [ Axel Beckert ]
