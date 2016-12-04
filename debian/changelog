@@ -1,4 +1,4 @@
-zsh (5.2-test-1-1) UNRELEASED; urgency=medium
+zsh (5.2-test-1-1) experimental; urgency=low
 
   * [3e439c38] New upstream test release 5.2-test-1.
     + [bcb52460]: "&&" inside a shell function could mess up ERR_EXIT
@@ -15,8 +15,10 @@ zsh (5.2-test-1-1) UNRELEASED; urgency=medium
     debian branch again.
   * [2aedc4b8] Remove cherry-picked
     fix-segfault-in-is_cond_binary_op.patch
+  * [516efade] Cherry-pick af2ab0247: attempt to make output from
+    interactive test more robust
 
- -- Axel Beckert <abe@debian.org>  Sun, 04 Dec 2016 04:39:10 +0100
+ -- Axel Beckert <abe@debian.org>  Sun, 04 Dec 2016 21:35:22 +0100
 
 zsh (5.2-5) unstable; urgency=low
 
