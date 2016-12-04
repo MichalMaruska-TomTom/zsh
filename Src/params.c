@@ -80,14 +80,14 @@ char *argzero,		/* $0           */
      *rprompt,		/* $RPROMPT     */
      *rprompt2,		/* $RPROMPT2    */
      *sprompt,		/* $SPROMPT     */
-     *wordchars,	/* $WORDCHARS   */
-     *zsh_name;		/* $ZSH_NAME    */
+     *wordchars;	/* $WORDCHARS   */
 /**/
 mod_export
 char *ifs,		/* $IFS         */
      *postedit,		/* $POSTEDIT    */
      *term,		/* $TERM        */
      *zsh_terminfo,     /* $TERMINFO    */
+     *zsh_terminfodirs, /* $TERMINFO_DIRS */
      *ttystrname,	/* $TTY         */
      *pwd;		/* $PWD         */
 
@@ -209,6 +209,8 @@ static const struct gsu_scalar term_gsu =
 { termgetfn, termsetfn, stdunsetfn };
 static const struct gsu_scalar terminfo_gsu =
 { terminfogetfn, terminfosetfn, stdunsetfn };
+static const struct gsu_scalar terminfodirs_gsu =
+{ terminfodirsgetfn, terminfodirssetfn, stdunsetfn };
 static const struct gsu_scalar wordchars_gsu =
 { wordcharsgetfn, wordcharssetfn, stdunsetfn };
 static const struct gsu_scalar ifs_gsu =
@@ -284,8 +286,9 @@ IPDEF2("histchars", histchars_gsu, PM_DONTIMPORT),
 IPDEF2("HOME", home_gsu, PM_UNSET),
 IPDEF2("TERM", term_gsu, PM_UNSET),
 IPDEF2("TERMINFO", terminfo_gsu, PM_UNSET),
+IPDEF2("TERMINFO_DIRS", terminfodirs_gsu, PM_UNSET),
 IPDEF2("WORDCHARS", wordchars_gsu, 0),
-IPDEF2("IFS", ifs_gsu, PM_DONTIMPORT),
+IPDEF2("IFS", ifs_gsu, PM_DONTIMPORT | PM_RESTRICTED),
 IPDEF2("_", underscore_gsu, PM_DONTIMPORT),
 IPDEF2("KEYBOARD_HACK", keyboard_hack_gsu, PM_DONTIMPORT),
 IPDEF2("0", argzero_gsu, 0),
@@ -334,6 +337,7 @@ IPDEF6("TRY_BLOCK_ERROR", &try_errflag, varinteger_gsu),
 IPDEF6("TRY_BLOCK_INTERRUPT", &try_interrupt, varinteger_gsu),
 
 #define IPDEF7(A,B) {{NULL,A,PM_SCALAR|PM_SPECIAL},BR((void *)B),GSU(varscalar_gsu),0,0,NULL,NULL,NULL,0}
+#define IPDEF7R(A,B) {{NULL,A,PM_SCALAR|PM_SPECIAL|PM_DONTIMPORT_SUID},BR((void *)B),GSU(varscalar_gsu),0,0,NULL,NULL,NULL,0}
 #define IPDEF7U(A,B) {{NULL,A,PM_SCALAR|PM_SPECIAL|PM_UNSET},BR((void *)B),GSU(varscalar_gsu),0,0,NULL,NULL,NULL,0}
 IPDEF7("OPTARG", &zoptarg),
 IPDEF7("NULLCMD", &nullcmd),
@@ -346,7 +350,7 @@ IPDEF7("PS2", &prompt2),
 IPDEF7U("RPS2", &rprompt2),
 IPDEF7U("RPROMPT2", &rprompt2),
 IPDEF7("PS3", &prompt3),
-IPDEF7("PS4", &prompt4),
+IPDEF7R("PS4", &prompt4),
 IPDEF7("SPROMPT", &sprompt),
 
 #define IPDEF8(A,B,C,D) {{NULL,A,D|PM_SCALAR|PM_SPECIAL},BR((void *)B),GSU(colonarr_gsu),0,0,NULL,C,NULL,0}
@@ -416,7 +420,7 @@ IPDEF10("pipestatus", pipestatus_gsu),
  * and $@, this is not readonly.  This parameter is not directly
  * visible in user space.
  */
-initparam argvparam_pm = IPDEF9F("", &pparams, NULL, \
+static initparam argvparam_pm = IPDEF9F("", &pparams, NULL, \
 				 PM_ARRAY|PM_SPECIAL|PM_DONTIMPORT);
 
 #undef BR
@@ -627,6 +631,36 @@ getvaluearr(Value v)
 	return NULL;
 }
 
+/* Return whether the variable is set         *
+ * checks that array slices are within range  *
+ * used for [[ -v ... ]] condition test       */
+
+/**/
+int
+issetvar(char *name)
+{
+    struct value vbuf;
+    Value v;
+    int slice;
+    char **arr;
+
+    if (!(v = getvalue(&vbuf, &name, 1)) || *name)
+	return 0; /* no value or more chars after the variable name */
+    if (v->isarr & ~SCANPM_ARRONLY)
+	return v->end > 1; /* for extracted elements, end gives us a count */
+
+    slice = v->start != 0 || v->end != -1;
+    if (PM_TYPE(v->pm->node.flags) != PM_ARRAY || !slice)
+	return !slice && !(v->pm->node.flags & PM_UNSET);
+
+    if (!v->end) /* empty array slice */
+	return 0;
+    /* get the array and check end is within range */
+    if (!(arr = getvaluearr(v)))
+	return 0;
+    return arrlen_ge(arr, v->end < 0 ? - v->end : v->end);
+}
+
 /*
  * Split environment string into (name, value) pair.
  * this is used to avoid in-place editing of environment table
@@ -660,7 +694,28 @@ split_env_string(char *env, char **name, char **value)
     } else
 	return 0;
 }
-    
+
+/**
+ * Check parameter flags to see if parameter shouldn't be imported
+ * from environment at start.
+ *
+ * return 1: don't import: 0: ok to import.
+ */
+static int dontimport(int flags)
+{
+    /* If explicitly marked as don't export */
+    if (flags & PM_DONTIMPORT)
+	return 1;
+    /* If value already exported */
+    if (flags & PM_EXPORTED)
+	return 1;
+    /* If security issue when importing and running with some privilege */
+    if ((flags & PM_DONTIMPORT_SUID) && isset(PRIVILEGED))
+	return 1;
+    /* OK to import */
+    return 0;
+}
+
 /* Set up parameter hash table.  This will add predefined  *
  * parameter entries as well as setting up parameter table *
  * entries for environment variables we inherit.           */
@@ -752,8 +807,13 @@ createparamtable(void)
 	    envp2 = environ; *envp2; envp2++) {
 	if (split_env_string(*envp2, &iname, &ivalue)) {
 	    if (!idigit(*iname) && isident(iname) && !strchr(iname, '[')) {
+		/*
+		 * Parameters that aren't already in the parameter table
+		 * aren't special to the shell, so it's always OK to
+		 * import.  Otherwise, check parameter flags.
+		 */
 		if ((!(pm = (Param) paramtab->getnode(paramtab, iname)) ||
-		     !(pm->node.flags & PM_DONTIMPORT || pm->node.flags & PM_EXPORTED)) &&
+		     !dontimport(pm->node.flags)) &&
 		    (pm = assignsparam(iname, metafy(ivalue, -1, META_DUP),
 				       ASSPM_ENV_IMPORT))) {
 		    pm->node.flags |= PM_EXPORTED;
@@ -771,7 +831,7 @@ createparamtable(void)
     }
     popheap();
 #ifndef USE_SET_UNSET_ENV
-    *envp = '\0';
+    *envp = NULL;
 #endif
     opts[ALLEXPORT] = oae;
 
@@ -812,7 +872,7 @@ createparamtable(void)
     setsparam("OSTYPE", ztrdup_metafy(OSTYPE));
     setsparam("TTY", ztrdup_metafy(ttystrname));
     setsparam("VENDOR", ztrdup_metafy(VENDOR));
-    setsparam("ZSH_NAME", ztrdup_metafy(zsh_name));
+    setsparam("ZSH_ARGZERO", ztrdup(posixzero));
     setsparam("ZSH_VERSION", ztrdup_metafy(ZSH_VERSION));
     setsparam("ZSH_PATCHLEVEL", ztrdup_metafy(ZSH_PATCHLEVEL));
     setaparam("signals", sigptr = zalloc((SIGCOUNT+4) * sizeof(char *)));
@@ -884,7 +944,10 @@ createparam(char *name, int flags)
 		zerr("%s: restricted", name);
 		return NULL;
 	    }
-	    if (!(oldpm->node.flags & PM_UNSET) || (oldpm->node.flags & PM_SPECIAL)) {
+	    if (!(oldpm->node.flags & PM_UNSET) ||
+		(oldpm->node.flags & PM_SPECIAL) ||
+		/* POSIXBUILTINS horror: we need to retain 'export' flags */
+		(isset(POSIXBUILTINS) && (oldpm->node.flags & PM_EXPORTED))) {
 		oldpm->node.flags &= ~PM_UNSET;
 		if ((oldpm->node.flags & PM_SPECIAL) && oldpm->ename) {
 		    Param altpm =
@@ -2001,6 +2064,7 @@ getstrvalue(Value v)
 {
     char *s, **ss;
     char buf[BDIGBUFSIZE];
+    int len;
 
     if (!v)
 	return hcalloc(1);
@@ -2027,7 +2091,7 @@ getstrvalue(Value v)
 	else {
 	    if (v->start < 0)
 		v->start += arrlen(ss);
-	    s = (v->start >= arrlen(ss) || v->start < 0) ?
+	    s = (arrlen_le(ss, v->start) || v->start < 0) ?
 		(char *) hcalloc(1) : ss[v->start];
 	}
 	return s;
@@ -2177,23 +2241,27 @@ getstrvalue(Value v)
     if (v->start == 0 && v->end == -1)
 	return s;
 
+    len = strlen(s);
     if (v->start < 0) {
-	v->start += strlen(s);
+	v->start += len;
 	if (v->start < 0)
 	    v->start = 0;
     }
     if (v->end < 0) {
-	v->end += strlen(s);
+	v->end += len;
 	if (v->end >= 0) {
 	    char *eptr = s + v->end;
 	    if (*eptr)
 		v->end += MB_METACHARLEN(eptr);
 	}
     }
-    s = (v->start > (int)strlen(s)) ? dupstring("") : dupstring(s + v->start);
+
+    s = (v->start > len) ? dupstring("") :
+	dupstring_wlen(s + v->start, len - v->start);
+
     if (v->end <= v->start)
 	s[0] = '\0';
-    else if (v->end - v->start <= (int)strlen(s))
+    else if (v->end - v->start <= len - v->start)
 	s[v->end - v->start] = '\0';
 
     return s;
@@ -2226,14 +2294,31 @@ getarrvalue(Value v)
 	v->start += arrlen(s);
     if (v->end < 0)
 	v->end += arrlen(s) + 1;
-    if (v->start > arrlen(s) || v->start < 0)
-	s = arrdup(nular);
-    else
-	s = arrdup(s + v->start);
-    if (v->end <= v->start)
-	s[0] = NULL;
-    else if (v->end - v->start <= arrlen(s))
-	s[v->end - v->start] = NULL;
+
+    /* Null if 1) array too short, 2) index still negative */
+    if (v->end <= v->start) {
+	s = arrdup_max(nular, 0);
+    }
+    else if (v->start < 0) {
+	s = arrdup_max(nular, 1);
+    }
+    else if (arrlen_le(s, v->start)) {
+	/* Handle $ary[i,i] consistently for any $i > $#ary
+	 * and $ary[i,j] consistently for any $j > $i > $#ary
+	 */
+	s = arrdup_max(nular, v->end - (v->start + 1));
+    }
+    else {
+        /* Copy to a point before the end of the source array:
+         * arrdup_max will copy at most v->end - v->start elements,
+         * starting from v->start element. Original code said:
+	 *  s[v->end - v->start] = NULL
+         * which means that there are exactly the same number of
+         * elements as the value of the above *0-based* index.
+         */
+	s = arrdup_max(s + v->start, v->end - v->start);
+    }
+
     return s;
 }
 
@@ -2362,10 +2447,11 @@ assignstrvalue(Value v, char *val, int flags)
 		v->pm->width = strlen(val);
 	} else {
 	    char *z, *x;
-	    int zlen;
+            int zlen, vlen, newsize;
 
-	    z = dupstring(v->pm->gsu.s->getfn(v->pm));
-	    zlen = strlen(z);
+            z = v->pm->gsu.s->getfn(v->pm);
+            zlen = strlen(z);
+
 	    if ((v->flags & VALFLAG_INV) && unset(KSHARRAYS))
 		v->start--, v->end--;
 	    if (v->start < 0) {
@@ -2395,12 +2481,34 @@ assignstrvalue(Value v, char *val, int flags)
 	    }
 	    else if (v->end > zlen)
 		v->end = zlen;
-	    x = (char *) zalloc(v->start + strlen(val) + zlen - v->end + 1);
-	    strncpy(x, z, v->start);
-	    strcpy(x + v->start, val);
-	    strcat(x + v->start, z + v->end);
-	    v->pm->gsu.s->setfn(v->pm, x);
-	    zsfree(val);
+
+            vlen = strlen(val);
+            /* Characters preceding start index +
+               characters of what is assigned +
+               characters following end index */
+            newsize = v->start + vlen + (zlen - v->end);
+
+            /* Does new size differ? */
+            if (newsize != zlen || v->pm->gsu.s->setfn != strsetfn) {
+                x = (char *) zalloc(newsize + 1);
+                strncpy(x, z, v->start);
+                strcpy(x + v->start, val);
+                strcat(x + v->start, z + v->end);
+                v->pm->gsu.s->setfn(v->pm, x);
+            } else {
+		Param pm = v->pm;
+                /* Size doesn't change, can limit actions to only
+                 * overwriting bytes in already allocated string */
+                strncpy(z + v->start, val, vlen);
+		/* Implement remainder of strsetfn */
+		if (!(pm->node.flags & PM_HASHELEM) &&
+		    ((pm->node.flags & PM_NAMEDDIR) ||
+		     isset(AUTONAMEDIRS))) {
+		    pm->node.flags |= PM_NAMEDDIR;
+		    adduserdir(pm->node.nam, z, 0, 0);
+		}
+            }
+            zsfree(val);
 	}
 	break;
     case PM_INTEGER:
@@ -2580,23 +2688,36 @@ setarrvalue(Value v, char **val)
 	    v->end = v->start;
 
 	post_assignment_length = v->start + arrlen(val);
-	if (v->end <= pre_assignment_length)
-	    post_assignment_length += pre_assignment_length - v->end + 1;
+	if (v->end < pre_assignment_length) {
+	    /* 
+	     * Allocate room for array elements between the end of the slice `v'
+	     * and the original array's end.
+	     */
+	    post_assignment_length += pre_assignment_length - v->end;
+	}
 
-	p = new = (char **) zshcalloc(sizeof(char *)
-		                      * (post_assignment_length + 1));
+	p = new = (char **) zalloc(sizeof(char *)
+		                   * (post_assignment_length + 1));
 
 	for (i = 0; i < v->start; i++)
 	    *p++ = i < pre_assignment_length ? ztrdup(*q++) : ztrdup("");
-	for (r = val; *r;)
-	    *p++ = ztrdup(*r++);
+	for (r = val; *r;) {
+            /* Give away ownership of the string */
+	    *p++ = *r++;
+	}
 	if (v->end < pre_assignment_length)
 	    for (q = old + v->end; *q;)
 		*p++ = ztrdup(*q++);
 	*p = NULL;
 
+	DPUTS2(p - new != post_assignment_length, "setarrvalue: wrong allocation: %d 1= %lu",
+	       post_assignment_length, (unsigned long)(p - new));
+
 	v->pm->gsu.a->setfn(v->pm, new);
-	freearray(val);
+
+        /* Ownership of all strings has been
+         * given away, can plainly free */
+	free(val);
     }
 }
 
@@ -2747,6 +2868,7 @@ assignsparam(char *s, char *val, int flags)
 		zerr("read-only variable: %s", v->pm->node.nam);
 		*ss = '[';
 		zsfree(val);
+		unqueue_signals();
 		return NULL;
 	    }
 	    flags &= ~ASSPM_WARN_CREATE;
@@ -2983,7 +3105,6 @@ sethparam(char *s, char **val)
 	return NULL;
     queue_signals();
     if (!(v = fetchvalue(&vbuf, &s, 1, SCANPM_ASSIGNING))) {
-	DPUTS(!v, "BUG: assigning to undeclared associative array");
 	createparam(t, PM_HASHED);
 	checkcreate = isset(WARNCREATEGLOBAL) && locallevel > forklevel;
     } else if (!(PM_TYPE(v->pm->node.flags) & PM_HASHED) &&
@@ -3062,6 +3183,7 @@ setnparam(char *s, mnumber val)
 	if (!(v = getvalue(&vbuf, &t, 1))) {
 	    DPUTS(!v, "BUG: value not found for new parameter");
 	    /* errflag |= ERRFLAG_ERROR; */
+	    unqueue_signals();
 	    return NULL;
 	}
 	if (!was_unset && isset(WARNCREATEGLOBAL) && locallevel > forklevel)
@@ -3803,8 +3925,8 @@ intsecondsgetfn(UNUSED(Param pm))
 
     gettimeofday(&now, &dummy_tz);
 
-    return (zlong)(now.tv_sec - shtimer.tv_sec) +
-	(zlong)(now.tv_usec - shtimer.tv_usec) / (zlong)1000000;
+    return (zlong)(now.tv_sec - shtimer.tv_sec -
+		  (now.tv_usec < shtimer.tv_usec ? 1 : 0));
 }
 
 /* Function to set value of special parameter `SECONDS' */
@@ -3822,7 +3944,7 @@ intsecondssetfn(UNUSED(Param pm), zlong x)
     shtimer.tv_sec = diff;
     if ((zlong)shtimer.tv_sec != diff)
 	zwarn("SECONDS truncated on assignment");
-    shtimer.tv_usec = 0;
+    shtimer.tv_usec = now.tv_usec;
 }
 
 /**/
@@ -4157,7 +4279,9 @@ static void
 argzerosetfn(UNUSED(Param pm), char *x)
 {
     if (x) {
-	if (!isset(POSIXARGZERO)) {
+	if (isset(POSIXARGZERO))
+	    zerr("read-only variable: 0");
+	else {
 	    zsfree(argzero);
 	    argzero = ztrdup(x);
 	}
@@ -4336,7 +4460,7 @@ void
 homesetfn(UNUSED(Param pm), char *x)
 {
     zsfree(home);
-    if (x && isset(CHASELINKS) && (home = xsymlink(x)))
+    if (x && isset(CHASELINKS) && (home = xsymlink(x, 0)))
 	zsfree(x);
     else
 	home = x ? x : ztrdup("");
@@ -4435,6 +4559,33 @@ terminfosetfn(Param pm, char *x)
     term_reinit_from_pm();
 }
 
+/* Function to get value of special parameter `TERMINFO_DIRS' */
+
+/**/
+char *
+terminfodirsgetfn(UNUSED(Param pm))
+{
+    return zsh_terminfodirs ? zsh_terminfodirs : dupstring("");
+}
+
+/* Function to set value of special parameter `TERMINFO_DIRS' */
+
+/**/
+void
+terminfodirssetfn(Param pm, char *x)
+{
+    zsfree(zsh_terminfodirs);
+    zsh_terminfodirs = x;
+
+    /*
+     * terminfo relies on the value being exported before
+     * we reinitialise the terminal.  This is a bit inefficient.
+     */
+    if ((pm->node.flags & PM_EXPORTED) && x)
+	addenv(pm, x);
+
+    term_reinit_from_pm();
+}
 /* Function to get value for special parameter `pipestatus' */
 
 /**/
@@ -4670,6 +4821,7 @@ addenv(Param pm, char *value)
      if (pm->env)
          zsfree(pm->env);
      pm->env = newenv;
+     pm->node.flags |= PM_EXPORTED;
 #else
     /*
      * Under Cygwin we must use putenv() to maintain consistency.
@@ -5165,10 +5317,6 @@ printparamvalue(Param p, int printflags)
 {
     char *t, **u;
 
-    if (p->node.flags & PM_AUTOLOAD) {
-	putchar('\n');
-	return;
-    }
     if (printflags & PRINT_KV_PAIR)
 	putchar(' ');
     else
@@ -5252,20 +5400,33 @@ printparamnode(HashNode hn, int printflags)
 	     */
 	    printflags |= PRINT_NAMEONLY;
 	}
+	else if (p->node.flags & PM_EXPORTED)
+	    printflags |= PRINT_NAMEONLY;
 	else
 	    return;
     }
+    if (p->node.flags & PM_AUTOLOAD)
+	printflags |= PRINT_NAMEONLY;
 
     if (printflags & PRINT_TYPESET) {
 	if ((p->node.flags & (PM_READONLY|PM_SPECIAL)) ==
-	    (PM_READONLY|PM_SPECIAL)) {
+	    (PM_READONLY|PM_SPECIAL) ||
+	    (p->node.flags & PM_AUTOLOAD)) {
 	    /*
 	     * It's not possible to restore the state of
 	     * these, so don't output.
 	     */
 	    return;
 	}
-	printf("typeset ");
+	if (locallevel && p->level >= locallevel) {
+	    printf("typeset ");	    /* printf("local "); */
+	} else if ((p->node.flags & PM_EXPORTED) &&
+		   !(p->node.flags & (PM_ARRAY|PM_HASHED))) {
+	    printf("export ");
+	} else if (locallevel) {
+	    printf("typeset -g ");
+	} else
+	    printf("typeset ");
     }
 
     /* Print the attributes of the parameter */
@@ -5278,7 +5439,9 @@ printparamnode(HashNode hn, int printflags)
 	    if (pmptr->flags & PMTF_TEST_LEVEL) {
 		if (p->level)
 		    doprint = 1;
-	    } else if (p->node.flags & pmptr->binflag)
+	    } else if ((pmptr->binflag != PM_EXPORTED || p->level ||
+			(p->node.flags & (PM_LOCAL|PM_ARRAY|PM_HASHED))) &&
+		       (p->node.flags & pmptr->binflag))
 		doprint = 1;
 
 	    if (doprint) {
@@ -5290,9 +5453,8 @@ printparamnode(HashNode hn, int printflags)
 			}
 			putchar(pmptr->typeflag);
 		    }
-		} else {
+		} else
 		    printf("%s ", pmptr->string);
-		}
 		if ((pmptr->flags & PMTF_USE_BASE) && p->base) {
 		    printf("%d ", p->base);
 		    doneminus = 0;

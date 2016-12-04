@@ -207,7 +207,7 @@ static int (*execfuncs[WC_COUNT-WC_CURSH]) _((Estate, int)) = {
 
 /* structure for command builtin for when it is used with -v or -V */
 static struct builtin commandbn =
-    BUILTIN(0, 0, bin_whence, 0, -1, BIN_COMMAND, "vV", NULL);
+    BUILTIN("command", 0, bin_whence, 0, -1, BIN_COMMAND, "pvV", NULL);
 
 /* parse string into a list */
 
@@ -437,7 +437,7 @@ static int
 zexecve(char *pth, char **argv, char **newenvp)
 {
     int eno;
-    static char buf[PATH_MAX * 2];
+    static char buf[PATH_MAX * 2+1];
     char **eep;
 
     unmetafy(pth, NULL);
@@ -568,11 +568,49 @@ commandnotfound(char *arg0, LinkList args)
     Shfunc shf = (Shfunc)
 	shfunctab->getnode(shfunctab, "command_not_found_handler");
 
-    if (!shf)
-	return 127;
+    if (!shf) {
+	lastval = 127;
+	return 1;
+    }
 
     pushnode(args, arg0);
-    return doshfunc(shf, args, 1);
+    lastval = doshfunc(shf, args, 1);
+    return 0;
+}
+
+/*
+ * Search the default path for cmd.
+ * pbuf of length plen is the buffer to use.
+ * Return NULL if not found.
+ */
+
+static char *
+search_defpath(char *cmd, char *pbuf, int plen)
+{
+    char *ps = DEFAULT_PATH, *pe = NULL, *s;
+
+    for (ps = DEFAULT_PATH; ps; ps = pe ? pe+1 : NULL) {
+	pe = strchr(ps, ':');
+	if (*ps == '/') {
+	    s = pbuf;
+	    if (pe) {
+		if (pe - ps >= plen)
+		    continue;
+		struncpy(&s, ps, pe-ps);
+	    } else {
+		if (strlen(ps) >= plen)
+		    continue;
+		strucpy(&s, ps);
+	    }
+	    *s++ = '/';
+	    if ((s - pbuf) + strlen(cmd) >= plen)
+		continue;
+	    strucpy(&s, cmd);
+	    if (iscom(pbuf))
+		return pbuf;
+	}
+    }
+    return NULL;
 }
 
 /* execute an external command */
@@ -582,7 +620,7 @@ static void
 execute(LinkList args, int flags, int defpath)
 {
     Cmdnam cn;
-    char buf[MAXCMDLEN], buf2[MAXCMDLEN];
+    char buf[MAXCMDLEN+1], buf2[MAXCMDLEN+1];
     char *s, *z, *arg0;
     char **argv, **pp, **newenvp = NULL;
     int eno = 0, ee;
@@ -663,29 +701,12 @@ execute(LinkList args, int flags, int defpath)
 
     /* for command -p, search the default path */
     if (defpath) {
-	char *s, pbuf[PATH_MAX];
-	char *dptr, *pe, *ps = DEFAULT_PATH;
+	char pbuf[PATH_MAX+1];
+	char *dptr;
 
-	for(;ps;ps = pe ? pe+1 : NULL) {
-	    pe = strchr(ps, ':');
-	    if (*ps == '/') {
-		s = pbuf;
-		if (pe)
-		    struncpy(&s, ps, pe-ps);
-		else
-		    strucpy(&s, ps);
-		*s++ = '/';
-		if ((s - pbuf) + strlen(arg0) >= PATH_MAX)
-		    continue;
-		strucpy(&s, arg0);
-		if (iscom(pbuf))
-		    break;
-	    }
-	}
-
-	if (!ps) {
+	if (!search_defpath(arg0, pbuf, PATH_MAX)) {
 	    if (commandnotfound(arg0, args) == 0)
-		_exit(0);
+		_exit(lastval);
 	    zerr("command not found: %s", arg0);
 	    _exit(127);
 	}
@@ -700,7 +721,7 @@ execute(LinkList args, int flags, int defpath)
     } else {
 
 	if ((cn = (Cmdnam) cmdnamtab->getnode(cmdnamtab, arg0))) {
-	    char nn[PATH_MAX], *dptr;
+	    char nn[PATH_MAX+1], *dptr;
 
 	    if (cn->node.flags & HASHED)
 		strcpy(nn, cn->u.cmd);
@@ -749,7 +770,7 @@ execute(LinkList args, int flags, int defpath)
     if (eno)
 	zerr("%e: %s", eno, arg0);
     else if (commandnotfound(arg0, args) == 0)
-	_exit(0);
+	_exit(lastval);
     else
 	zerr("command not found: %s", arg0);
     _exit((eno == EACCES || eno == ENOEXEC) ? 126 : 127);
@@ -760,32 +781,40 @@ execute(LinkList args, int flags, int defpath)
 /*
  * Get the full pathname of an external command.
  * If the second argument is zero, return the first argument if found;
- * if non-zero, return the path using heap memory.  (RET_IF_COM(X), above).
+ * if non-zero, return the path using heap memory.  (RET_IF_COM(X),
+ * above).
+ * If the third argument is non-zero, use the system default path
+ * instead of the current path.
  */
 
 /**/
 mod_export char *
-findcmd(char *arg0, int docopy)
+findcmd(char *arg0, int docopy, int default_path)
 {
     char **pp;
     char *z, *s, buf[MAXCMDLEN];
     Cmdnam cn;
 
+    if (default_path)
+    {
+	if (search_defpath(arg0, buf, MAXCMDLEN))
+	    return docopy ? dupstring(buf) : arg0;
+	return NULL;
+    }
     cn = (Cmdnam) cmdnamtab->getnode(cmdnamtab, arg0);
-    if (!cn && isset(HASHCMDS))
+    if (!cn && isset(HASHCMDS) && !isrelative(arg0))
 	cn = hashcmd(arg0, path);
     if ((int) strlen(arg0) > PATH_MAX)
 	return NULL;
-    for (s = arg0; *s; s++)
-	if (*s == '/') {
-	    RET_IF_COM(arg0);
-	    if (arg0 == s || unset(PATHDIRS)) {
-		return NULL;
-	    }
-	    break;
+    if ((s = strchr(arg0, '/'))) {
+	RET_IF_COM(arg0);
+	if (arg0 == s || unset(PATHDIRS) || !strncmp(arg0, "./", 2) ||
+	    !strncmp(arg0, "../", 3)) {
+	    return NULL;
 	}
+    }
     if (cn) {
-	char nn[PATH_MAX];
+	char nn[PATH_MAX+1];
 
 	if (cn->node.flags & HASHED)
 	    strcpy(nn, cn->u.cmd);
@@ -818,6 +847,11 @@ findcmd(char *arg0, int docopy)
     return NULL;
 }
 
+/*
+ * Return TRUE if the given path denotes an executable regular file, or a
+ * symlink to one.
+ */
+
 /**/
 int
 iscom(char *s)
@@ -847,6 +881,11 @@ isreallycom(Cmdnam cn)
     return iscom(fullnam);
 }
 
+/*
+ * Return TRUE if the given path contains a dot or dot-dot component
+ * and does not start with a slash.
+ */
+
 /**/
 int
 isrelative(char *s)
@@ -866,7 +905,7 @@ mod_export Cmdnam
 hashcmd(char *arg0, char **pp)
 {
     Cmdnam cn;
-    char *s, buf[PATH_MAX];
+    char *s, buf[PATH_MAX+1];
     char **pq;
 
     for (; *pp; pp++)
@@ -994,9 +1033,18 @@ entersubsh(int flags)
     if ((flags & ESUB_REVERTPGRP) && getpid() == mypgrp)
 	release_pgrp();
     shout = NULL;
-    if (!job_control_ok) {
+    if (flags & ESUB_NOMONITOR) {
 	/*
-	 * If this process is not goign to be doing job control,
+	 * Allowing any form of interactive signalling here is
+	 * actively harmful as we are in a context where there is no
+	 * control over the process.
+	 */
+	signal_ignore(SIGTTOU);
+	signal_ignore(SIGTTIN);
+	signal_ignore(SIGTSTP);
+    } else if (!job_control_ok) {
+	/*
+	 * If this process is not going to be doing job control,
 	 * we don't want to do special things with the corresponding
 	 * signals.  If it is, we need to keep the special behaviour:
 	 * see note about attachtty() above.
@@ -1190,6 +1238,7 @@ execlist(Estate state, int dont_change_job, int exiting)
     }
     while (wc_code(code) == WC_LIST && !breaks && !retflag && !errflag) {
 	int donedebug;
+	int this_noerrexit = 0, this_donetrap = 0;
 
 	ltype = WC_LIST_TYPE(code);
 	csp = cmdsp;
@@ -1273,9 +1322,17 @@ execlist(Estate state, int dont_change_job, int exiting)
 	    goto sublist_done;
 	}
 	while (wc_code(code) == WC_SUBLIST) {
+	    int isend = (WC_SUBLIST_TYPE(code) == WC_SUBLIST_END);
 	    next = state->pc + WC_SUBLIST_SKIP(code);
 	    if (!oldnoerrexit)
-		noerrexit = (WC_SUBLIST_TYPE(code) != WC_SUBLIST_END);
+		noerrexit = !isend;
+	    if (WC_SUBLIST_FLAGS(code) & WC_SUBLIST_NOT) {
+		/* suppress errexit for "! this_command" */
+		if (isend)
+		    this_noerrexit = 1;
+		/* suppress errexit for ! <list-of-shell-commands> */
+		noerrexit = 1;
+	    }
 	    switch (WC_SUBLIST_TYPE(code)) {
 	    case WC_SUBLIST_END:
 		/* End of sublist; just execute, ignoring status. */
@@ -1305,10 +1362,10 @@ execlist(Estate state, int dont_change_job, int exiting)
 			/* We've skipped to the end of the list, not executing *
 			 * the final pipeline, so don't perform error handling *
 			 * for this sublist.                                   */
-			donetrap = 1;
+			this_donetrap = 1;
 			goto sublist_done;
 		    } else if (WC_SUBLIST_TYPE(code) == WC_SUBLIST_END) {
-			donetrap = 1;
+			this_donetrap = 1;
 			/*
 			 * Treat this in the same way as if we reached
 			 * the end of the sublist normally.
@@ -1338,10 +1395,10 @@ execlist(Estate state, int dont_change_job, int exiting)
 			/* We've skipped to the end of the list, not executing *
 			 * the final pipeline, so don't perform error handling *
 			 * for this sublist.                                   */
-			donetrap = 1;
+			this_donetrap = 1;
 			goto sublist_done;
 		    } else if (WC_SUBLIST_TYPE(code) == WC_SUBLIST_END) {
-			donetrap = 1;
+			this_donetrap = 1;
 			/*
 			 * Treat this in the same way as if we reached
 			 * the end of the sublist normally.
@@ -1391,7 +1448,7 @@ sublist_done:
 	/* Check whether we are suppressing traps/errexit *
 	 * (typically in init scripts) and if we haven't  *
 	 * already performed them for this sublist.       */
-	if (!noerrexit && !donetrap) {
+	if (!noerrexit && !this_noerrexit && !donetrap && !this_donetrap) {
 	    if (sigtrapped[SIGZERR] && lastval) {
 		dotrap(SIGZERR);
 		donetrap = 1;
@@ -1561,6 +1618,7 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 
 	    if (nowait) {
 		if(!pline_level) {
+		    int jobsub;
 		    struct process *pn, *qn;
 
 		    curjob = newjob;
@@ -1573,6 +1631,20 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 		    if (!jn->procs->next || lpforked == 2) {
 			jn->gleader = list_pipe_pid;
 			jn->stat |= STAT_SUBLEADER;
+			/*
+			 * Pick up any subjob that's still lying around
+			 * as it's now our responsibility.
+			 * If we find it we're a SUPERJOB.
+			 */
+			for (jobsub = 1; jobsub <= maxjob; jobsub++) {
+			    Job jnsub = jobtab + jobsub;
+			    if (jnsub->stat & STAT_SUBJOB_ORPHANED) {
+				jn->other = jobsub;
+				jn->stat |= STAT_SUPERJOB;
+				jnsub->stat &= ~STAT_SUBJOB_ORPHANED;
+				jnsub->other = list_pipe_pid;
+			    }
+			}
 		    }
 		    for (pn = jobtab[jn->other].procs; pn; pn = pn->next)
 			if (WIFSTOPPED(pn->status))
@@ -1584,7 +1656,8 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 		    }
 
 		    jn->stat &= ~(STAT_DONE | STAT_NOPRINT);
-		    jn->stat |= STAT_STOPPED | STAT_CHANGED | STAT_LOCKED;
+		    jn->stat |= STAT_STOPPED | STAT_CHANGED | STAT_LOCKED |
+			STAT_INUSE;
 		    printjob(jn, !!isset(LONGLISTJOBS), 1);
 		}
 		else if (newjob != list_pipe_job)
@@ -1627,7 +1700,13 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 		    int synch[2];
 		    struct timeval bgtime;
 
+		    /*
+		     * A pipeline with the shell handling the right
+		     * hand side was stopped.  We'll fork to allow
+		     * it to continue.
+		     */
 		    if (pipe(synch) < 0 || (pid = zfork(&bgtime)) == -1) {
+			/* Failure */
 			if (pid < 0) {
 			    close(synch[0]);
 			    close(synch[1]);
@@ -1641,6 +1720,18 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 			thisjob = newjob;
 		    }
 		    else if (pid) {
+			/*
+			 * Parent: job control is here.  If the job
+			 * started for the RHS of the pipeline is still
+			 * around, then its a SUBJOB and the job for
+			 * earlier parts of the pipeeline is its SUPERJOB.
+			 * The newly forked shell isn't recorded as a
+			 * separate job here, just as list_pipe_pid.
+			 * If the superjob exits (it may already have
+			 * done so, see child branch below), we'll use
+			 * list_pipe_pid to form the basis of a
+			 * replacement job --- see SUBLEADER code above.
+			 */
 			char dummy;
 
 			lpforked =
@@ -1659,7 +1750,9 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 			    jobtab[list_pipe_job].other = newjob;
 			    jobtab[list_pipe_job].stat |= STAT_SUPERJOB;
 			    jn->stat |= STAT_SUBJOB | STAT_NOPRINT;
-			    jn->other = pid;
+			    jn->other = list_pipe_pid;	/* see zsh.h */
+			    if (hasprocs(list_pipe_job))
+				jn->gleader = jobtab[list_pipe_job].gleader;
 			}
 			if ((list_pipe || last1) && hasprocs(list_pipe_job))
 			    killpg(jobtab[list_pipe_job].gleader, SIGSTOP);
@@ -1668,13 +1761,21 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 		    else {
 			close(synch[0]);
 			entersubsh(ESUB_ASYNC);
-			if (jobtab[list_pipe_job].procs) {
-			    if (setpgrp(0L, mypgrp = jobtab[list_pipe_job].gleader)
-				== -1) {
-				setpgrp(0L, mypgrp = getpid());
-			    }
-			} else
-			    setpgrp(0L, mypgrp = getpid());
+			/*
+			 * At this point, we used to attach this process
+			 * to the process group of list_pipe_job (the
+			 * new superjob) any time that was still available.
+			 * That caused problems in at least two
+			 * cases because this forked shell was then
+			 * suspended with the right hand side of the
+			 * pipeline, and the SIGSTOP below suspended
+			 * it a second time when it was continued.
+			 *
+			 * It's therefore not clear entirely why you'd ever
+			 * do anything other than the following, but no
+			 * doubt we'll find out...
+			 */
+			setpgrp(0L, mypgrp = getpid());
 			close(synch[1]);
 			kill(getpid(), SIGSTOP);
 			list_pipe = 0;
@@ -1711,6 +1812,8 @@ execpline(Estate state, wordcode slcode, int how, int last1)
 		deletejob(jn, 0);
 	    thisjob = pj;
 	}
+	else
+	    unqueue_signals();
 	if ((slflags & WC_SUBLIST_NOT) && !errflag)
 	    lastval = !lastval;
     }
@@ -1728,6 +1831,7 @@ execpline2(Estate state, wordcode pcode,
 {
     pid_t pid;
     int pipes[2];
+    struct execcmd_params eparams;
 
     if (breaks || retflag)
 	return;
@@ -1745,17 +1849,16 @@ execpline2(Estate state, wordcode pcode,
 	else
 	    list_pipe_text[0] = '\0';
     }
-    if (WC_PIPE_TYPE(pcode) == WC_PIPE_END)
-	execcmd(state, input, output, how, last1 ? 1 : 2);
-    else {
+    if (WC_PIPE_TYPE(pcode) == WC_PIPE_END) {
+	execcmd_analyse(state, &eparams);
+	execcmd_exec(state, &eparams, input, output, how, last1 ? 1 : 2);
+    } else {
 	int old_list_pipe = list_pipe;
 	int subsh_close = -1;
-	Wordcode next = state->pc + (*state->pc), pc;
-	wordcode code;
+	Wordcode next = state->pc + (*state->pc), start_pc;
 
-	state->pc++;
-	for (pc = state->pc; wc_code(code = *pc) == WC_REDIR;
-	     pc += WC_REDIR_WORDS(code));
+	start_pc = ++state->pc;
+	execcmd_analyse(state, &eparams);
 
 	if (mpipe(pipes) < 0) {
 	    /* FIXME */
@@ -1764,7 +1867,8 @@ execpline2(Estate state, wordcode pcode,
 	/* if we are doing "foo | bar" where foo is a current *
 	 * shell command, do foo in a subshell and do the     *
 	 * rest of the pipeline in the current shell.         */
-	if (wc_code(code) >= WC_CURSH && (how & Z_SYNC)) {
+	if ((eparams.type >= WC_CURSH || !eparams.args)
+	    && (how & Z_SYNC)) {
 	    int synch[2];
 	    struct timeval bgtime;
 
@@ -1782,7 +1886,7 @@ execpline2(Estate state, wordcode pcode,
 	    } else if (pid) {
 		char dummy, *text;
 
-		text = getjobtext(state->prog, state->pc);
+		text = getjobtext(state->prog, start_pc);
 		addproc(pid, text, 0, &bgtime);
 		close(synch[1]);
 		read_loop(synch[0], &dummy, 1);
@@ -1793,14 +1897,18 @@ execpline2(Estate state, wordcode pcode,
 		entersubsh(((how & Z_ASYNC) ? ESUB_ASYNC : 0)
 			   | ESUB_PGRP | ESUB_KEEPTRAP);
 		close(synch[1]);
-		execcmd(state, input, pipes[1], how, 1);
+		if (sigtrapped[SIGEXIT])
+		{
+		    unsettrap(SIGEXIT);
+		}
+		execcmd_exec(state, &eparams, input, pipes[1], how, 1);
 		_exit(lastval);
 	    }
 	} else {
 	    /* otherwise just do the pipeline normally. */
 	    addfilelist(NULL, pipes[0]);
 	    subsh_close = pipes[0];
-	    execcmd(state, input, pipes[1], how, 0);
+	    execcmd_exec(state, &eparams, input, pipes[1], how, 0);
 	}
 	zclose(pipes[1]);
 	state->pc = next;
@@ -2456,55 +2564,51 @@ resolvebuiltin(const char *cmdarg, HashNode hn)
     return hn;
 }
 
+/*
+ * We are about to execute a command at the lowest level of the
+ * hierarchy.  Analyse the parameters from the wordcode.
+ */
+
 /**/
 static void
-execcmd(Estate state, int input, int output, int how, int last1)
+execcmd_analyse(Estate state, Execcmd_params eparams)
 {
-    HashNode hn = NULL;
-    LinkList args, filelist = NULL;
-    LinkNode node;
-    Redir fn;
-    struct multio *mfds[10];
-    char *text;
-    int save[10];
-    int fil, dfil, is_cursh, type, do_exec = 0, redir_err = 0, i, htok = 0;
-    int nullexec = 0, assign = 0, forked = 0, postassigns = 0;
-    int is_shfunc = 0, is_builtin = 0, is_exec = 0, use_defpath = 0;
-    /* Various flags to the command. */
-    int cflags = 0, orig_cflags = 0, checked = 0, oautocont = -1;
-    LinkList redir;
     wordcode code;
-    Wordcode beg = state->pc, varspc, assignspc = (Wordcode)0;
-    FILE *oxtrerr = xtrerr, *newxtrerr = NULL;
+    int i;
 
-    doneps4 = 0;
-    redir = (wc_code(*state->pc) == WC_REDIR ? ecgetredirs(state) : NULL);
+    eparams->beg = state->pc;
+    eparams->redir =
+	(wc_code(*state->pc) == WC_REDIR ? ecgetredirs(state) : NULL);
     if (wc_code(*state->pc) == WC_ASSIGN) {
 	cmdoutval = 0;
-	varspc = state->pc;
+	eparams->varspc = state->pc;
 	while (wc_code((code = *state->pc)) == WC_ASSIGN)
 	    state->pc += (WC_ASSIGN_TYPE(code) == WC_ASSIGN_SCALAR ?
 			  3 : WC_ASSIGN_NUM(code) + 2);
     } else
-	varspc = NULL;
+	eparams->varspc = NULL;
 
     code = *state->pc++;
 
-    type = wc_code(code);
+    eparams->type = wc_code(code);
+    eparams->postassigns = 0;
 
     /* It would be nice if we could use EC_DUPTOK instead of EC_DUP here.
      * But for that we would need to check/change all builtins so that
      * they don't modify their argument strings. */
-    switch (type) {
+    switch (eparams->type) {
     case WC_SIMPLE:
-	args = ecgetlist(state, WC_SIMPLE_ARGC(code), EC_DUP, &htok);
+	eparams->args = ecgetlist(state, WC_SIMPLE_ARGC(code), EC_DUP,
+				  &eparams->htok);
+	eparams->assignspc = NULL;
 	break;
 
     case WC_TYPESET:
-	args = ecgetlist(state, WC_TYPESET_ARGC(code), EC_DUP, &htok);
-	postassigns = *state->pc++;
-	assignspc = state->pc;
-	for (i = 0; i < postassigns; i++) {
+	eparams->args = ecgetlist(state, WC_TYPESET_ARGC(code), EC_DUP,
+				  &eparams->htok);
+	eparams->postassigns = *state->pc++;
+	eparams->assignspc = state->pc;
+	for (i = 0; i < eparams->postassigns; i++) {
 	    code = *state->pc;
 	    DPUTS(wc_code(code) != WC_ASSIGN,
 		  "BUG: miscounted typeset assignments");
@@ -2514,8 +2618,45 @@ execcmd(Estate state, int input, int output, int how, int last1)
 	break;
 
     default:
-	args = NULL;
+	eparams->args = NULL;
+	eparams->assignspc = NULL;
+	eparams->htok = 0;
+	break;
     }
+}
+
+/*
+ * Execute a command at the lowest level of the hierarchy.
+ */
+
+/**/
+static void
+execcmd_exec(Estate state, Execcmd_params eparams,
+	     int input, int output, int how, int last1)
+{
+    HashNode hn = NULL;
+    LinkList filelist = NULL;
+    LinkNode node;
+    Redir fn;
+    struct multio *mfds[10];
+    char *text;
+    int save[10];
+    int fil, dfil, is_cursh, do_exec = 0, redir_err = 0, i;
+    int nullexec = 0, assign = 0, forked = 0;
+    int is_shfunc = 0, is_builtin = 0, is_exec = 0, use_defpath = 0;
+    /* Various flags to the command. */
+    int cflags = 0, orig_cflags = 0, checked = 0, oautocont = -1;
+    FILE *oxtrerr = xtrerr, *newxtrerr = NULL;
+    /*
+     * Retrieve parameters for quick reference (they are unique
+     * to us so we can modify the structure if we want).
+     */
+    LinkList args = eparams->args;
+    LinkList redir = eparams->redir;
+    Wordcode varspc = eparams->varspc;
+    int type = eparams->type;
+
+    doneps4 = 0;
 
     /*
      * If assignment but no command get the status from variable
@@ -2609,24 +2750,76 @@ execcmd(Estate state, int input, int output, int how, int last1)
 	    }
 	    checked = 0;
 	    if ((cflags & BINF_COMMAND) && nextnode(firstnode(args))) {
-		/* check for options to command builtin */
-		char *next = (char *) getdata(nextnode(firstnode(args)));
+		/*
+		 * Check for options to "command".
+		 * If just -p, this is handled here: use the default
+		 * path to execute.
+		 * If -v or -V, possibly with -p, dispatch to bin_whence
+		 * but with flag to indicate special handling of -p.
+		 * Otherwise, just leave marked as BINF_COMMAND
+		 * modifier with no additional action.
+		 */
+		LinkNode argnode = nextnode(firstnode(args));
+		char *argdata = (char *) getdata(argnode);
 		char *cmdopt;
-		if (next && *next == '-' && strlen(next) == 2 &&
-		        (cmdopt = strchr("pvV", next[1])))
-		{
-		    if (*cmdopt == 'p') {
-			uremnode(args, firstnode(args));
-			use_defpath = 1;
-			if (nextnode(firstnode(args)))
-			    next = (char *) getdata(nextnode(firstnode(args)));
-		    } else {
-			hn = &commandbn.node;
-			is_builtin = 1;
+		int has_p = 0, has_vV = 0, has_other = 0;
+		while (*argdata == '-') {
+		    /* Just to be definite, stop on single "-", too, */
+		    if (!argdata[1] || (argdata[1] == '-' && !argdata[2]))
+			break;
+		    for (cmdopt = argdata+1; *cmdopt; cmdopt++) {
+			switch (*cmdopt) {
+			case 'p':
+			    /*
+			     * If we've got this multiple times (command
+			     * -p -p) we'll treat the second -p as a
+			     * command because we only remove one below.
+			     * Don't think that's a big issue, and it's
+			     * also traditional behaviour.
+			     */
+			    has_p = 1;
+			    break;
+			case 'v':
+			case 'V':
+			    has_vV = 1;
+			    break;
+			default:
+			    has_other = 1;
+			    break;
+			}
+		    }
+		    if (has_other) {
+			/* Don't know how to handle this, so don't */
+			has_p = has_vV = 0;
 			break;
 		    }
+
+		    argnode = nextnode(argnode);
+		    if (!argnode)
+			break;
+		    argdata = (char *) getdata(argnode);
 		}
-		if (!strcmp(next, "--"))
+		if (has_vV) {
+		    /* Leave everything alone, dispatch to whence */
+		    hn = &commandbn.node;
+		    is_builtin = 1;
+		    break;
+		} else if (has_p) {
+		    /* Use default path; absorb command and option. */
+		    uremnode(args, firstnode(args));
+		    use_defpath = 1;
+		    if ((argnode = nextnode(firstnode(args))))
+			argdata = (char *) getdata(argnode);
+		}
+		/*
+		 * Else just absorb command and any trailing
+		 * end-of-options marker.  This can only occur
+		 * if we just had -p or something including more
+		 * than just -p, -v and -V, in which case we behave
+		 * as if this is command [non-option-stuff].  This
+		 * isn't a good place for standard option handling.
+		 */
+		if (!strcmp(argdata, "--"))
 		     uremnode(args, firstnode(args));
 	    }
 	    if ((cflags & BINF_EXEC) && nextnode(firstnode(args))) {
@@ -2721,7 +2914,7 @@ execcmd(Estate state, int input, int output, int how, int last1)
 
     /* Do prefork substitutions */
     esprefork = (assign || isset(MAGICEQUALSUBST)) ? PREFORK_TYPESET : 0;
-    if (args && htok)
+    if (args && eparams->htok)
 	prefork(args, esprefork, NULL);
 
     if (type == WC_SIMPLE || type == WC_TYPESET) {
@@ -2866,7 +3059,7 @@ execcmd(Estate state, int input, int output, int how, int last1)
     /* Get the text associated with this command. */
     if ((how & Z_ASYNC) ||
 	(!sfcontext && !sourcelevel && (jobbing || (how & Z_TIMED))))
-	text = getjobtext(state->prog, beg);
+	text = getjobtext(state->prog, eparams->beg);
     else
 	text = NULL;
 
@@ -2893,11 +3086,11 @@ execcmd(Estate state, int input, int output, int how, int last1)
 	    if (s[0] == Star && !s[1]) {
 		if (!checkrmall(pwd))
 		    uremnode(args, node);
-	    } else if (l > 2 && s[l - 2] == '/' && s[l - 1] == Star) {
+	    } else if (l >= 2 && s[l - 2] == '/' && s[l - 1] == Star) {
 		char t = s[l - 2];
 
 		s[l - 2] = 0;
-		if (!checkrmall(s))
+		if (!checkrmall(*s ? s : "/"))
 		    uremnode(args, node);
 		s[l - 2] = t;
 	    }
@@ -3125,7 +3318,7 @@ execcmd(Estate state, int input, int output, int how, int last1)
 	    forked = 1;
     }
 
-    if ((esglob = !(cflags & BINF_NOGLOB)) && args && htok) {
+    if ((esglob = !(cflags & BINF_NOGLOB)) && args && eparams->htok) {
 	LinkList oargs = args;
 	globlist(args, 0);
 	args = oargs;
@@ -3439,7 +3632,7 @@ execcmd(Estate state, int input, int output, int how, int last1)
 	}
 	if (type == WC_FUNCDEF) {
 	    Eprog redir_prog;
-	    if (!redir && wc_code(*beg) == WC_REDIR)  {
+	    if (!redir && wc_code(*eparams->beg) == WC_REDIR)  {
 		/*
 		 * We're not using a redirection from the currently
 		 * parsed environment, which is what we'd do for an
@@ -3449,7 +3642,7 @@ execcmd(Estate state, int input, int output, int how, int last1)
 		struct estate s;
 
 		s.prog = state->prog;
-		s.pc = beg;
+		s.pc = eparams->beg;
 		s.strs = state->prog->strs;
 
 		/*
@@ -3491,7 +3684,7 @@ execcmd(Estate state, int input, int output, int how, int last1)
 		     * if it's got "command" in front.
 		     * If it's a normal command --- save.
 		     */
-		    if (is_shfunc || (hn->flags & BINF_PSPECIAL))
+		    if (is_shfunc || (hn->flags & (BINF_PSPECIAL|BINF_ASSIGN)))
 			do_save = (orig_cflags & BINF_COMMAND);
 		    else
 			do_save = 1;
@@ -3500,7 +3693,7 @@ execcmd(Estate state, int input, int output, int how, int last1)
 		     * Save if it's got "command" in front or it's
 		     * not a magic-equals assignment.
 		     */
-		    if ((cflags & BINF_COMMAND) || !assign)
+		    if ((cflags & (BINF_COMMAND|BINF_ASSIGN)) || !assign)
 			do_save = 1;
 		}
 		if (do_save && varspc)
@@ -3533,13 +3726,15 @@ execcmd(Estate state, int input, int output, int how, int last1)
 	    } else {
 		/* It's a builtin */
 		LinkList assigns = (LinkList)0;
+		int postassigns = eparams->postassigns;
 		if (forked)
 		    closem(FDT_INTERNAL);
 		if (postassigns) {
 		    Wordcode opc = state->pc;
-		    state->pc = assignspc;
+		    state->pc = eparams->assignspc;
 		    assigns = newlinklist();
 		    while (postassigns--) {
+			int htok;
 			wordcode ac = *state->pc++;
 			char *name = ecgetstr(state, EC_DUPTOK, &htok);
 			Asgment asg;
@@ -3648,7 +3843,8 @@ execcmd(Estate state, int input, int output, int how, int last1)
 		    state->pc = opc;
 		}
 		dont_queue_signals();
-		lastval = execbuiltin(args, assigns, (Builtin) hn);
+		if (!errflag)
+		    lastval = execbuiltin(args, assigns, (Builtin) hn);
 		if (do_save & BINF_COMMAND)
 		    errflag &= ~ERRFLAG_ERROR;
 		restore_queue_signals(q);
@@ -3685,12 +3881,15 @@ execcmd(Estate state, int input, int output, int how, int last1)
 		restore_params(restorelist, removelist);
 
 	} else {
-	    if (!forked)
-		setiparam("SHLVL", --shlvl);
-	    if (do_exec) {
+	    if (!subsh) {
+	        /* for either implicit or explicit "exec", decrease $SHLVL
+		 * as we're now done as a shell */
+		if (!forked)
+		    setiparam("SHLVL", --shlvl);
+
 		/* If we are exec'ing a command, and we are not *
 		 * in a subshell, then save the history file.   */
-		if (!subsh && isset(RCS) && interact && !nohistsave)
+		if (do_exec && isset(RCS) && interact && !nohistsave)
 		    savehistfile(NULL, 1, HFILE_USE_OPTIONS);
 	    }
 	    if (type == WC_SIMPLE || type == WC_TYPESET) {
@@ -4022,7 +4221,7 @@ gethere(char **strp, int typ)
 
 	parsestr(&buf);
 
-	if (!errflag) {
+	if (!(errflag & ERRFLAG_ERROR)) {
 	    /* Retain any user interrupt error */
 	    errflag = ef | (errflag & ERRFLAG_INT);
 	}
@@ -4275,11 +4474,26 @@ getoutputfile(char *cmd, char **eptr)
 	    untokenize(s);
     }
 
-    addfilelist(nam, 0);
+    if (!s)             /* Unclear why we need to do this before open() */
+	child_block();  /* but it has been so for a long time: leave it */
 
-    if (!s)
-	child_block();
-    fd = open(nam, O_WRONLY | O_CREAT | O_EXCL | O_NOCTTY, 0600);
+    if ((fd = open(nam, O_WRONLY | O_CREAT | O_EXCL | O_NOCTTY, 0600)) < 0) {
+	zerr("process substitution failed: %e", errno);
+	free(nam);
+	if (!s)
+	    child_unblock();
+	return NULL;
+    } else {
+	char *suffix = getsparam("TMPSUFFIX");
+	if (suffix && *suffix && !strstr(suffix, "/")) {
+	    suffix = dyncat(nam, unmeta(suffix));
+	    if (link(nam, suffix) == 0) {
+		addfilelist(nam, 0);
+		nam = ztrdup(suffix);
+	    }
+	}
+    }
+    addfilelist(nam, 0);
 
     if (s) {
 	/* optimised here-string */
@@ -4290,7 +4504,7 @@ getoutputfile(char *cmd, char **eptr)
 	return nam;
     }
 
-    if (fd < 0 || (cmdoutpid = pid = zfork(NULL)) == -1) {
+    if ((cmdoutpid = pid = zfork(NULL)) == -1) {
 	/* fork or open error */
 	child_unblock();
 	return nam;
@@ -4518,8 +4732,6 @@ spawnpipes(LinkList l, int nullexec)
     }
 }
 
-extern int tracingcond;
-
 /* evaluate a [[ ... ]] */
 
 /**/
@@ -4607,6 +4819,8 @@ exectime(Estate state, UNUSED(int do_exec))
 }
 
 /* Define a shell function */
+
+static const char *const ANONYMOUS_FUNCTION_NAME = "(anon)";
 
 /**/
 static int
@@ -4725,7 +4939,7 @@ execfuncdef(Estate state, Eprog redir_prog)
 
 	    if (!args)
 		args = newlinklist();
-	    shf->node.nam = "(anon)";
+	    shf->node.nam = (char *) ANONYMOUS_FUNCTION_NAME;
 	    pushnode(args, shf->node.nam);
 
 	    execshfunc(shf, args);
@@ -4906,7 +5120,8 @@ execautofn_basic(Estate state, UNUSED(int do_exec))
 
     oldscriptname = scriptname;
     oldscriptfilename = scriptfilename;
-    scriptname = scriptfilename = dupstring(shf->node.nam);
+    scriptname = dupstring(shf->node.nam);
+    scriptfilename = dupstring(shf->filename);
     execode(shf->funcdef, 1, 0, "loadautofunc");
     scriptname = oldscriptname;
     scriptfilename = oldscriptfilename;
@@ -5158,8 +5373,12 @@ doshfunc(Shfunc shfunc, LinkList doshargs, int noreturnval)
 
 	if (flags & (PM_TAGGED|PM_TAGGED_LOCAL))
 	    opts[XTRACE] = 1;
-	else if (oflags & PM_TAGGED_LOCAL)
-	    opts[XTRACE] = 0;
+	else if (oflags & PM_TAGGED_LOCAL) {
+	    if (shfunc->node.nam == ANONYMOUS_FUNCTION_NAME /* pointer comparison */)
+		flags |= PM_TAGGED_LOCAL;
+	    else
+		opts[XTRACE] = 0;
+	}
 	ooflags = oflags;
 	/*
 	 * oflags is static, because we compare it on the next recursive
@@ -5360,6 +5579,7 @@ runshfunc(Eprog prog, FuncWrap wrap, char *name)
 	if (!cont) {
 	    if (ou)
 		zfree(ou, ouu);
+	    unqueue_signals();
 	    return;
 	}
 	wrap = wrap->next;
@@ -5382,7 +5602,7 @@ runshfunc(Eprog prog, FuncWrap wrap, char *name)
 Eprog
 getfpfunc(char *s, int *ksh, char **fname)
 {
-    char **pp, buf[PATH_MAX];
+    char **pp, buf[PATH_MAX+1];
     off_t len;
     off_t rlen;
     char *d;
@@ -5512,7 +5732,7 @@ cancd(char *s)
     char *t;
 
     if (*s != '/') {
-	char sbuf[PATH_MAX], **cp;
+	char sbuf[PATH_MAX+1], **cp;
 
 	if (cancd2(s))
 	    return s;

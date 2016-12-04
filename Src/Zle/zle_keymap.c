@@ -135,7 +135,10 @@ mod_export HashTable keymapnamtab;
 /**/
 char *keybuf;
 
-static int keybuflen, keybufsz = 20;
+/**/
+int keybuflen;
+
+static int keybufsz = 20;
 
 /* last command executed with execute-named-command */
 
@@ -1322,15 +1325,15 @@ default_bindings(void)
 	amap->first[i] = refthingy(t_undefinedkey);
 
     /* safe fallback keymap:
-     *   0-255  self-insert, except: *
-     *    '\n'  accept-line          *
-     *    '\r'  accept-line          */
+     *   0-255  .self-insert, except: *
+     *    '\n'  .accept-line          *
+     *    '\r'  .accept-line          */
     for (i = 0; i < 256; i++)
-	smap->first[i] = refthingy(t_selfinsert);
-    unrefthingy(t_selfinsert);
-    unrefthingy(t_selfinsert);
-    smap->first['\n'] = refthingy(t_acceptline);
-    smap->first['\r'] = refthingy(t_acceptline);
+	smap->first[i] = refthingy(t_Dselfinsert);
+    unrefthingy(t_Dselfinsert);
+    unrefthingy(t_Dselfinsert);
+    smap->first['\n'] = refthingy(t_Dacceptline);
+    smap->first['\r'] = refthingy(t_Dacceptline);
 
     /* vt100 arrow keys are bound by default, for historical reasons. *
      * Both standard and keypad modes are supported.                  */
@@ -1366,6 +1369,8 @@ default_bindings(void)
     bindkey(vismap, "\33", refthingy(t_deactivateregion), NULL);
     bindkey(vismap, "o", refthingy(t_exchangepointandmark), NULL);
     bindkey(vismap, "p", refthingy(t_putreplaceselection), NULL);
+    bindkey(vismap, "u", refthingy(t_vidowncase), NULL);
+    bindkey(vismap, "U", refthingy(t_viupcase), NULL);
     bindkey(vismap, "x", refthingy(t_videlete), NULL);
     bindkey(vismap, "~", refthingy(t_vioperswapcase), NULL);
 
@@ -1374,8 +1379,12 @@ default_bindings(void)
     bindkey(amap, "ge", refthingy(t_vibackwardwordend), NULL);
     bindkey(amap, "gE", refthingy(t_vibackwardblankwordend), NULL);
     bindkey(amap, "gg", refthingy(t_beginningofbufferorhistory), NULL);
+    bindkey(amap, "gu", refthingy(t_vidowncase), NULL);
+    bindkey(amap, "gU", refthingy(t_viupcase), NULL);
     bindkey(amap, "g~", refthingy(t_vioperswapcase), NULL);
     bindkey(amap, "g~~", NULL, "g~g~");
+    bindkey(amap, "guu", NULL, "gugu");
+    bindkey(amap, "gUU", NULL, "gUgU");
 
     /* emacs mode: arrow keys */ 
     add_cursor_key(emap, TCUPCURSOR, t_uplineorhistory, 'A');
@@ -1615,11 +1624,18 @@ getkeymapcmd(Keymap km, Thingy *funcp, char **strp)
     else
 	lastchar = lastc;
     if(lastlen != keybuflen) {
+	/*
+	 * We want to keep only the first lastlen bytes of the key
+	 * buffer in the key buffer that were marked as used by the key
+	 * binding above, and make the rest available for input again.
+	 * That rest (but not what we are keeping) needs to be
+	 * unmetafied.
+	 */
 	unmetafy(keybuf + lastlen, &keybuflen);
 	ungetbytes(keybuf+lastlen, keybuflen);
 	if(vichgflag)
-	    vichgbufptr -= keybuflen;
-	keybuf[lastlen] = 0;
+	    curvichg.bufptr -= keybuflen;
+	keybuf[keybuflen = lastlen] = 0;
     }
     *funcp = func;
     *strp = str;
@@ -1672,7 +1688,7 @@ getkeybuf(int w)
 mod_export void
 ungetkeycmd(void)
 {
-    ungetbytes(keybuf, keybuflen);
+    ungetbytes_unmeta(keybuf, keybuflen);
 }
 
 /* read a command from the current keymap, with widgets */
@@ -1690,17 +1706,12 @@ getkeycmd(void)
     if(!*seq)
 	return NULL;
     if(!func) {
-	int len;
-	char *pb;
-
 	if (++hops == 20) {
 	    zerr("string inserting another one too many times");
 	    hops = 0;
 	    return NULL;
 	}
-	pb = unmetafy(ztrdup(str), &len);
-	ungetbytes(pb, len);
-	zfree(pb, strlen(str) + 1);
+	ungetbytes_unmeta(str, strlen(str));
 	goto sentstring;
     }
     if (func == Th(z_executenamedcmd) && !statusline) {

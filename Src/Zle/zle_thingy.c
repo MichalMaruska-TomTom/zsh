@@ -269,7 +269,7 @@ freewidget(Widget w)
     zfree(w, sizeof(*w));
 }
 
-/* Add am internal widget provided by a module.  The name given is the  *
+/* Add an internal widget provided by a module.  The name given is the  *
  * canonical one, which must not begin with a dot.  The widget is first *
  * bound to the dotted canonical name; if that name is already taken by *
  * an internal widget, failure is indicated.  The same widget is then   *
@@ -678,7 +678,16 @@ bin_zle_flags(char *name, char **args, UNUSED(Options ops), UNUSED(char func))
 		else if (!strcmp(*flag, "keepsuffix"))
 		    w->flags |= ZLE_KEEPSUFFIX;
 		*/
-		else {
+	        else if (!strcmp(*flag, "vichange")) {
+		    if (invicmdmode()) {
+			startvichange(-1);
+			if (zmod.flags & (MOD_MULT|MOD_TMULT)) {
+			    Param pm = (Param) paramtab->getnode(paramtab, "NUMERIC");
+			    if (pm && pm->node.flags & PM_SPECIAL)
+				pm->node.flags &= ~PM_UNSET;
+			}
+		    }
+		} else {
 		    zwarnnam(name, "invalid flag `%s' given to zle -f", *flag);
 		    ret = 1;
 		}
@@ -756,6 +765,10 @@ bin_zle_call(char *name, char **args, UNUSED(Options ops), UNUSED(char func))
     }
 
     t = rthingy(wname);
+    /* for internal widgets we set bindk except for when getting
+     * a vi range to detect a repeated key */
+    setbindk = setbindk ||
+	(t->widget && (t->widget->flags & (WIDGET_INT | ZLE_VIOPER)) == WIDGET_INT);
     ret = execzlefunc(t, args, setbindk);
     unrefthingy(t);
     if (saveflag)

@@ -249,7 +249,7 @@ int
 execbuiltin(LinkList args, LinkList assigns, Builtin bn)
 {
     char *pp, *name, *optstr;
-    int flags, sense, argc, execop, xtr = isset(XTRACE);
+    int flags, argc, execop, xtr = isset(XTRACE);
     struct options ops;
 
     /* initialise options structure */
@@ -294,6 +294,7 @@ execbuiltin(LinkList args, LinkList assigns, Builtin bn)
 	/* Sort out the options. */
 	if (optstr) {
 	    char *arg = *argv;
+	    int sense; /* 1 for -x, 0 for +x */
 	    /* while arguments look like options ... */
 	    while (arg &&
 		   /* Must begin with - or maybe + */
@@ -387,7 +388,7 @@ execbuiltin(LinkList args, LinkList assigns, Builtin bn)
 		if (*arg) {
 		    if(*arg == Meta)
 			*++arg ^= 32;
-		    zwarnnam(name, "bad option: -%c", *arg);
+		    zwarnnam(name, "bad option: %c%c", "+-"[sense], *arg);
 		    return 1;
 		}
 		arg = *++argv;
@@ -973,7 +974,7 @@ cd_do_chdir(char *cnam, char *dest, int hard)
      * Normalize path under Cygwin to avoid messing with
      * DOS style names with drives in them
      */
-    static char buf[PATH_MAX];
+    static char buf[PATH_MAX+1];
 #ifdef HAVE_CYGWIN_CONV_PATH
     cygwin_conv_path(CCP_WIN_A_TO_POSIX | CCP_RELATIVE, dest, buf,
 		     PATH_MAX);
@@ -1273,7 +1274,23 @@ fixdir(char *src)
 #ifdef __CYGWIN__
     char *s0 = src;
 #endif
-    int ret = 0;
+    /* This function is always called with n path containing at
+     * least one slash, either because one was input by the user or
+     * because the caller has prepended either pwd or a cdpath dir.
+     * If asked to make a relative change and pwd is set to ".",
+     * the current directory has been removed out from under us,
+     * so force links to be chased.
+     *
+     * Ordinarily we can't get here with "../" as the first component
+     * but handle the silly special case of ".." in cdpath.
+     *
+     * Order of comparisons here looks funny, but it short-circuits
+     * most rapidly in the event of a false condition.  Set to 2
+     * here so we still obey the (lack of) CHASEDOTS option after
+     * the first "../" is preserved (test chasedots > 1 below).
+     */
+    int chasedots = (src[0] == '.' && pwd[0] == '.' && pwd[1] == '\0' &&
+		     (src[1] == '/' || (src[1] == '.' && src[2] == '/'))) * 2;
 
 /*** if have RFS superroot directory ***/
 #ifdef HAVE_SUPERROOT
@@ -1305,12 +1322,12 @@ fixdir(char *src)
 	    while (dest > d0 + 1 && dest[-1] == '/')
 		dest--;
 	    *dest = '\0';
-	    return ret;
+	    return chasedots;
 	}
 	if (src[0] == '.' && src[1] == '.' &&
 	    (src[2] == '\0' || src[2] == '/')) {
-	    if (isset(CHASEDOTS)) {
-		ret = 1;
+	    if (isset(CHASEDOTS) || chasedots > 1) {
+		chasedots = 1;
 		/* and treat as normal path segment */
 	    } else {
 		if (dest > d0 + 1) {
@@ -1348,6 +1365,7 @@ fixdir(char *src)
 		    dest[-1] = *src++ ^ 32;
 	}
     }
+    /* unreached */
 }
 
 /**/
@@ -1472,6 +1490,7 @@ bin_fc(char *nam, char **argv, Options ops, int func)
     }
 
     if (zleactive) {
+	unqueue_signals();
 	zwarnnam(nam, "no interactive history within ZLE");
 	return 1;
     }
@@ -1610,7 +1629,7 @@ bin_fc(char *nam, char **argv, Options ops, int func)
 		unqueue_signals();
 		if (fcedit(editor, fil)) {
 		    if (stuff(fil))
-			zwarnnam("fc", "%e: %s", errno, s);
+			zwarnnam("fc", "%e: %s", errno, fil);
 		    else {
 			loop(0,1);
 			retval = lastval;
@@ -1990,11 +2009,12 @@ typeset_single(char *cname, char *pname, Param pm, UNUSED(int func),
      * handled in createparam().  Here we just avoid using it for the
      * present tests if it's unset.
      *
-     * POSIXBUILTINS horror: we need to retain the 'readonly' flag
-     * of an unset parameter.
+     * POSIXBUILTINS horror: we need to retain the 'readonly' or 'export'
+     * flags of an unset parameter.
      */
     usepm = pm && (!(pm->node.flags & PM_UNSET) ||
-		   (isset(POSIXBUILTINS) && (pm->node.flags & PM_READONLY)));
+		   (isset(POSIXBUILTINS) &&
+		    (pm->node.flags & (PM_READONLY|PM_EXPORTED))));
 
     /*
      * We need to compare types with an existing pm if special,
@@ -2117,7 +2137,8 @@ typeset_single(char *cname, char *pname, Param pm, UNUSED(int func),
 	/*
 	 * Stricter rules about retaining readonly attribute in this case.
 	 */
-	if ((on & PM_READONLY) && (!usepm || (pm->node.flags & PM_UNSET)) &&
+	if ((on & (PM_READONLY|PM_EXPORTED)) &&
+	    (!usepm || (pm->node.flags & PM_UNSET)) &&
 	    !ASG_VALUEP(asg))
 	    on |= PM_UNSET;
 	else if (usepm && (pm->node.flags & PM_READONLY) &&
@@ -2125,6 +2146,10 @@ typeset_single(char *cname, char *pname, Param pm, UNUSED(int func),
 	    zerr("read-only variable: %s", pm->node.nam);
 	    return NULL;
 	}
+	/* This is handled by createparam():
+	if (usepm && (pm->node.flags & PM_EXPORTED) && !(off & PM_EXPORTED))
+	    on |= PM_EXPORTED;
+	*/
     }
 
     /*
@@ -2264,6 +2289,10 @@ typeset_single(char *cname, char *pname, Param pm, UNUSED(int func),
 	Param tpm, pm2;
 	if ((pm->node.flags & PM_RESTRICTED) && isset(RESTRICTED)) {
 	    zerrnam(cname, "%s: restricted", pname);
+	    return pm;
+	}
+	if (pm->node.flags & PM_SINGLE) {
+	    zerrnam(cname, "%s: can only have a single instance", pname);
 	    return pm;
 	}
 	/*
@@ -2787,6 +2816,7 @@ bin_typeset(char *name, char **argv, LinkList assigns, Options ops, int func)
 	return 0;
     }
     if (off & PM_TIED) {
+	unqueue_signals();
 	zerrnam(name, "use unset to remove tied variables");
 	return 1;
     }
@@ -3117,6 +3147,7 @@ bin_functions(char *name, char **argv, Options ops, int func)
 	    queue_signals();
 	    for (q = mathfuncs; q; q = q->next) {
 		if (!strcmp(q->name, funcname)) {
+		    unqueue_signals();
 		    zwarnnam(name, "-M %s: function already exists",
 			     funcname);
 		    zsfree(p->name);
@@ -3142,15 +3173,33 @@ bin_functions(char *name, char **argv, Options ops, int func)
 
 	queue_signals();
 	if (OPT_MINUS(ops,'X')) {
-	    if ((shf = (Shfunc) shfunctab->getnode(shfunctab, scriptname))) {
-		DPUTS(!shf->funcdef,
-		      "BUG: Calling autoload from empty function");
-	    } else {
-		shf = (Shfunc) zshcalloc(sizeof *shf);
-		shfunctab->addnode(shfunctab, ztrdup(scriptname), shf);
+	    Funcstack fs;
+	    char *funcname = NULL;
+	    for (fs = funcstack; fs; fs = fs->prev) {
+		if (fs->tp == FS_FUNC) {
+		    /*
+		     * dupstring here is paranoia but unlikely to be
+		     * problematic
+		     */
+		    funcname = dupstring(fs->name);
+		    break;
+		}
 	    }
-	    shf->node.flags = on;
-	    ret = eval_autoload(shf, scriptname, ops, func);
+	    if (!funcname)
+	    {
+		zerrnam(name, "bad autoload");
+		ret = 1;
+	    } else {
+		if ((shf = (Shfunc) shfunctab->getnode(shfunctab, funcname))) {
+		    DPUTS(!shf->funcdef,
+			  "BUG: Calling autoload from empty function");
+		} else {
+		    shf = (Shfunc) zshcalloc(sizeof *shf);
+		    shfunctab->addnode(shfunctab, ztrdup(funcname), shf);
+		}
+		shf->node.flags = on;
+		ret = eval_autoload(shf, funcname, ops, func);
+	    }
 	} else {
 	    if (OPT_ISSET(ops,'U') && !OPT_ISSET(ops,'u'))
 		on &= ~PM_UNDEFINED;
@@ -3332,15 +3381,24 @@ bin_unset(char *name, char **argv, Options ops, int func)
     /* do not glob -- unset the given parameter */
     queue_signals();
     while ((s = *argv++)) {
-	char *ss = strchr(s, '[');
-	char *sse = ss;
+	char *ss = strchr(s, '['), *subscript = 0;
 	if (ss) {
-	    if (skipparens('[', ']', &sse) || *sse) {
-		zerrnam(name, "%s: invalid parameter name", s);
-		returnval = 1;
-		continue;
-	    }
+	    char *sse;
 	    *ss = 0;
+	    if ((sse = parse_subscript(ss+1, 1, ']'))) {
+		*sse = 0;
+		subscript = dupstring(ss+1);
+		*sse = ']';
+		remnulargs(subscript);
+		untokenize(subscript);
+	    }
+	}
+	if ((ss && !subscript) || !isident(s)) {
+	    if (ss)
+		*ss = '[';
+	    zerrnam(name, "%s: invalid parameter name", s);
+	    returnval = 1;
+	    continue;
 	}
 	pm = (Param) (paramtab == realparamtab ?
 		      /* getnode2() to avoid autoloading */
@@ -3358,11 +3416,8 @@ bin_unset(char *name, char **argv, Options ops, int func)
 	} else if (ss) {
 	    if (PM_TYPE(pm->node.flags) == PM_HASHED) {
 		HashTable tht = paramtab;
-		if ((paramtab = pm->gsu.h->getfn(pm))) {
-		    *--sse = 0;
-		    unsetparam(ss+1);
-		    *sse = ']';
-		}
+		if ((paramtab = pm->gsu.h->getfn(pm)))
+		    unsetparam(subscript);
 		paramtab = tht;
 	    } else if (PM_TYPE(pm->node.flags) == PM_SCALAR ||
 		       PM_TYPE(pm->node.flags) == PM_ARRAY) {
@@ -3382,7 +3437,7 @@ bin_unset(char *name, char **argv, Options ops, int func)
 		    } else {
 			/* start is after the element for reverse index */
 			int start = vbuf.start - !!(vbuf.flags & VALFLAG_INV);
-			if (start < arrlen(vbuf.pm->u.arr)) {
+			if (arrlen_gt(vbuf.pm->u.arr, start)) {
 			    char *arr[2];
 			    arr[0] = "";
 			    arr[1] = 0;
@@ -3609,12 +3664,23 @@ bin_whence(char *nam, char **argv, Options ops, int func)
 		}
 	    }
 	    if (!informed && (wd || v || csh)) {
+		/* this is information and not an error so, as in csh, use stdout */
 		zputs(*argv, stdout);
 		puts(wd ? ": none" : " not found");
 		returnval = 1;
 	    }
 	    popheap();
-	} else if ((cnam = findcmd(*argv, 1))) {
+	} else if (func == BIN_COMMAND && OPT_ISSET(ops,'p') &&
+		   (hn = builtintab->getnode(builtintab, *argv))) {
+	    /*
+	     * Special case for "command -p[vV]" which needs to
+	     * show a builtin in preference to an external command.
+	     */
+	    builtintab->printnode(hn, printflags);
+	    informed = 1;
+	} else if ((cnam = findcmd(*argv, 1,
+				   func == BIN_COMMAND &&
+				   OPT_ISSET(ops,'p')))) {
 	    /* Found external command. */
 	    if (wd) {
 		printf("%s: command\n", *argv);
@@ -3628,7 +3694,7 @@ bin_whence(char *nam, char **argv, Options ops, int func)
 	    }
 	    informed = 1;
 	} else {
-	    /* Not found at all. */
+	    /* Not found at all. That's not an error as such so this goes to stdout */
 	    if (v || csh || wd)
 		zputs(*argv, stdout), puts(wd ? ": none" : " not found");
 	    returnval = 1;
@@ -3724,6 +3790,7 @@ bin_hash(char *name, char **argv, Options ops, UNUSED(int func))
         if (!(asg = getasg(&argv, NULL))) {
 	    zwarnnam(name, "bad assignment");
 	    returnval = 1;
+	    break;
         } else if (ASG_VALUEP(asg)) {
 	    if(isset(RESTRICTED)) {
 		zwarnnam(name, "restricted: %s", asg->value.scalar);
@@ -4021,10 +4088,11 @@ bin_print(char *name, char **args, Options ops, int func)
 {
     int flen, width, prec, type, argc, n, narg, curlen = 0;
     int nnl = 0, fmttrunc = 0, ret = 0, maxarg = 0, nc = 0;
-    int flags[6], *len;
+    int flags[6], *len, visarr = 0;
     char *start, *endptr, *c, *d, *flag, *buf = NULL, spec[14], *fmt = NULL;
     char **first, **argp, *curarg, *flagch = "'0+- #", save = '\0', nullstr = '\0';
-    size_t rcount, count = 0;
+    size_t rcount = 0, count = 0;
+    size_t *cursplit, *splits = 0;
     FILE *fout = stdout;
 #ifdef HAVE_OPEN_MEMSTREAM
     size_t mcount;
@@ -4056,7 +4124,7 @@ bin_print(char *name, char **args, Options ops, int func)
             return 1; \
         } \
         unlink(tmpf); \
-        if ((fout = fdopen(tempfd, "w+")) == NULL) { \
+        if ((FOUT = fdopen(tempfd, "w+")) == NULL) { \
             close(tempfd); \
             zwarnnam(name, "can't open temp file: %e", errno); \
             return 1; \
@@ -4485,6 +4553,7 @@ bin_print(char *name, char **args, Options ops, int func)
 		    short *words;
 		    if (nwords > 1) {
 			zwarnnam(name, "option -S takes a single argument");
+			unqueue_signals();
 			return 1;
 		    }
 		    words = NULL;
@@ -4554,7 +4623,8 @@ bin_print(char *name, char **args, Options ops, int func)
 			  OPT_ISSET(ops,'N') ? '\0' : ' ', fout);
 	    }
 	}
-	if (!(OPT_ISSET(ops,'n') || OPT_ISSET(ops, 'v') || nnl))
+	if (!(OPT_ISSET(ops,'n') || nnl ||
+	    (OPT_ISSET(ops, 'v') && !OPT_ISSET(ops, 'l'))))
 	    fputc(OPT_ISSET(ops,'N') ? '\0' : '\n', fout);
 	if (IS_MSTREAM(fout) && (rcount = READ_MSTREAM(buf,fout)) == -1)
 	    ret = 1;
@@ -4581,11 +4651,23 @@ bin_print(char *name, char **args, Options ops, int func)
      * special cases of printing to a ZLE buffer or the history, however.
      */
 
+    if (OPT_ISSET(ops,'v')) {
+	struct value vbuf;
+	char* s = OPT_ARG(ops,'v');
+	Value v = getvalue(&vbuf, &s, 0);
+	visarr = v && PM_TYPE(v->pm->node.flags) == PM_ARRAY;
+    }
     /* printf style output */
     *spec = '%';
     argp = args;
     do {
     	rcount = count;
+	if (argp > args && visarr) { /* reusing format string */
+	    if (!splits)
+		cursplit = splits = (size_t *)zhalloc(sizeof(size_t) *
+			(arrlen(args) / (argp - args) + 1));
+	    *cursplit++ = count;
+	}
     	if (maxarg) {
 	    first += maxarg;
 	    argc -= maxarg;
@@ -4712,7 +4794,8 @@ bin_print(char *name, char **args, Options ops, int func)
 		} else if (idigit(*c)) {
 		    prec = strtoul(c, &endptr, 0);
 		    c = endptr;
-		}
+		} else
+		    prec = 0;
 		if (prec >= 0) *d++ = '.', *d++ = '*';
 	    }
 
@@ -4813,9 +4896,10 @@ bin_print(char *name, char **args, Options ops, int func)
 		break;
 	    case 'q':
 		stringval = curarg ?
-		    quotestring(curarg, NULL, QT_BACKSLASH_SHOWNULL) : &nullstr;
+		    quotestring(metafy(curarg, curlen, META_USEHEAP),
+				QT_BACKSLASH_SHOWNULL) : &nullstr;
 		*d = 's';
-		print_val(stringval);
+		print_val(unmetafy(stringval, &curlen));
 		break;
 	    case 'd':
 	    case 'i':
@@ -4951,18 +5035,30 @@ bin_print(char *name, char **args, Options ops, int func)
 	    if (buf)
 		free(buf);
 	} else {
-	    stringval = metafy(buf, rcount, META_REALLOC);
-	    if (OPT_ISSET(ops,'z')) {
-		zpushnode(bufstack, stringval);
-	    } else if (OPT_ISSET(ops,'v')) {
-		setsparam(OPT_ARG(ops, 'v'), stringval);
+	    if (visarr && splits) {
+		char **arrayval = zshcalloc((cursplit - splits + 2) * sizeof(char *));
+		for (;cursplit >= splits; cursplit--) {
+		    int start = cursplit == splits ? 0 : cursplit[-1];
+		    arrayval[cursplit - splits] =
+			    metafy(buf + start, count - start, META_DUP);
+		    count = start;
+		}
+		setaparam(OPT_ARG(ops, 'v'), arrayval);
+		free(buf);
 	    } else {
-		ent = prepnexthistent();
-		ent->node.nam = stringval;
-		ent->stim = ent->ftim = time(NULL);
-		ent->node.flags = 0;
-		ent->words = (short *)NULL;
-		addhistnode(histtab, ent->node.nam, ent);
+		stringval = metafy(buf, rcount, META_REALLOC);
+		if (OPT_ISSET(ops,'z')) {
+		    zpushnode(bufstack, stringval);
+		} else if (OPT_ISSET(ops,'v')) {
+		    setsparam(OPT_ARG(ops, 'v'), stringval);
+		} else {
+		    ent = prepnexthistent();
+		    ent->node.nam = stringval;
+		    ent->stim = ent->ftim = time(NULL);
+		    ent->node.flags = 0;
+		    ent->words = (short *)NULL;
+		    addhistnode(histtab, ent->node.nam, ent);
+		}
 	    }
 	}
 	unqueue_signals();
@@ -4999,7 +5095,7 @@ bin_shift(char *name, char **argv, Options ops, UNUSED(int func))
     if (*argv) {
         for (; *argv; argv++)
             if ((s = getaparam(*argv))) {
-                if (num > arrlen(s)) {
+                if (arrlen_lt(s, num)) {
 		    zwarnnam(name, "shift count must be <= $#");
 		    ret++;
 		    continue;
@@ -5068,7 +5164,7 @@ bin_getopts(UNUSED(char *name), char **argv, UNUSED(Options ops), UNUSED(int fun
 	zoptind = 1;
 	optcind = 0;
     }
-    if(zoptind > arrlen(args))
+    if (arrlen_lt(args, zoptind))
 	/* no more options */
 	return 1;
 
@@ -5340,6 +5436,11 @@ zexit(int val, int from_where)
 	}
     }
     lastval = val;
+    /*
+     * Now we are committed to exiting any previous state
+     * is irrelevant.  Ensure trap can run.
+     */
+    errflag = intrap = 0;
     if (sigtrapped[SIGEXIT])
 	dotrap(SIGEXIT);
     callhookfunc("zshexit", NULL, 1, NULL);
@@ -6531,7 +6632,7 @@ bin_test(char *name, char **argv, UNUSED(Options ops), int func)
 	for (s = argv; *s; s++);
 	if (s == argv || strcmp(s[-1], "]")) {
 	    zwarnnam(name, "']' expected");
-	    return 1;
+	    return 2;
 	}
 	s[-1] = NULL;
     }
@@ -6574,19 +6675,19 @@ bin_test(char *name, char **argv, UNUSED(Options ops), int func)
     if (errflag) {
 	errflag &= ~ERRFLAG_ERROR;
 	zcontext_restore();
-	return 1;
+	return 2;
     }
 
     if (!prog || tok == LEXERR) {
 	zwarnnam(name, tokstr ? "parse error" : "argument expected");
 	zcontext_restore();
-	return 1;
+	return 2;
     }
     zcontext_restore();
 
     if (*curtestarg) {
 	zwarnnam(name, "too many arguments");
-	return 1;
+	return 2;
     }
 
     /* syntax is OK, so evaluate */

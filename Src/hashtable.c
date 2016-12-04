@@ -558,7 +558,7 @@ printhashtabinfo(HashTable ht)
 
 /**/
 int
-bin_hashinfo(char *nam, char **args, Options ops, int func)
+bin_hashinfo(UNUSED(char *nam), UNUSED(char **args), UNUSED(Options ops), UNUSED(int func))
 {
     HashTable ht;
 
@@ -1291,9 +1291,9 @@ printaliasnode(HashNode hn, int printflags)
 	else if (a->node.flags & ALIAS_GLOBAL)
 	    printf("-g ");
 
-	/* If an alias begins with `-', then we must output `-- ' *
+	/* If an alias begins with `-' or `+', then we must output `-- '
 	 * first, so that it is not interpreted as an option.     */
-	if(a->node.nam[0] == '-')
+	if(a->node.nam[0] == '-' || a->node.nam[0] == '+')
 	    printf("-- ");
     }
 

@@ -56,12 +56,12 @@ typedef struct widechar_array *Widechar_array;
  * The wordchars variable turned into a wide character array.
  * This is much more convenient for testing.
  */
-struct widechar_array wordchars_wide;
+static struct widechar_array wordchars_wide;
 
 /*
  * The same for the separators (IFS) array.
  */
-struct widechar_array ifs_wide;
+static struct widechar_array ifs_wide;
 
 /* Function to set one of the above from the multibyte array */
 
@@ -84,7 +84,15 @@ set_widearray(char *mb_array, Widechar_array wca)
 
 	mb_charinit();
 	while (*mb_array) {
-	    int mblen = mb_metacharlenconv(mb_array, &wci);
+	    int mblen;
+
+	    if (STOUC(*mb_array) <= 0x7f) {
+		mb_array++;
+		*wcptr++ = (wchar_t)*mb_array;
+		continue;
+	    }
+
+	    mblen = mb_metacharlenconv(mb_array, &wci);
 
 	    if (!mblen)
 		break;
@@ -133,9 +141,11 @@ zwarning(const char *cmd, const char *fmt, va_list ap)
     if (isatty(2))
 	zleentry(ZLE_CMD_TRASH);
 
+    char *prefix = scriptname ? scriptname : (argzero ? argzero : "");
+
     if (cmd) {
 	if (unset(SHINSTDIN) || locallevel) {
-	    nicezputs(scriptname ? scriptname : argzero, stderr);
+	    nicezputs(prefix, stderr);
 	    fputc((unsigned char)':', stderr);
 	}
 	nicezputs(cmd, stderr);
@@ -147,8 +157,7 @@ zwarning(const char *cmd, const char *fmt, va_list ap)
 	 * program/script is running.  It's also set in shell functions,
 	 * so test locallevel, too.
 	 */
-	nicezputs((isset(SHINSTDIN) && !locallevel) ? "zsh" :
-		  scriptname ? scriptname : argzero, stderr);
+	nicezputs((isset(SHINSTDIN) && !locallevel) ? "zsh" : prefix, stderr);
 	fputc((unsigned char)':', stderr);
     }
 
@@ -169,12 +178,12 @@ VA_DCL
 	    errflag |= ERRFLAG_ERROR;
 	return;
     }
+    errflag |= ERRFLAG_ERROR;
 
     VA_START(ap, fmt);
     VA_GET_ARG(ap, fmt, const char *);
     zwarning(NULL, fmt, ap);
     va_end(ap);
-    errflag |= ERRFLAG_ERROR;
 }
 
 /**/
@@ -188,13 +197,13 @@ VA_DCL
 
     if (errflag || noerrs)
 	return;
+    errflag |= ERRFLAG_ERROR;
 
     VA_START(ap, fmt);
     VA_GET_ARG(ap, cmd, const char *);
     VA_GET_ARG(ap, fmt, const char *);
     zwarning(cmd, fmt, ap);
     va_end(ap);
-    errflag |= ERRFLAG_ERROR;
 }
 
 /**/
@@ -800,9 +809,9 @@ findpwd(char *s)
     char *t;
 
     if (*s == '/')
-	return xsymlink(s);
+	return xsymlink(s, 0);
     s = tricat((pwd[1]) ? pwd : "", "/", s);
-    t = xsymlink(s);
+    t = xsymlink(s, 0);
     zsfree(s);
     return t;
 }
@@ -836,7 +845,7 @@ ispwd(char *s)
     return 0;
 }
 
-static char xbuf[PATH_MAX*2];
+static char xbuf[PATH_MAX*2+1];
 
 /**/
 static char **
@@ -875,7 +884,7 @@ static int
 xsymlinks(char *s, int full)
 {
     char **pp, **opp;
-    char xbuf2[PATH_MAX*3], xbuf3[PATH_MAX*2];
+    char xbuf2[PATH_MAX*3+1], xbuf3[PATH_MAX*2+1];
     int t0, ret = 0;
     zulong xbuflen = strlen(xbuf);
 
@@ -968,11 +977,13 @@ xsymlinks(char *s, int full)
 /*
  * expand symlinks in s, and remove other weird things:
  * note that this always expands symlinks.
+ *
+ * 'heap' indicates whether to malloc() or allocate on the heap.
  */
 
 /**/
 char *
-xsymlink(char *s)
+xsymlink(char *s, int heap)
 {
     if (*s != '/')
 	return NULL;
@@ -980,8 +991,8 @@ xsymlink(char *s)
     if (xsymlinks(s + 1, 1) < 0)
 	zwarn("path expansion failed, using root directory");
     if (!*xbuf)
-	return ztrdup("/");
-    return ztrdup(xbuf);
+	return heap ? dupstring("/") : ztrdup("/");
+    return heap ? dupstring(xbuf) : ztrdup(xbuf);
 }
 
 /**/
@@ -992,7 +1003,7 @@ print_if_link(char *s, int all)
 	*xbuf = '\0';
 	if (all) {
 	    char *start = s + 1;
-	    char xbuflink[PATH_MAX];
+	    char xbuflink[PATH_MAX+1];
 	    for (;;) {
 		if (xsymlinks(start, 0) > 0) {
 		    printf(" -> ");
@@ -1044,9 +1055,9 @@ substnamedir(char *s)
     Nameddir d = finddir(s);
 
     if (!d)
-	return quotestring(s, NULL, QT_BACKSLASH);
+	return quotestring(s, QT_BACKSLASH);
     return zhtricat("~", d->node.nam, quotestring(s + strlen(d->dir),
-						  NULL, QT_BACKSLASH));
+						  QT_BACKSLASH));
 }
 
 
@@ -1129,7 +1140,7 @@ finddir(char *s)
 	if(homenode.diff==1)
 	    homenode.diff = 0;
 	if(!finddir_full)
-	    finddir_full = zalloc(ffsz = PATH_MAX);
+	    finddir_full = zalloc(ffsz = PATH_MAX+1);
 	finddir_full[0] = 0;
 	return finddir_last = NULL;
     }
@@ -1156,7 +1167,7 @@ finddir(char *s)
     scanhashtable(nameddirtab, 0, 0, 0, finddir_scan, 0);
 
     ares = subst_string_by_hook("zsh_directory_name", "d", finddir_full);
-    if (ares && arrlen(ares) >= 2 &&
+    if (ares && arrlen_ge(ares, 2) &&
 	(len = (int)zstrtol(ares[1], NULL, 10)) > finddir_best) {
 	/* better duplicate this string since it's come from REPLY */
 	finddir_last = (Nameddir)hcalloc(sizeof(struct nameddir));
@@ -1259,7 +1270,7 @@ getnameddir(char *name)
 	/* Retrieve an entry from the password table/database for this user. */
 	struct passwd *pw;
 	if ((pw = getpwnam(name))) {
-	    char *dir = isset(CHASELINKS) ? xsymlink(pw->pw_dir)
+	    char *dir = isset(CHASELINKS) ? xsymlink(pw->pw_dir, 0)
 		: ztrdup(pw->pw_dir);
 	    if (dir) {
 		adduserdir(name, dir, ND_USERNAME, 1);
@@ -1633,7 +1644,7 @@ checkmailpath(char **s)
 	} else if (S_ISDIR(st.st_mode)) {
 	    LinkList l;
 	    DIR *lock = opendir(unmeta(*s));
-	    char buf[PATH_MAX * 2], **arr, **ap;
+	    char buf[PATH_MAX * 2 + 1], **arr, **ap;
 	    int ct = 1;
 
 	    if (lock) {
@@ -2161,6 +2172,7 @@ gettempfile(const char *prefix, int use_heap, char **tempname)
 #if HAVE_MKSTEMP
     char *suffix = prefix ? ".XXXXXX" : "XXXXXX";
 
+    queue_signals();
     if (!prefix && !(prefix = getsparam("TMPPREFIX")))
 	prefix = DEFAULT_TMPPREFIX;
     if (use_heap)
@@ -2177,6 +2189,7 @@ gettempfile(const char *prefix, int use_heap, char **tempname)
 #else
     int failures = 0;
 
+    queue_signals();
     do {
 	if (!(fn = gettempname(prefix, use_heap))) {
 	    fd = -1;
@@ -2190,6 +2203,8 @@ gettempfile(const char *prefix, int use_heap, char **tempname)
     } while (errno == EEXIST && ++failures < 16);
 #endif
     *tempname = fn;
+
+    unqueue_signals();
     return fd;
 }
 
@@ -2277,6 +2292,46 @@ arrlen(char **s)
 
     for (count = 0; *s; s++, count++);
     return count;
+}
+
+/* Return TRUE iff arrlen(s) >= lower_bound, but more efficiently. */
+
+/**/
+mod_export char
+arrlen_ge(char **s, unsigned lower_bound)
+{
+    while (lower_bound--)
+	if (!*s++)
+	    return 0 /* FALSE */;
+
+    return 1 /* TRUE */;
+}
+
+/* Return TRUE iff arrlen(s) > lower_bound, but more efficiently. */
+
+/**/
+mod_export char
+arrlen_gt(char **s, unsigned lower_bound)
+{
+    return arrlen_ge(s, 1+lower_bound);
+}
+
+/* Return TRUE iff arrlen(s) <= upper_bound, but more efficiently. */
+
+/**/
+mod_export char
+arrlen_le(char **s, unsigned upper_bound)
+{
+    return arrlen_lt(s, 1+upper_bound);
+}
+
+/* Return TRUE iff arrlen(s) < upper_bound, but more efficiently. */
+
+/**/
+mod_export char
+arrlen_lt(char **s, unsigned upper_bound)
+{
+    return !arrlen_ge(s, upper_bound);
 }
 
 /* Skip over a balanced pair of parenthesis. */
@@ -2533,7 +2588,7 @@ read_poll(int fd, int *readchar, int polltty, zlong microseconds)
 #endif
 #endif
 
-    if (fd >= 0 && ret < 0) {
+    if (fd >= 0 && ret < 0 && !errflag) {
 	/*
 	 * Final attempt: set non-blocking read and try to read a character.
 	 * Praise Bill, this works under Cygwin (nothing else seems to).
@@ -2633,13 +2688,36 @@ zsleep_random(long max_us, time_t end_time)
 int
 checkrmall(char *s)
 {
+    DIR *rmd;
+    int count = 0;
     if (!shout)
 	return 1;
-    fprintf(shout, "zsh: sure you want to delete all the files in ");
     if (*s != '/') {
-	nicezputs(pwd[1] ? pwd : "", shout);
-	fputc('/', shout);
+	if (pwd[1])
+	    s = zhtricat(pwd, "/", s);
+	else
+	    s = dyncat("/", s);
     }
+    const int max_count = 100;
+    if ((rmd = opendir(unmeta(s)))) {
+	int ignoredots = !isset(GLOBDOTS);
+	while (zreaddir(rmd, ignoredots)) {
+	    count++;
+	    if (count > max_count)
+		break;
+	}
+	closedir(rmd);
+    }
+    if (count > max_count)
+	fprintf(shout, "zsh: sure you want to delete more than %d files in ",
+		max_count);
+    else if (count == 1)
+	fprintf(shout, "zsh: sure you want to delete the only file in ");
+    else if (count > 0)
+	fprintf(shout, "zsh: sure you want to delete all %d files in ",
+		count);
+    else
+	fprintf(shout, "zsh: sure you want to delete all the files in ");
     nicezputs(s, shout);
     if(isset(RMSTARWAIT)) {
 	fputs("? (waiting ten seconds)", shout);
@@ -2866,9 +2944,7 @@ mod_export void
 spckword(char **s, int hist, int cmd, int ask)
 {
     char *t, *correct_ignore;
-    int x;
     char ic = '\0';
-    int ne;
     int preflen = 0;
     int autocd = cmd && isset(AUTOCD) && strcmp(*s, ".") && strcmp(*s, "..");
 
@@ -2937,6 +3013,7 @@ spckword(char **s, int hist, int cmd, int ask)
     } else {
 	guess = *s;
 	if (*guess == Tilde || *guess == String) {
+	    int ne;
 	    ic = *guess;
 	    if (!*++t)
 		return;
@@ -2981,6 +3058,7 @@ spckword(char **s, int hist, int cmd, int ask)
     if (errflag)
 	return;
     if (best && (int)strlen(best) > 1 && strcmp(best, guess)) {
+	int x;
 	if (ic) {
 	    char *u;
 	    if (preflen) {
@@ -3010,14 +3088,14 @@ spckword(char **s, int hist, int cmd, int ask)
 		free(pptbuf);
 		fflush(shout);
 		zbeep();
-		x = getquery("nyae \t", 0);
+		x = getquery("nyae", 0);
 		if (cmd && x == 'n')
 		    pathchecked = path;
 	    } else
 		x = 'n';
 	} else
 	    x = 'y';
-	if (x == 'y' || x == ' ' || x == '\t') {
+	if (x == 'y') {
 	    *s = dupstring(best);
 	    if (hist)
 		hwrep(best);
@@ -3881,7 +3959,7 @@ inittyptab(void)
 #endif
     /* typtab['.'] |= IIDENT; */ /* Allow '.' in variable names - broken */
     typtab['_'] = IIDENT | IUSER;
-    typtab['-'] = typtab['.'] = IUSER;
+    typtab['-'] = typtab['.'] = typtab[STOUC(Dash)] = IUSER;
     typtab[' '] |= IBLANK | INBLANK;
     typtab['\t'] |= IBLANK | INBLANK;
     typtab['\n'] |= INBLANK;
@@ -4079,42 +4157,50 @@ itype_end(const char *ptr, int itype, int once)
 	(itype != IIDENT || !isset(POSIXIDENTIFIERS))) {
 	mb_charinit();
 	while (*ptr) {
-	    wint_t wc;
-	    int len = mb_metacharlenconv(ptr, &wc);
-
-	    if (!len)
-		break;
-
-	    if (wc == WEOF) {
-		/* invalid, treat as single character */
-		int chr = STOUC(*ptr == Meta ? ptr[1] ^ 32 : *ptr);
-		/* in this case non-ASCII characters can't match */
-		if (chr > 127 || !zistype(chr,itype))
-		    break;
-	    } else if (len == 1 && isascii(*ptr)) {
-		/* ASCII: can't be metafied, use standard test */
+	    int len;
+	    if (itok(*ptr)) {
+		/* Not untokenised yet --- can happen in raw command line */
+		len = 1;
 		if (!zistype(*ptr,itype))
 		    break;
 	    } else {
-		/*
-		 * Valid non-ASCII character.
-		 */
-		switch (itype) {
-		case IWORD:
-		    if (!iswalnum(wc) &&
-			!wmemchr(wordchars_wide.chars, wc,
-				 wordchars_wide.len))
-			return (char *)ptr;
+		wint_t wc;
+		len = mb_metacharlenconv(ptr, &wc);
+
+		if (!len)
 		    break;
 
-		case ISEP:
-		    if (!wmemchr(ifs_wide.chars, wc, ifs_wide.len))
-			return (char *)ptr;
-		    break;
+		if (wc == WEOF) {
+		    /* invalid, treat as single character */
+		    int chr = STOUC(*ptr == Meta ? ptr[1] ^ 32 : *ptr);
+		    /* in this case non-ASCII characters can't match */
+		    if (chr > 127 || !zistype(chr,itype))
+			break;
+		} else if (len == 1 && isascii(*ptr)) {
+		    /* ASCII: can't be metafied, use standard test */
+		    if (!zistype(*ptr,itype))
+			break;
+		} else {
+		    /*
+		     * Valid non-ASCII character.
+		     */
+		    switch (itype) {
+		    case IWORD:
+			if (!iswalnum(wc) &&
+			    !wmemchr(wordchars_wide.chars, wc,
+				     wordchars_wide.len))
+			    return (char *)ptr;
+			break;
 
-		default:
-		    if (!iswalnum(wc))
-			return (char *)ptr;
+		    case ISEP:
+			if (!wmemchr(ifs_wide.chars, wc, ifs_wide.len))
+			    return (char *)ptr;
+			break;
+
+		    default:
+			if (!iswalnum(wc))
+			    return (char *)ptr;
+		    }
 		}
 	    }
 	    ptr += len;
@@ -4155,6 +4241,32 @@ arrdup(char **s)
     y = x = (char **) zhalloc(sizeof(char *) * (arrlen(s) + 1));
 
     while ((*x++ = dupstring(*s++)));
+
+    return y;
+}
+
+/* Duplicate at most max elements of the array s with heap memory */
+
+/**/
+mod_export char **
+arrdup_max(char **s, unsigned max)
+{
+    char **x, **y, **send;
+    int len = 0;
+
+    if (max)
+	len = arrlen(s);
+
+    /* Limit has sense only if not equal to len */
+    if (max > len)
+        max = len;
+
+    y = x = (char **) zhalloc(sizeof(char *) * (max + 1));
+
+    send = s + max;
+    while (s < send)
+	*x++ = dupstring(*s++);
+    *x = NULL;
 
     return y;
 }
@@ -5016,8 +5128,10 @@ mb_niceformat(const char *s, FILE *stream, char **outstrp, int flags)
 	    cnt = 1;
 	    /* FALL THROUGH */
 	default:
-	    if (c == L'\'' && (flags & NICEFLAG_QUOTE))
+	    if (c == L'\'' && (flags & NICEFLAG_QUOTE)) {
 		fmt = "\\'";
+		newl = 2;
+	    }
 	    else
 		fmt = wcs_nicechar_sel(c, &newl, NULL, flags & NICEFLAG_QUOTE);
 	    break;
@@ -5152,6 +5266,12 @@ mb_metacharlenconv_r(const char *s, wint_t *wcp, mbstate_t *mbsp)
     const char *ptr;
     wchar_t wc;
 
+    if (STOUC(*s) <= 0x7f) {
+	if (wcp)
+	    *wcp = (wint_t)*s;
+	return 1;
+    }
+
     for (ptr = s; *ptr; ) {
 	if (*ptr == Meta) {
 	    inchar = *++ptr ^ 32;
@@ -5204,7 +5324,7 @@ mb_metacharlenconv_r(const char *s, wint_t *wcp, mbstate_t *mbsp)
 mod_export int
 mb_metacharlenconv(const char *s, wint_t *wcp)
 {
-    if (!isset(MULTIBYTE)) {
+    if (!isset(MULTIBYTE) || STOUC(*s) <= 0x7f) {
 	/* treat as single byte, possibly metafied */
 	if (wcp)
 	    *wcp = (wint_t)(*s == Meta ? s[1] ^ 32 : *s);
@@ -5251,7 +5371,7 @@ mb_metastrlenend(char *ptr, int width, char *eptr)
     char inchar, *laststart;
     size_t ret;
     wchar_t wc;
-    int num, num_in_char;
+    int num, num_in_char, complete;
 
     if (!isset(MULTIBYTE))
 	return ztrlen(ptr);
@@ -5259,6 +5379,7 @@ mb_metastrlenend(char *ptr, int width, char *eptr)
     laststart = ptr;
     ret = MB_INVALID;
     num = num_in_char = 0;
+    complete = 1;
 
     memset(&mb_shiftstate, 0, sizeof(mb_shiftstate));
     while (*ptr && !(eptr && ptr >= eptr)) {
@@ -5267,6 +5388,18 @@ mb_metastrlenend(char *ptr, int width, char *eptr)
 	else
 	    inchar = *ptr;
 	ptr++;
+
+	if (complete && STOUC(inchar) <= STOUC(0x7f)) {
+	    /*
+	     * We rely on 7-bit US-ASCII as a subset, so skip
+	     * multibyte handling if we have such a character.
+	     */
+	    num++;
+	    laststart = ptr;
+	    num_in_char = 0;
+	    continue;
+	}
+
 	ret = mbrtowc(&wc, &inchar, 1, &mb_shiftstate);
 
 	if (ret == MB_INCOMPLETE) {
@@ -5286,6 +5419,7 @@ mb_metastrlenend(char *ptr, int width, char *eptr)
 	     * so we don't count characters twice.
 	     */
 	    num_in_char++;
+	    complete = 0;
 	} else {
 	    if (ret == MB_INVALID) {
 		/* Reset, treat as single character */
@@ -5308,6 +5442,7 @@ mb_metastrlenend(char *ptr, int width, char *eptr)
 		num++;
 	    laststart = ptr;
 	    num_in_char = 0;
+	    complete = 1;
 	}
     }
 
@@ -5329,6 +5464,12 @@ mb_charlenconv_r(const char *s, int slen, wint_t *wcp, mbstate_t *mbsp)
     char inchar;
     const char *ptr;
     wchar_t wc;
+
+    if (slen && STOUC(*s) <= 0x7f) {
+	if (wcp)
+	    *wcp = (wint_t)*s;
+	return 1;
+    }
 
     for (ptr = s; slen;  ) {
 	inchar = *ptr;
@@ -5365,7 +5506,7 @@ mb_charlenconv_r(const char *s, int slen, wint_t *wcp, mbstate_t *mbsp)
 mod_export int
 mb_charlenconv(const char *s, int slen, wint_t *wcp)
 {
-    if (!isset(MULTIBYTE)) {
+    if (!isset(MULTIBYTE) || STOUC(*s) <= 0x7f) {
 	if (wcp)
 	    *wcp = (wint_t)*s;
 	return 1;
@@ -5581,10 +5722,6 @@ addunprintable(char *v, const char *u, const char *uend)
 /*
  * Quote the string s and return the result as a string from the heap.
  *
- * If e is non-zero, the
- * pointer it points to may point to a position in s and in e the position
- * of the corresponding character in the quoted string is returned.
- * 
  * The last argument is a QT_ value defined in zsh.h other than QT_NONE.
  *
  * Most quote styles other than backslash assume the quotes are to
@@ -5597,13 +5734,13 @@ addunprintable(char *v, const char *u, const char *uend)
 
 /**/
 mod_export char *
-quotestring(const char *s, char **e, int instring)
+quotestring(const char *s, int instring)
 {
     const char *u;
     char *v;
     int alloclen;
     char *buf;
-    int sf = 0, shownull = 0;
+    int shownull = 0;
     /*
      * quotesub is used with QT_SINGLE_OPTIONAL.
      * quotesub = 0:  mechanism not active
@@ -5674,10 +5811,6 @@ quotestring(const char *s, char **e, int instring)
 	while (*u) {
 	    uend = u + MB_METACHARLENCONV(u, &cc);
 
-	    if (e && !sf && *e <= u) {
-		*e = v;
-		sf = 1;
-	    }
 	    if (
 #ifdef MULTIBYTE_SUPPORT
 		cc != WEOF &&
@@ -5704,11 +5837,6 @@ quotestring(const char *s, char **e, int instring)
 	}
     } else if (instring == QT_BACKSLASH_PATTERN) {
 	while (*u) {
-	    if (e && !sf && *e == u) {
-		*e = v;
-		sf = 1;
-	    }
-
 	    if (ipattern(*u))
 		*v++ = '\\';
 	    *v++ = *u++;
@@ -5727,8 +5855,6 @@ quotestring(const char *s, char **e, int instring)
 	 */
 	while (*u) {
 	    int dobackslash = 0;
-	    if (e && *e == u)
-		*e = v, sf = 1;
 	    if (*u == Tick || *u == Qtick) {
 		char c = *u++;
 
@@ -5915,10 +6041,6 @@ quotestring(const char *s, char **e, int instring)
     if (quotesub == 2)
 	*v++ = '\'';
     *v = '\0';
-
-    if (e && *e == u)
-	*e = v, sf = 1;
-    DPUTS(e && !sf, "BUG: Wild pointer *e in quotestring()");
 
     v = dupstring(buf);
     zfree(buf, alloclen);
@@ -6794,7 +6916,7 @@ strsfx(char *s, char *t)
 static int
 upchdir(int n)
 {
-    char buf[PATH_MAX];
+    char buf[PATH_MAX+1];
     char *s;
     int err = -1;
 

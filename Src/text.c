@@ -46,8 +46,8 @@ int text_expand_tabs;
  * et seq. in zsh.h.
  */
 static const char *cond_binary_ops[] = {
-    "=", "!=", "<", ">", "-nt", "-ot", "-ef", "-eq",
-    "-ne", "-lt", "-gt", "-le", "-ge", "=~"
+    "=", "==", "!=", "<", ">", "-nt", "-ot", "-ef", "-eq",
+    "-ne", "-lt", "-gt", "-le", "-ge", "=~", NULL
 };
 
 static char *tptr, *tbuf, *tlim, *tpending;
@@ -934,6 +934,7 @@ gettext2(Estate state)
 			    taddstr(" ");
 			    taddstr(ecgetstr(state, EC_NODUP, NULL));
 			    if (ctype == COND_STREQ ||
+				ctype == COND_STRDEQ ||
 				ctype == COND_STRNEQ)
 				state->pc++;
 			} else {
@@ -1068,11 +1069,11 @@ getredirs(LinkList redirs)
 		     */
 		    if (!has_token(f->name)) {
 			taddchr('\'');
-			taddstr(quotestring(f->name, NULL, QT_SINGLE));
+			taddstr(quotestring(f->name, QT_SINGLE));
 			taddchr('\'');
 		    } else {
 			taddchr('"');
-			taddstr(quotestring(f->name, NULL, QT_DOUBLE));
+			taddstr(quotestring(f->name, QT_DOUBLE));
 			taddchr('"');
 		    }
 		    if (sav)

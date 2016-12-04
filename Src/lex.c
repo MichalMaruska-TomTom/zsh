@@ -267,9 +267,13 @@ zshlex(void)
 {
     if (tok == LEXERR)
 	return;
-    do
+    do {
+	if (inrepeat_)
+	    ++inrepeat_;
+	if (inrepeat_ == 3 && isset(SHORTLOOPS))
+	    incmdpos = 1;
 	tok = gettok();
-    while (tok != ENDINPUT && exalias());
+    } while (tok != ENDINPUT && exalias());
     nocorrect &= 1;
     if (tok == NEWLIN || tok == ENDINPUT) {
 	while (hdocs) {
@@ -609,7 +613,7 @@ gettok(void)
     if (lexstop)
 	return (errflag) ? LEXERR : ENDINPUT;
     isfirstln = 0;
-    if ((lexflags & LEXFLAGS_ZLE))
+    if ((lexflags & LEXFLAGS_ZLE) && !(inbufflags & INP_ALIAS))
 	wordbeg = inbufct - (qbang && c == bangchar);
     hwbegin(-1-(qbang && c == bangchar));
     /* word includes the last character read and possibly \ before ! */
@@ -1026,8 +1030,10 @@ gettokstr(int c, int sub)
 		    c = Inbrace;
 		    ++bct;
 		    cmdpush(CS_BRACEPAR);
-		    if (!in_brace_param)
-			in_brace_param = bct;
+		    if (!in_brace_param) {
+			if ((in_brace_param = bct))
+			    seen_brct = 0;
+		    }
 		} else {
 		    hungetc(e);
 		    lexstop = 0;
@@ -1783,9 +1789,17 @@ parse_subst_string(char *s)
 static void
 gotword(void)
 {
-    we = zlemetall + 1 - inbufct + (addedx == 2 ? 1 : 0);
-    if (zlemetacs <= we) {
-	wb = zlemetall - wordbeg + addedx;
+    int nwe = zlemetall + 1 - inbufct + (addedx == 2 ? 1 : 0);
+    if (zlemetacs <= nwe) {
+	int nwb = zlemetall - wordbeg + addedx;
+	if (zlemetacs >= nwb) {
+	    wb = nwb;
+	    we = nwe;
+	} else {
+	    wb = zlemetacs + addedx;
+	    if (we < wb)
+		we = wb;
+	}
 	lexflags = 0;
     }
 }
@@ -1829,9 +1843,9 @@ checkalias(void)
 	    suf > zshlextext && suf[-1] != Meta &&
 	    (an = (Alias)sufaliastab->getnode(sufaliastab, suf+1)) &&
 	    !an->inuse && incmdpos) {
-	    inpush(dupstring(zshlextext), INP_ALIAS, NULL);
+	    inpush(dupstring(zshlextext), INP_ALIAS, an);
 	    inpush(" ", INP_ALIAS, NULL);
-	    inpush(an->text, INP_ALIAS, an);
+	    inpush(an->text, INP_ALIAS, NULL);
 	    lexstop = 0;
 	    return 1;
 	}
@@ -1897,6 +1911,7 @@ exalias(void)
 		  zshlextext[0] == '}' && !zshlextext[1])) &&
 		(rw = (Reswd) reswdtab->getnode(reswdtab, zshlextext))) {
 		tok = rw->token;
+		inrepeat_ = (tok == REPEAT);
 		if (tok == DINBRACK)
 		    incond = 1;
 	    } else if (incond && !strcmp(zshlextext, "]]")) {
@@ -2123,8 +2138,17 @@ skipcomm(void)
     lexflags &= ~LEXFLAGS_ZLE;
     dbparens = 0;	/* restored by zcontext_restore_partial() */
 
-    if (!parse_event(OUTPAR) || tok != OUTPAR)
-	lexstop = 1;
+    if (!parse_event(OUTPAR) || tok != OUTPAR) {
+	if (strin) {
+	    /*
+	     * Get the rest of the string raw since we don't
+	     * know where this token ends.
+	     */
+	    while (!lexstop)
+		(void)ingetc();
+	} else
+	    lexstop = 1;
+    }
      /* Outpar lexical token gets added in caller if present */
 
     /*

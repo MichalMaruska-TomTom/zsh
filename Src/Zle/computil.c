@@ -199,11 +199,11 @@ cd_calc(void)
             set->count++;
             if ((l = strlen(str->str)) > cd_state.pre)
                 cd_state.pre = l;
-            if ((l = MB_METASTRWIDTH(str->str)) > cd_state.premaxw)
+            if ((l = ZMB_nicewidth(str->str)) > cd_state.premaxw)
                 cd_state.premaxw = l;
             if (str->desc) {
                 set->desc++;
-                if ((l = strlen(str->desc)) > cd_state.suf)
+                if ((l = strlen(str->desc)) > cd_state.suf) /* ### strlen() assumes no \n */
                     cd_state.suf = l;
             }
         }
@@ -490,7 +490,7 @@ cd_init(char *nam, char *hide, char *mlen, char *sep,
     setp = &(cd_state.sets);
     cd_state.sep = ztrdup(sep);
     cd_state.slen = strlen(sep);
-    cd_state.swidth = MB_METASTRWIDTH(sep);
+    cd_state.swidth = ZMB_nicewidth(sep);
     cd_state.sets = NULL;
     cd_state.showd = disp;
     cd_state.maxg = cd_state.groups = cd_state.descs = 0;
@@ -526,7 +526,8 @@ cd_init(char *nam, char *hide, char *mlen, char *sep,
             str->other = NULL;
             str->set = set;
 
-            for (tmp = *ap; *tmp && *tmp != ':'; tmp++)
+	    /* Advance tmp to the first unescaped colon. */
+	    for (tmp = *ap; *tmp && *tmp != ':'; tmp++)
                 if (*tmp == '\\' && tmp[1])
                     tmp++;
 
@@ -537,7 +538,7 @@ cd_init(char *nam, char *hide, char *mlen, char *sep,
             *tmp = '\0';
             str->str = str->match = ztrdup(rembslash(*ap));
             str->len = strlen(str->str);
-            str->width = MB_METASTRWIDTH(str->str);
+            str->width = ZMB_nicewidth(str->str);
 	    str->sortstr = NULL;
         }
         if (str)
@@ -692,7 +693,7 @@ cd_get(char **params)
 			 * end of screen as safety margin
 			 */
 			d = str->desc;
-			w = MB_METASTRWIDTH(d);
+			w = ZMB_nicewidth(d);
 			if (w <= remw)
 			    strcpy(p, d);
 			else {
@@ -701,7 +702,7 @@ cd_get(char **params)
 				l = MB_METACHARLEN(d);
 				memcpy(pp, d, l);
 				pp[l] = '\0';
-				w = MB_METASTRWIDTH(pp);
+				w = ZMB_nicewidth(pp);
 				if (w > remw) {
 				    *pp = '\0';
 				    break;
@@ -792,7 +793,7 @@ cd_get(char **params)
 			cd_state.swidth - CM_SPACE;
 		    p = pp = dbuf + cd_state.slen;
 		    d = str->desc;
-		    w = MB_METASTRWIDTH(d);
+		    w = ZMB_nicewidth(d);
 		    if (w <= remw) {
 			strcpy(p, d);
 			remw -= w;
@@ -802,7 +803,7 @@ cd_get(char **params)
 			    l = MB_METACHARLEN(d);
 			    memcpy(pp, d, l);
 			    pp[l] = '\0';
-			    w = MB_METASTRWIDTH(pp);
+			    w = ZMB_nicewidth(pp);
 			    if (w > remw) {
 				*pp = '\0';
 				break;
@@ -1693,10 +1694,10 @@ ca_get_opt(Cadef d, char *line, int full, char **end)
 	for (p = d->opts; p; p = p->next)
 	    if (p->active && ((!p->args || p->type == CAO_NEXT) ?
 			      !strcmp(p->name, line) : strpfx(p->name, line))) {
-	    int l = strlen(p->name);
-	    if ((p->type == CAO_OEQUAL || p->type == CAO_EQUAL) &&
-		line[l] && line[l] != '=')
-		continue;
+		int l = strlen(p->name);
+		if ((p->type == CAO_OEQUAL || p->type == CAO_EQUAL) &&
+		    line[l] && line[l] != '=')
+		    continue;
 
 		if (end) {
 		    /* Return a pointer to the end of the option. */
@@ -2158,7 +2159,8 @@ ca_parse_line(Cadef d, int multi, int first)
 		state.opt = 0;
 	    else
 		state.curopt = NULL;
-	} else if (multi && (*line == '-' || *line == '+') && cur != compcurrent
+	} else if (multi && (*line == '-' || *line == '+') && cur != compcurrent &&
+		ca_get_opt(d, line, 0, NULL)
 #if 0
 		   /**** Ouch. Using this will disable the mutual exclusion
 			 of different sets. Not using it will make the -A
@@ -2167,9 +2169,11 @@ ca_parse_line(Cadef d, int multi, int first)
 #endif
 		   )
 	    return 1;
-	else if (state.arg && (!napat || !pattry(napat, line))) {
+	else if (state.arg &&
+		 (!napat || cur <= compcurrent || !pattry(napat, line))) {
 	    /* Otherwise it's a normal argument. */
-	    if (napat && ca_inactive(d, NULL, cur + 1, 1, NULL))
+	    if (napat && cur <= compcurrent &&
+		    ca_inactive(d, NULL, cur + 1, 1, NULL))
 		return 1;
 
 	    arglast = 1;
@@ -2308,7 +2312,10 @@ ca_parse_line(Cadef d, int multi, int first)
     return 0;
 }
 
-/* Build a colon-list from a list. */
+/* Build a colon-list from a list.
+ *
+ * This is only used to populate values of $opt_args.
+ */
 
 static char *
 ca_colonlist(LinkList l)
@@ -2318,16 +2325,19 @@ ca_colonlist(LinkList l)
 	int len = 0;
 	char *p, *ret, *q;
 
+	/* Compute the length to be allocated. */
 	for (n = firstnode(l); n; incnode(n)) {
 	    len++;
 	    for (p = (char *) getdata(n); *p; p++)
-		len += (*p == ':' ? 2 : 1);
+		len += (*p == ':' || *p == '\\') ? 2 : 1;
 	}
 	ret = q = (char *) zalloc(len);
 
+	/* Join L into RET, joining with colons and escaping colons and
+	 * backslashes. */
 	for (n = firstnode(l); n;) {
 	    for (p = (char *) getdata(n); *p; p++) {
-		if (*p == ':')
+		if (*p == ':' || *p == '\\')
 		    *q++ = '\\';
 		*q++ = *p;
 	    }
@@ -3546,7 +3556,7 @@ comp_quote(char *str, int prefix)
     if ((x = (prefix && *str == '=')))
 	*str = 'x';
 
-    ret = quotestring(str, NULL, *compqstack);
+    ret = quotestring(str, *compqstack);
 
     if (x)
 	*str = *ret = '=';
@@ -4480,6 +4490,10 @@ cfp_matcher_pats(char *matcher, char *add)
     return add;
 }
 
+/*
+ * ### This function call is skipped by _approximate, so "opt" probably means "optimize".
+ */
+
 static void
 cfp_opt_pats(char **pats, char *matcher)
 {
@@ -4732,7 +4746,7 @@ cf_ignore(char **names, LinkList ign, char *style, char *path)
     for (; (n = *names); names++) {
 	if (!ztat(n, &nst, 1) && S_ISDIR(nst.st_mode)) {
 	    if (tpwd && nst.st_dev == est.st_dev && nst.st_ino == est.st_ino) {
-		addlinknode(ign, quotestring(n, NULL, QT_BACKSLASH));
+		addlinknode(ign, quotestring(n, QT_BACKSLASH));
 		continue;
 	    }
 	    if (tpar && !strncmp((c = dupstring(n)), path, pl)) {
@@ -4748,7 +4762,7 @@ cf_ignore(char **names, LinkList ign, char *style, char *path)
 		if (found || ((e = strrchr(c, '/')) && e > c + pl &&
 			      !ztat(c, &st, 1) && st.st_dev == nst.st_dev &&
 			      st.st_ino == nst.st_ino))
-		    addlinknode(ign, quotestring(n, NULL, QT_BACKSLASH));
+		    addlinknode(ign, quotestring(n, QT_BACKSLASH));
 	    }
 	}
     }
@@ -4811,6 +4825,20 @@ cf_remove_other(char **names, char *pre, int *amb)
     return NULL;
 }
 
+/*
+ * SYNOPSIS:
+ *     1. compfiles -p  parnam1 parnam2 skipped matcher sdirs parnam3 varargs [..varargs]
+ *     2. compfiles -p- parnam1 parnam2 skipped matcher sdirs parnam3 varargs [..varargs]
+ *     3. compfiles -P  parnam1 parnam2 skipped matcher sdirs parnam3 
+ *
+ *     1. Set parnam1 to an array of patterns....
+ *        ${(P)parnam1} is an in/out parameter.
+ *     2. Like #1 but without calling cfp_opt_pats().  (This is only used by _approximate.)
+ *     3. Like #1 but varargs is implicitly set to  char *varargs[2] = { "*(-/)", NULL };.
+ *
+ *     parnam2 has to do with the accept-exact style (see cfp_test_exact()).
+ */
+
 static int
 bin_compfiles(char *nam, char **args, UNUSED(Options ops), UNUSED(int func))
 {
@@ -4839,11 +4867,12 @@ bin_compfiles(char *nam, char **args, UNUSED(Options ops), UNUSED(int func))
 	    }
 	    queue_signals();
 	    if (!(tmp = getaparam(args[1]))) {
+		unqueue_signals();
 		zwarnnam(nam, "unknown parameter: %s", args[1]);
 		return 0;
 	    }
 	    for (l = newlinklist(); *tmp; tmp++)
-		addlinknode(l, *tmp);
+		addlinknode(l, quotestring(*tmp, QT_BACKSLASH_PATTERN));
 	    set_list_array(args[1], cf_pats((args[0][1] == 'P'), !!args[0][2],
 					    l, getaparam(args[2]), args[3],
 					    args[4], args[5],
@@ -4994,7 +5023,7 @@ enables_(Module m, int **enables)
 
 /**/
 int
-boot_(Module m)
+boot_(UNUSED(Module m))
 {
     return 0;
 }

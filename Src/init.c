@@ -712,7 +712,7 @@ init_term(void)
     if (tgetent(termbuf, term) != TGETENT_SUCCESS)
 #endif
     {
-	if (isset(INTERACTIVE))
+	if (interact)
 	    zerr("can't find terminal definition for %s", term);
 	errflag &= ~ERRFLAG_ERROR;
 	termflags |= TERM_BAD;
@@ -802,7 +802,7 @@ init_term(void)
 
 /**/
 void
-setupvals(char *cmd)
+setupvals(char *cmd, char *runscript, char *zsh_name)
 {
 #ifdef USE_GETPWUID
     struct passwd *pswd;
@@ -1089,6 +1089,9 @@ setupvals(char *cmd)
 
     if (cmd)
 	setsparam("ZSH_EXECUTION_STRING", ztrdup(cmd));
+    if (runscript)
+        setsparam("ZSH_SCRIPT", ztrdup(runscript));
+    setsparam("ZSH_NAME", ztrdup(zsh_name)); /* NOTE: already metafied early in zsh_main() */
 }
 
 /*
@@ -1202,19 +1205,22 @@ run_init_scripts(void)
 	if (islogin)
 	    source("/etc/profile");
 	if (unset(PRIVILEGED)) {
-	    char *s = getsparam("ENV");
 	    if (islogin)
 		sourcehome(".profile");
-	    noerrs = 2;
-	    if (s) {
-		s = dupstring(s);
-		if (!parsestr(&s)) {
-		    singsub(&s);
-		    noerrs = 0;
-		    source(s);
+
+	    if (interact) {
+		noerrs = 2;
+		char *s = getsparam("ENV");
+		if (s) {
+		    s = dupstring(s);
+		    if (!parsestr(&s)) {
+			singsub(&s);
+			noerrs = 0;
+			source(s);
+		    }
 		}
+		noerrs = 0;
 	    }
-	    noerrs = 0;
 	} else
 	    source("/etc/suid_profile");
     } else {
@@ -1224,7 +1230,7 @@ run_init_scripts(void)
 
 	if (isset(RCS) && unset(PRIVILEGED))
 	{
-	    if (isset(INTERACTIVE)) {
+	    if (interact) {
 		/*
 		 * Always attempt to load the newuser module to perform
 		 * checks for new zsh users.  Don't care if we can't load it.
@@ -1270,7 +1276,7 @@ run_init_scripts(void)
 
 /**/
 void
-init_misc(char *cmd)
+init_misc(char *cmd, char *zsh_name)
 {
 #ifndef RESTRICTED_R
     if ( restricted )
@@ -1436,8 +1442,10 @@ sourcehome(char *s)
     queue_signals();
     if (EMULATION(EMULATE_SH|EMULATE_KSH) || !(h = getsparam_u("ZDOTDIR"))) {
 	h = home;
-	if (!h)
+	if (!h) {
+	    unqueue_signals();
 	    return;
+	}
     }
 
     {
@@ -1606,7 +1614,7 @@ mod_export int use_exit_printed;
 mod_export int
 zsh_main(UNUSED(int argc), char **argv)
 {
-    char **t, *runscript = NULL;
+    char **t, *runscript = NULL, *zsh_name;
     char *cmd;			/* argument to -c */
     int t0;
 #ifdef USE_LOCALE
@@ -1660,14 +1668,14 @@ zsh_main(UNUSED(int argc), char **argv)
 
     SHTTY = -1;
     init_io(cmd);
-    setupvals(cmd);
+    setupvals(cmd, runscript, zsh_name);
 
     init_signals();
     init_bltinmods();
     init_builtins();
     run_init_scripts();
     setupshin(runscript);
-    init_misc(cmd);
+    init_misc(cmd, zsh_name);
 
     for (;;) {
 	/*
