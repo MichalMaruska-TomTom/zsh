@@ -3,7 +3,7 @@ Upstream-Name: Zsh (Z Shell)
 Upstream-Contact: zsh-workers@zsh.org
 Source: http://www.zsh.org/pub/
         ftp://ftp.zsh.org/pub/
-        http://sourceforge.net/projects/zsh/files/
+        https://sourceforge.net/projects/zsh/files/
 
 Files: *
 Copyright: 1992-2014 The Zsh Development Group (Paul Falstad, Richard
