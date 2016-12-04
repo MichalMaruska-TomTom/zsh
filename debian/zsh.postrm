@@ -9,4 +9,9 @@ case "$1" in
 	;;
 esac
 
+# Remove hardcoded symlink again
+if [ -L /usr/bin/zsh ]; then
+  rm -f /usr/bin/zsh
+fi
+
 #DEBHELPER#
