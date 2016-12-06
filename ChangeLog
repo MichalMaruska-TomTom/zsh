@@ -1,3 +1,58 @@
+2016-12-06  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted: Config/version.mk: 5.2-test-2.
+
+2016-12-05  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* 40102: Test/ztst.zsh, Test/C02cond.ztst: create test IO
+	files in newly created temporary directory.
+
+	* 40100: Test/C03traps.ztst: Check ERR_EXIT and ERR_RETURN on
+	anonymous functions: should exit on function return even if
+	suppressed internally.
+
+	* 40097: Src/exec.c, Test/C03traps.ztst: Don't trigger ERR_EXIT
+	or ERR_RETURN on non-zero status after current shell group, either.
+
+	* 40096: Src/exec.c, Src/loop.c, Src/zsh.h, Test/C03traps.ztst:
+	Don't trigger ERR_EXIT or ERR_RETURN on non-zero status after
+	shell construct.
+
+2016-12-04  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* unposted: Functions/VCS_Info/Backends/VCS_INFO_get_data_git:
+	vcs_info git: Handle rebase-apply sequences with >=10000 patches.
+
+	* 40074: Functions/VCS_Info/Backends/VCS_INFO_get_data_git:
+	vcs_info git: rfc822-unfold rebase-apply patch subjects when
+	msg-clean is unavailable.
+
+2016-12-04  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* 40088: Test/D04parameter.ztst: attempt to make output from
+	interactive test more robust.
+
+2016-12-03  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* unposted: Test/D04parameter.ztst: regression test for 40071
+
+	* 40071: Src/subst.c: change Dash back to "-" before evaluating
+	named directory expansions
+
+2016-12-03  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 40068: Src/params.c, Test/B02typeset.ztst: Abort execution
+	when setuid/setgid fail.
+
+	* 40067: Src/Zle/comp.h, Src/Zle/complete.c, Src/params.c:
+	internal: Document 'cmatcher', parse_cmatcher(), 'comptoend',
+	unsetparam_pm(), and getindex().
+
+2016-12-03  Daniel Hahler  <zsh@thequod.de>
+
+	*  40029: Functions/VCS_Info/Backends/VCS_INFO_get_data_git:
+	Get subject of current patch in rebase-apply mode
+
 2016-12-02  Peter Stephenson  <p.w.stephenson@ntlworld.com>
 
 	* unposted: Config/version.mk: 5.2-test-1.
@@ -40,7 +95,7 @@
 	* 40036: Completion/Debian/Command/_bts: Complete removal
 	syntaxes correctly.
 
-2016-11-29  Barton E. Schaefer  <schaefer@brasslantern.com>
+2016-11-29  Barton E. Schaefer  <schaefer@zsh.org>
 
 	* 40034: Src/subst.c: clear badcshglob when ignoring errors
 
