@@ -1,3 +1,56 @@
+2016-12-09  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted: Config/version.mk: 5.2-test-3.
+
+	* users/22161: Doc/Zsh/expn.yo: the (E) parameter flag is one
+	after every other use of indexing.
+
+2016-12-09  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 40117: Doc/Zsh/compsys.yo, Src/input.c: Revert a hunk of
+	40035 that changed semantics incorrectly.
+
+2016-12-09  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* unposted: Test/D07multibyte.ztst: minor typos.
+
+	* 40138: Test/D07multibyte.ztst: Put the regex test last as it
+	has an additional dependency, and note this in a failure
+	message.
+
+2016-12-09  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* 40126: Functions/Misc/zed: zed (fned): When editing a new
+	function. escape its name.
+
+2016-12-08  Oliver Kiddle  <opk@zsh.org>
+
+	* 40130: NEWS: mention some changes since 5.2
+
+	* 40129: Src/Zle/computil.c, Test/Y03arguments.ztst:
+	revert 39611, add code comments and test cases for _arguments
+
+	* c.f. 40119: Src/zsh.h: correct typo in comment
+
+	* 40114: Completion/Zsh/Context/_brace_parameter: complete
+	:/ with other parameter operators
+
+2016-12-06  Barton E. Schaefer  <schaefer@zsh.org>
+
+	* Zhiming Wang: 40115: Functions/Zle/bracketed-paste-magic:
+	revert 38579 due to bug restoring BUFFER after history search
+
+	* 40110: Test/B02typeset.ztst: ignore strerror text in test
+	output, it differs by OS
+
+	* 40110: Test/C02cond.ztst: discard stderr when looking for
+	a path to the "mount" command, to avoid spurious test failure
+
+2016-12-06  Mikael Magnusson  <mikachu@gmail.com>
+
+	* 40107: Completion/Linux/Command/_fusermount,
+	Completion/Unix/Command/_mount: fix quoting
+
 2016-12-06  Peter Stephenson  <p.w.stephenson@ntlworld.com>
 
 	* unposted: Config/version.mk: 5.2-test-2.
@@ -1916,9 +1969,6 @@
 	Functions/Misc/add-zsh-hook.
 
 2016-06-09  Oliver Kiddle  <opk@zsh.org>
-
-	* 38579: Functions/Zle/bracketed-paste-magic: simplify saving
-	and restoring of state
 
 	* 38641: Completion/Base/Utility/_values: allow for values which
 	resemble compadd options
