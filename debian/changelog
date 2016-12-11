@@ -1,4 +1,10 @@
-zsh (5.2-test-3-1) experimental; urgency=medium
+zsh (5.3-1) UNRELEASED; urgency=low
+
+  * [4cfdbdb8] Release 5.3 of zsh.
+
+ -- Axel Beckert <abe@debian.org>  Sun, 11 Dec 2016 20:56:00 +0100
+
+zsh (5.2-test-3-1) experimental; urgency=low
 
   * [b1f62d9d] Third and "final" upstream test version before 5.3.
 
