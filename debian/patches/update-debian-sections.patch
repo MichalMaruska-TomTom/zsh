@@ -5,6 +5,7 @@ Subject: [PATCH] Update for new programming language sections
 Origin: https://bugs.debian.org/cgi-bin/bugreport.cgi?att=1;bug=847540;filename=0001-Update-for-new-programming-language-sections.patch;msg=13
 Bug-Debian: https://bugs.debian.org/847540
 Forwarded: not-yet
+Reviewed-By: Axel Beckert <abe@debian.org>, Daniel Shahaf <danielsh@apache.org>
 
 ---
  Completion/Debian/Command/_dak       | 2 +-
@@ -20,7 +21,7 @@ index 086196c4a..d06f55d23 100644
    '(-s --suite)'{-s,--suite=}':suite:_values -s , "suite list" oldstable stable testing unstable experimental'
    ':package:_deb_packages avail'
 -  ':section:(admin base comm contrib/admin contrib/comm contrib/devel contrib/doc contrib/games contrib/graphics contrib/interpreters contrib/kde contrib/libdevel contrib/libs contrib/mail contrib/math contrib/misc contrib/net contrib/otherosfs contrib/perl contrib/python contrib/science contrib/sound contrib/tex contrib/text contrib/utils contrib/web contrib/x11 devel doc editors electronics embedded games gnome graphics hamradio interpreters kde libdevel libs mail math misc net news non-free/admin non-free/base non-free/comm non-free/devel non-free/doc non-free/editors non-free/electronics non-free/games non-free/graphics non-free/hamradio non-free/libdevel non-free/libs non-free/mail non-free/math non-free/misc non-free/net non-free/news non-free/otherosfs non-free/python non-free/science non-free/sound non-free/tex non-free/text non-free/utils non-free/web non-free/x11 oldlibs otherosfs perl python science shells sound tex text utils web x11)'
-+  ':section:({,contrib/,non-free/}{admin,base,comm,devel,doc,editors,electronics,embedded,games,gnome,graphics,hamradio,interpreters,java,javascript,kde,libdevel,libs,mail,math,misc,net,news,oldlibs,otherosfs,perl,python,ruby,rust,science,shells,sound,tex,text,utils,web,x11})'
++  ':section:({,contrib/,non-free/}{admin,cli-mono,comm,database,debug,devel,doc,editors,education,electronics,embedded,fonts,games,gnome,gnu-r,gnustep,graphics,hamradio,haskell,httpd,interpreters,introspection,java,javascript,kde,kernel,libdevel,libs,lisp,localization,mail,math,metapackages,misc,net,news,ocaml,oldlibs,otherosfs,perl,php,python,ruby,rust,science,shells,sound,tex,text,utils,vcs,video,web,x11,xfce,zope})'
    ':priority:(extra important optional required standard)'
      )
      ;;
@@ -28,15 +29,23 @@ diff --git a/Completion/Debian/Command/_debfoster b/Completion/Debian/Command/_d
 index 08a1078e2..4c041bc36 100644
 --- a/Completion/Debian/Command/_debfoster
 +++ b/Completion/Debian/Command/_debfoster
-@@ -45,7 +45,9 @@
+@@ -44,10 +44,13 @@
+       ;;
      *(#i)(no|)keepsections*)
        _wanted values expl 'section' compadd \
- 	  x11 web utils text tex sound shells science \
-+	  rust ruby python perl \
- 	  otherosfs oldlibs news net misc math mail libs \
-+	  javascript java \
- 	  interpreters hamradio graphics games electronics \
- 	  editors doc devel comm base admin && ret=0
+-	  x11 web utils text tex sound shells science \
+-	  otherosfs oldlibs news net misc math mail libs \
+-	  interpreters hamradio graphics games electronics \
+-	  editors doc devel comm base admin && ret=0
++	  zope xfce x11 web video vcs utils text tex sound shells \
++	  science rust ruby python php perl otherosfs oldlibs ocaml \
++	  news net misc metapackages math mail localization lisp libs \
++	  libdevel kernel kde javascript java introspection \
++	  interpreters httpd haskell hamradio graphics gnustep gnu-r \
++	  gnome games fonts embedded electronics education editors doc \
++	  devel debug database comm cli-mono admin && ret=0
        ;;
+     *(#i)guessdepends*)
+       _wanted values expl 'name extension' \
 -- 
 2.11.0
