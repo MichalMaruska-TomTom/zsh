@@ -1,8 +1,14 @@
-zsh (5.3-1) UNRELEASED; urgency=low
+zsh (5.3-1) unstable; urgency=low
 
-  * [4cfdbdb8] Release 5.3 of zsh.
+  [ Axel Beckert ]
+  * [4cfdbdb8] Import new upstream release.
+  * Upload to unstable again.
 
- -- Axel Beckert <abe@debian.org>  Sun, 11 Dec 2016 20:56:00 +0100
+  [ Josh Triplett, Daniel Shahaf, Axel Beckert ]
+  * [7d6c5d6c,dca380d6,f9fbafb1] Add patch to update for new Debian
+    programming language sections. (Closes: #847540)
+
+ -- Axel Beckert <abe@debian.org>  Sun, 11 Dec 2016 23:02:55 +0100
 
 zsh (5.2-test-3-1) experimental; urgency=low
 
