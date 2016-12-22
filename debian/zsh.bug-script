@@ -32,6 +32,7 @@ else
                       environment-modules \
                       fizsh \
                       oh-my-zsh \
+                      ondir \
                       python-powerline \
                       python3-powerline \
                       rosbash \
