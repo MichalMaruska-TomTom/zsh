@@ -1,3 +1,11 @@
+zsh (5.3.1-1) UNRELEASED; urgency=medium
+
+  * [06b1b7a3] Import new upstream release
+  * [ea5d92e0] bug-script: Add ondir to list of packages which provide
+    code meant to be sourced in .zshrc
+
+ -- Axel Beckert <abe@debian.org>  Fri, 23 Dec 2016 01:59:09 +0100
+
 zsh (5.3-1) unstable; urgency=low
 
   [ Axel Beckert ]
