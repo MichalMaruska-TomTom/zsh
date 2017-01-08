@@ -1,3 +1,5 @@
 further-mitigate-test-suite-hangs.patch
 update-debian-sections.patch
 remove-SH_USE_BSD_ECHO-autoconf-test-to-make-build-more-reproducible.patch
+update_bts_completion.patch
+swaks_completion.patch
