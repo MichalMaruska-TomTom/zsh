@@ -100,7 +100,6 @@ clean:
 	dh_auto_clean -B obj-static --parallel
 	dh_auto_clean               --parallel
 	dh_clean
-	rm -rf config.cache obj obj-static autom4te.cache
 
 binary-indep: build-indep binary-arch-dynamic
 	dh_testdir

@@ -15,3 +15,6 @@ META-FAQ
 build-arch
 build-indep
 stamp-h.in
+obj/
+obj-static/
+autom4te.cache/
