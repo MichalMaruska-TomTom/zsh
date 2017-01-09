@@ -1,5 +1,5 @@
+/bin/zsh /bin/rzsh
+/usr/share/doc/zsh-common /usr/share/doc/zsh/doc
 /usr/share/doc/zsh-common/changelog.gz /usr/share/doc/zsh/changelog.gz
 /usr/share/doc/zsh-common/examples /usr/share/doc/zsh/examples
-/usr/share/doc/zsh-common /usr/share/doc/zsh/doc
-/bin/zsh /bin/rzsh
 /usr/share/man/man1/zsh.1.gz /usr/share/man/man1/rzsh.1.gz
