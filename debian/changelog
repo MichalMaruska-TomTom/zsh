@@ -1,3 +1,15 @@
+zsh (5.3.1-2) unstable; urgency=low
+
+  * [c95b2f20] Add patches posted by Daniel Shahaf on zsh-workers to
+    update bts completion and add swaks completion.
+  * [3ab2793a] Add lintian override for debian-news-entry-uses-asterisk as
+    that won't change.
+  * [f1b49f7e] Use dh_clean's directory removal feature added in debhelper
+    9.20151116. Update versioned debhelper build-dependency accordingly.
+  * [beb9a8a3] Apply "wrap-and-sort -a".
+
+ -- Axel Beckert <abe@debian.org>  Mon, 09 Jan 2017 02:10:23 +0100
+
 zsh (5.3.1-1) unstable; urgency=low
 
   * [06b1b7a3] Import new upstream release
