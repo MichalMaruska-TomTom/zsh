@@ -3,3 +3,7 @@ update-debian-sections.patch
 remove-SH_USE_BSD_ECHO-autoconf-test-to-make-build-more-reproducible.patch
 update_bts_completion.patch
 swaks_completion.patch
+cherry-pick_8d4c9854_zero_new_space_allocated_in_prompt_buffer.patch
+cherry-pick_48cadf48_be_more_careful_with_pattern_allocation_in_history_isearch.patch
+cherry-pick_ebd7fdd9_fix_setting_of_parameter_values_in_compvalues.patch
+cherry-pick_2e76fb80_turn_off_POSIX_IDENTIFIERS_option_in_completion.patch
