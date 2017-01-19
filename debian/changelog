@@ -1,3 +1,18 @@
+zsh (5.3.1-3) unstable; urgency=medium
+
+  * [348c47bd] Cherry-pick four stability patches from upstream:
+    + [48cadf48] 40285: Src/Zle/zle_hist.c: more care needed managing
+      patterns in history isearch if there are hooks around.
+    + [2e76fb80] 40372: Completion/compinit: turn off POSIX_IDENTIFIERS
+      option for completion.
+    + [8d4c9854] 40260: Src/prompt.c: Set newly allocated space in prompt
+      buffer to zero as it may be tested.
+    + [ebd7fdd9] 40362: Src/Zle/computil.c: need duplicated values for
+      setting parameter in compvalues.  Was causing obscure but
+      surprisingly rare crashes in value completion.
+
+ -- Axel Beckert <abe@debian.org>  Thu, 19 Jan 2017 23:25:40 +0100
+
 zsh (5.3.1-2) unstable; urgency=low
 
   * [c95b2f20] Add patches posted by Daniel Shahaf on zsh-workers to
