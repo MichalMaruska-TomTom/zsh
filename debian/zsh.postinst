@@ -2,6 +2,14 @@
 
 set -e
 
+# ksh alternatives
+update-alternatives --remove ksh /usr/bin/zsh
+update-alternatives --remove ksh /bin/zsh4
+
+# Remove alternatives system for zsh in general
+update-alternatives --remove zsh /bin/zsh5
+update-alternatives --remove rzsh /bin/zsh5
+
 case "$1" in
     (configure)
         add-shell /bin/zsh
@@ -22,14 +30,6 @@ case "$1" in
 	exit 0
     ;;
 esac
-
-# ksh alternatives
-update-alternatives --remove ksh /usr/bin/zsh
-update-alternatives --remove ksh /bin/zsh4
-
-# Remove alternatives system for zsh in general
-update-alternatives --remove zsh /bin/zsh5
-update-alternatives --remove rzsh /bin/zsh5
 
 #DEBHELPER#
 
