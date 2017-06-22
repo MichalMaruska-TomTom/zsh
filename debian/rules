@@ -49,20 +49,20 @@ BUILT_USING=$(shell dpkg-query -f '$${source:Package} (= $${source:Version}), ' 
 build: build-arch build-indep
 
 build-arch: configure-stamp
-	dh_auto_build -B obj --parallel
+	dh_auto_build -B obj
 	if dpkg-architecture -qDEB_BUILD_ARCH_OS | grep -qv hurd; then \
-		HOME="$(CURDIR)/obj/testhome" ZTST_verbose=1 dh_auto_test -B obj --parallel; \
+		HOME="$(CURDIR)/obj/testhome" ZTST_verbose=1 dh_auto_test -B obj; \
 	fi
 	touch $@
 
 build-indep: configure-stamp
-	dh_auto_build -B obj --parallel -- pdf
+	dh_auto_build -B obj -- pdf
 	touch $@
 
 build-static: configure-static-stamp
 	dh_testdir
-	dh_auto_build -B obj-static --parallel
-	#HOME="$(CURDIR)/obj-static/testhome" ZTST_verbose=1 dh_auto_test -B obj-static --parallel || true
+	dh_auto_build -B obj-static
+	#HOME="$(CURDIR)/obj-static/testhome" ZTST_verbose=1 dh_auto_test -B obj-static || true
 	touch $@
 
 build-debug: DEB_BUILD_OPTIONS+=debug
@@ -96,9 +96,9 @@ clean:
 	dh_autoreconf_clean
 	dh_autotools-dev_restoreconfig
 	rm -f build build-static
-	dh_auto_clean -B obj        --parallel
-	dh_auto_clean -B obj-static --parallel
-	dh_auto_clean               --parallel
+	dh_auto_clean -B obj
+	dh_auto_clean -B obj-static
+	dh_auto_clean
 	dh_clean
 
 binary-indep: build-indep binary-arch-dynamic
