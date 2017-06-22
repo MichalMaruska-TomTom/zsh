@@ -1,3 +1,17 @@
+zsh (5.3.1-5) unstable; urgency=medium
+
+  * [aa55c6bb] Patch configure.ac to add support for yodl 4 to yodl
+    version check. (Closes: #865492)
+  * [ffdd3ef2] Switch all http://www.zsh.org/ and http://www.debian.org/
+    URLs in packaging to HTTPS.
+  * [42e6d850] Declare compliance with Debian Policy 4.0.0. (No further
+    changes were required.)
+  * [2b2aa74d] Bump debhelper compatibility to 10.
+    + Update versioned build-dependency on debhelper accordingly.
+    + Remove all --parallel options from debian/rules.
+
+ -- Axel Beckert <abe@debian.org>  Thu, 22 Jun 2017 04:26:33 +0200
+
 zsh (5.3.1-4) unstable; urgency=high
 
   * [5c3b52b8] Reorder zsh.postinst: do alternatives removal before
