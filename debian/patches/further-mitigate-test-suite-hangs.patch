@@ -1,4 +1,4 @@
-Origin: http://www.zsh.org/mla/workers/2014/msg01250.html
+Origin: https://www.zsh.org/mla/workers/2014/msg01250.html
 Author: Bart Schaefer <schaefer@brasslantern.com>
 Bug-Debian: https://bugs.debian.org/759870
 Description: Add a sleep call which should prevent a race condition in coproc

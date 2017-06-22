@@ -1,7 +1,7 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Zsh (Z Shell)
 Upstream-Contact: zsh-workers@zsh.org
-Source: http://www.zsh.org/pub/
+Source: https://www.zsh.org/pub/
         ftp://ftp.zsh.org/pub/
         https://sourceforge.net/projects/zsh/files/
 

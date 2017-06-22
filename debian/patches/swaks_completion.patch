@@ -4,7 +4,7 @@ From: Daniel Shahaf <d.s@daniel.shahaf.name>
 To: zsh-workers@zsh.org
 Subject: _swaks completion
 Message-ID: <20170108033049.GA27435@fujitsu.shahaf.local2>
-Origin:  http://www.zsh.org/cgi-bin/mla/redirect?WORKERNUMBER=40302
+Origin: https://www.zsh.org/cgi-bin/mla/redirect?WORKERNUMBER=40302
 
 This doesn't include all options, only a few options that I've used so
 far, but I suppose it'd still be better to commit it than not to.

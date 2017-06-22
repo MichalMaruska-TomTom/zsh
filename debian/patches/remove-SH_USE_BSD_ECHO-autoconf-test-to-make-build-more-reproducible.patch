@@ -5,7 +5,7 @@ Description: Remove SH_USE_BSD_ECHO autoconf test
  .
  See https://bugs.debian.org/849288 for a discussion of this issue.
 Author: Daniel Shahaf <danielsh@apache.org>
-Origin: http://www.zsh.org/mla/workers/2016/msg02716.html
+Origin: https://www.zsh.org/mla/workers/2016/msg02716.html
 
 --- a/configure.ac
 +++ b/configure.ac

@@ -4,7 +4,7 @@ To: zsh-workers@zsh.org
 Subject: [PATCH] _bts: Add more subcommands.
 Date: Sun,  8 Jan 2017 03:47:24 +0000
 Message-Id: <1483847244-7913-1-git-send-email-danielsh@fujitsu.shahaf.local2>
-Origin:  http://www.zsh.org/cgi-bin/mla/redirect?WORKERNUMBER=40303
+Origin:  https://www.zsh.org/cgi-bin/mla/redirect?WORKERNUMBER=40303
 
 Since 'done' is deprecated, stop offering it but do complete after it.
 ---
