@@ -6,6 +6,7 @@ export DEB_BUILD_MAINT_OPTIONS=hardening=+all
 
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/buildflags.mk
+include /usr/share/dpkg/pkg-info.mk
 H_LDFLAGS = $(LDFLAGS)
 
 VENDOR=$(shell dpkg-vendor --query vendor | env LC_ALL=C tr A-Z a-z | env LC_ALL=C tr -d -c '[:alnum:]')
@@ -28,7 +29,7 @@ CONFIGFLAGS += --with-tcsetpgrp
 CONFIGFLAGS += --with-term-lib="ncursesw tinfo"
 CONFIGFLAGS += --enable-cap --enable-pcre
 CONFIGFLAGS += --enable-readnullcmd=pager
-CONFIGFLAGS += --enable-custom-patchlevel=Debian
+CONFIGFLAGS += --enable-custom-patchlevel=$(VENDOR)/$(DEB_VERSION)
 CONFIGFLAGS += --enable-additional-fpath=/usr/share/zsh/vendor-functions,/usr/share/zsh/vendor-completions
 CONFIGFLAGS += --disable-ansi2knr
 
