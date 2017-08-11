@@ -1,2 +1,0 @@
-# Bug in Lintian, see #871711
-zsh source: missing-build-dependency-for-dh_-command dh_autotools-dev_restoreconfig => autotools-dev
