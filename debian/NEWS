@@ -1,3 +1,37 @@
+zsh (5.4.1-2) unstable; urgency=medium
+
+  From the upstream README of 5.4.1:
+
+  > The default behaviour of code like the following has changed:
+  >
+  >   alias foo='noglob foo'
+  >   foo() { print function body; }
+  >
+  > When this is encountered in a start-up file, or other place where
+  > input was read line by line, "foo" is in command position and is
+  > expanded as an alias before the function definition takes place.  In
+  > previous versions of the shell, this caused two functions "noglob" and
+  > "foo" to be defined.  Any expansion of an alias in a function
+  > definition is nearly always an unintended effect, as well as hard to
+  > detect, so has been made an error.  (The option setting
+  > NO_MULTI_FUNC_DEF turned this case into an error, but did not help
+  > with other cases and is off by default.)  The alternative, of not
+  > expanding the alias, was rejected as it was more difficult to achieve
+  > in the parser and also would silently change the shell's behaviur
+  > between versions.  A new option, ALIAS_FUNC_DEF, has been added, which
+  > can be set to make the shell behave as in previous versions.  It is in
+  > any case recommended to use the "function" keyword, as aliases are not
+  > expanded afterwards.
+
+  The common error message triggered by this change looks as follows:
+
+  > zsh: defining function based on alias `foo'
+  > zsh: parse error near `()'
+
+  See https://bugs.debian.org/871816 for more information.
+
+ -- Axel Beckert <abe@debian.org>  Fri, 11 Aug 2017 21:43:25 +0200
+
 zsh (5.0.0-1) unstable; urgency=low
 
   This update includes a rewrite of keyboard handling in `/etc/zsh/zshrc'.
