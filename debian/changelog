@@ -1,10 +1,24 @@
-zsh (5.4.1-1) UNRELEASED; urgency=low
+zsh (5.4.1-1) unstable; urgency=low
 
-  * [e3b67a81] Import new upstream release 5.4.1
-    + Drop all patches except further-mitigate-test-suite-hangs.patch and
-      update-debian-sections.patch (applied upstream; were cherry-picked)
+  [ Axel Beckert ]
+  * [e3b67a81] Import new upstream release 5.4.1.
+    + [4d67d694] Drop all patches except
+      further-mitigate-test-suite-hangs.patch and
+      update-debian-sections.patch. (were either applied upstream or
+      cherry-picked)
+    + [385cb9b9] Fixes incomplete completion list for "man -a". (Closes:
+      #853130)
+  * [d0927608] Drop build-dependencies on autotools-dev and dh-autoreconf.
+    No more needed with debhelper compatibility level 10 and the according
+    versioned build-dependency.
+  * [4cbb9256,9574eafe] Replace dh_autotools-dev_*config with
+    dh_update_autotools_config (+ dh_clean).
 
- -- Axel Beckert <abe@debian.org>  Thu, 10 Aug 2017 18:07:34 +0200
+  [ Daniel Shahaf ]
+  * [e795f448] Change the value of $ZSH_PATCHLEVEL to sport the Debian
+    package version including the Debian package revision.
+
+ -- Axel Beckert <abe@debian.org>  Fri, 11 Aug 2017 03:20:51 +0200
 
 zsh (5.3.1-5) unstable; urgency=medium
 
