@@ -1,4 +1,4 @@
-zsh (5.4.2-1) UNRELEASED; urgency=medium
+zsh (5.4.2-1) unstable; urgency=medium
 
   * [4aaf06e6] Import new upstream bugfix release 5.4.2.
   * [48098e7b] Document change of default behaviour in 5.4.1 in
@@ -6,7 +6,7 @@ zsh (5.4.2-1) UNRELEASED; urgency=medium
   * [f33de64a] Declare compliance with Debian Policy 4.1.0. (No other
     changes needed.)
 
- -- Axel Beckert <abe@debian.org>  Wed, 13 Sep 2017 00:47:15 +0200
+ -- Axel Beckert <abe@debian.org>  Wed, 13 Sep 2017 01:15:48 +0200
 
 zsh (5.4.1-1) unstable; urgency=low
 
