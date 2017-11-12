@@ -72,7 +72,6 @@ override_dh_auto_configure:
 	mkdir -p obj/testhome obj-static/testhome
 	dh_auto_configure -B obj -- $(CONFIGFLAGS)
 	dh_auto_configure -B obj-static -- $(CONFIGFLAGS) $(STATICFLAGS)
-#	cp debian/static.conf obj-static/Src/mymods.conf
 
 	sed -e 's/#define VENDOR "pc"/#define VENDOR "$(VENDOR)"/' \
 	    -i obj/config.h obj-static/config.h
@@ -115,7 +114,6 @@ override_dh_auto_install-indep: build-dynamic
 	sed -i -e 's/<BODY.*>/<BODY LANG="EN">/' debian/zsh-doc/usr/share/doc/zsh-common/html/*.html
 
 override_dh_installexamples-indep:
-# functions
 	dh_installexamples -pzsh-common -X.distfiles
 	cd debian/zsh-common/usr/share/doc/zsh-common/examples/; mv Example Functions
 	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#' \
@@ -134,7 +132,6 @@ override_dh_compress-indep:
 	dh_compress -i -Xpdf
 
 override_dh_auto_install-arch:
-# modules
 	cd obj && $(MAKE) install.bin     DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 	cd obj && $(MAKE) install.modules DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 
