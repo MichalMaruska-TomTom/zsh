@@ -1,6 +1,8 @@
 autom4te.cache/
+build
 build-arch
 build-indep
+build-static
 config.cache
 config.status
 config.status.lineno

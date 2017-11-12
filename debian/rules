@@ -47,74 +47,52 @@ endif
 
 BUILT_USING=$(shell dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W libcap-dev libncursesw5-dev libpcre3-dev libc-dev-bin)
 
-build: build-arch build-indep
+%:
+	dh $@
 
-build-arch: configure-stamp
+override_dh_auto_build-arch:
 	dh_auto_build -B obj
+	dh_auto_build -B obj-static
+
+override_dh_auto_build-indep:
+	dh_auto_build -B obj -- pdf
+
+override_dh_auto_test-arch:
 	if dpkg-architecture -qDEB_BUILD_ARCH_OS | grep -qv hurd; then \
 		HOME="$(CURDIR)/obj/testhome" ZTST_verbose=1 dh_auto_test -B obj; \
 	fi
-	touch $@
-
-build-indep: configure-stamp
-	dh_auto_build -B obj -- pdf
-	touch $@
-
-build-static: configure-static-stamp
-	dh_testdir
-	dh_auto_build -B obj-static
 	#HOME="$(CURDIR)/obj-static/testhome" ZTST_verbose=1 dh_auto_test -B obj-static || true
-	touch $@
 
-build-debug: DEB_BUILD_OPTIONS+=debug
-build-debug: build
+override_dh_auto_test-indep:
 
-configure:
+override_dh_update_autotools_config:
 	touch stamp-h.in
 	dh_update_autotools_config
-	dh_autoreconf
 
-configure-stamp: configure
-	dh_testdir
+override_dh_auto_configure:
 	chmod 755 configure
-	mkdir -p obj/testhome
+	mkdir -p obj/testhome obj-static/testhome
 	dh_auto_configure -B obj -- $(CONFIGFLAGS)
-	sed -e 's/#define VENDOR "pc"/#define VENDOR "$(VENDOR)"/' -i obj/config.h
-	touch $@
-
-configure-static-stamp: configure
-	dh_testdir
-	mkdir -p obj-static/testhome
 	dh_auto_configure -B obj-static -- $(CONFIGFLAGS) $(STATICFLAGS)
 #	cp debian/static.conf obj-static/Src/mymods.conf
-	sed -i -e 's/files.mdd link=no/files.mdd link=static/;s/stat.mdd link=no/stat.mdd link=static/' \
-	    obj-static/config.modules
-	sed -e 's/#define VENDOR "pc"/#define VENDOR "$(VENDOR)"/' -i obj-static/config.h
-	touch $@
 
-clean:
-	dh_testdir
-	dh_autoreconf_clean
-	rm -f build build-static
+	sed -e 's/#define VENDOR "pc"/#define VENDOR "$(VENDOR)"/' \
+	    -i obj/config.h obj-static/config.h
+	sed -e 's/files.mdd link=no/files.mdd link=static/;s/stat.mdd link=no/stat.mdd link=static/' \
+	    -i obj-static/config.modules
+
+override_dh_auto_clean:
 	dh_auto_clean -B obj
 	dh_auto_clean -B obj-static
 	dh_auto_clean
-	dh_clean
 
-binary-indep: build-indep binary-arch-dynamic
-	dh_testdir
-	dh_testroot
-	dh_installdocs -i --link-doc=zsh-common
-	dh_installdirs -i
+override_dh_installdocs-indep:
+	dh_installdocs -pzsh-doc --link-doc=zsh-common --doc-main-package=zsh-common
+	dh_installdocs -pzsh-common
 
+override_dh_auto_install-indep:
 	cd obj && $(MAKE) install.man DESTDIR=$(CURDIR)/debian/zsh-common
 	perl $(CURDIR)/Util/helpfiles Doc/zshbuiltins.1 debian/zsh-common/usr/share/zsh/help
-
-# functions
-	dh_installexamples -pzsh-common -X.distfiles
-	cd debian/zsh-common/usr/share/doc/zsh-common/examples/; mv Example Functions
-	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#' \
-	   debian/zsh-common/usr/share/doc/zsh-common/examples/Misc/*
 
 	cd obj && $(MAKE) install.fns DESTDIR=$(CURDIR)/debian/zsh-common
 	rm -r debian/zsh-common/usr/local
@@ -124,6 +102,7 @@ binary-indep: build-indep binary-arch-dynamic
              /^#define FPATH_SUBDIRS/ { $$1=""; $$2=""; gsub(/[" ]/,""); tail=$$0; } \
              END                      { printf "%s/%s\n", head, tail; };'            \
 	    obj/Src/zshpaths.h >obj/Src/zshpaths.temp
+# TODO: This will likely not work if only arch-indep packages are built
 	debian/zsh/bin/zsh -fc \
             'setopt extendedglob; \
 	     for i in debian/zsh-common/'`cat obj/Src/zshpaths.temp`'; do \
@@ -134,11 +113,19 @@ binary-indep: build-indep binary-arch-dynamic
 # Docs: Info + HTML
 	cd obj && $(MAKE) install.info DESTDIR=$(CURDIR)/debian/zsh-doc
 	rm -f debian/zsh-doc/usr/share/info/dir*
-	cd obj && $(MAKE) install.html DESTDIR=$(CURDIR)/debian/zsh-doc htmldir=/usr/share/doc/zsh-doc/html
+	cd obj && $(MAKE) install.html DESTDIR=$(CURDIR)/debian/zsh-doc htmldir=/usr/share/doc/zsh-common/html
 
 # Work around texi2html unfriendliness
-	sed -i -e 's/<BODY.*>/<BODY LANG="EN">/' debian/zsh-doc/usr/share/doc/zsh-doc/html/*.html
+	sed -i -e 's/<BODY.*>/<BODY LANG="EN">/' debian/zsh-doc/usr/share/doc/zsh-common/html/*.html
 
+override_dh_installexamples-indep:
+# functions
+	dh_installexamples -pzsh-common -X.distfiles
+	cd debian/zsh-common/usr/share/doc/zsh-common/examples/; mv Example Functions
+	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#' \
+	   debian/zsh-common/usr/share/doc/zsh-common/examples/Misc/*
+
+override_dh_install-indep:
 	dh_install -i
 
 # Doesn't this need to go before we zcompile stuff into .zwc files? -- Axel
@@ -147,94 +134,47 @@ binary-indep: build-indep binary-arch-dynamic
 	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#;' \
 		`find debian/zsh-common/usr/share/zsh/functions -type f`
 
-	dh_link              -i
-	dh_bugfiles          -i
-	dh_installmenu                    -pzsh-common
-	dh_installdocs                    -pzsh-common
-	dh_installchangelogs    -pzsh-doc -pzsh-common
-	dh_lintian           -i
-	dh_compress          -i                        -Xpdf
-	dh_fixperms          -i
-	dh_installdeb        -i
-	dh_md5sums           -i
-	dh_gencontrol        -i
-	dh_builddeb          -i
+override_dh_compress-indep:
+	dh_compress -i -Xpdf
 
-binary-arch-dynamic: build-arch
-	dh_testdir
-	dh_testroot
-
-	dh_installdirs -pzsh
-
+override_dh_auto_install-arch:
 # modules
 	cd obj && $(MAKE) install.bin     DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 	cd obj && $(MAKE) install.modules DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 
 	rm debian/zsh/bin/zsh-5.[0-9]*
 
-	dh_bugfiles    -pzsh
-	dh_strip       -pzsh --dbgsym-migration=zsh-dbg
-	dh_install     -pzsh
+override_dh_strip-arch:
+	dh_strip -pzsh --dbgsym-migration=zsh-dbg
+	dh_strip -pzsh-static
 
-	dh_shlibdeps   -pzsh -- \
+override_dh_shlibdeps-arch:
+	dh_shlibdeps -pzsh -- \
 		-dDepends    debian/zsh/bin/*   \
 		-dRecommends debian/zsh/usr/lib/*/zsh/*/zsh/*.so
 
-	dh_installdocs -pzsh --link-doc=zsh
-	dh_installchangelogs -pzsh
-
-binary-arch-static: build-static
-	dh_testdir
-	dh_testroot
-
-	dh_installdirs       -pzsh-static
-
-	# Do not symlink /usr/share/doc/zsh-static to
-	# /usr/share/doc/zsh-common because zsh-static has a unique,
-	# generated README.Debian, and because --link-doc between
-	# arch-dep and arch-indep packages breaks binNMUs
-	dh_installdocs       -pzsh-static
+override_dh_installdocs-arch:
+	dh_installdocs -a
 	awk 'BEGIN { print "The following modules are statically-compiled into the static zsh binary:\n"; } /link=static/ { printf "%s (%s %s)\n", substr($$1,6), $$4, $$5; }' obj-static/config.modules >debian/zsh-static/usr/share/doc/zsh-static/README.Debian
 
-	dh_bugfiles          -pzsh-static
-	dh_install           -pzsh-static
-	dh_strip             -pzsh-static
+override_dh_install-arch:
+	dh_install -a
 
 	mv debian/zsh-static/bin/zsh  debian/zsh-static/bin/zsh-static
 	mv debian/zsh-static/bin/zsh5 debian/zsh-static/bin/zsh5-static
 	sed -e 's:#!/bin/zsh:#!/bin/zsh-static:' -i debian/zsh-static/bin/zsh5-static
 
-	dh_installchangelogs -pzsh-static
-
-binary-arch-dev: build-arch
-	dh_testdir
-	dh_testroot
-
-	dh_installdirs -pzsh-dev
-	dh_install     -pzsh-dev
 	find debian/zsh-dev/usr/include/zsh -name '*.h' -o -name '*.mdh' | \
 	  xargs sed -e 's@\.\./config\.h@config.h@;s@#\(\s*\)include "\([^"]\+\)"@#\1include <zsh/\2>@' -i
 
 	cd debian/zsh-dev/usr/share/aclocal; mv aczshoot.m4 zshoot.m4
 
-	dh_installdocs -pzsh-dev
-	dh_installchangelogs -pzsh-dev
-
-binary-arch: binary-arch-dynamic binary-arch-static binary-arch-dev
-	dh_lintian    -a
-	dh_link       -a
-	dh_compress   -a
-	dh_fixperms   -a
-	dh_installdeb -a
+override_dh_gencontrol-arch:
 	dh_gencontrol -a -- -VBuilt-Using="$(BUILT_USING)"
-	dh_md5sums    -a
-	dh_builddeb   -a
-
-binary: binary-indep binary-arch binary-arch-static binary-arch-dev
 
 get-orig-source: version=$(shell git describe --tags --match='zsh-*' upstream | sed -e 's/^zsh-//')
 get-orig-source:
 	git archive --format=tar --output=../zsh_$(version).orig.tar --prefix=zsh-$(version)/ zsh-$(version)
 	xz -7v ../zsh_$(version).orig.tar
 
-.PHONY: binary binary-arch binary-indep clean binary-arch-dynamic binary-arch-static binary-arch-dev get-orig-source
+.PHONY: get-orig-source
