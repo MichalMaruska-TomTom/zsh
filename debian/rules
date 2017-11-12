@@ -65,10 +65,6 @@ override_dh_auto_test-arch:
 
 override_dh_auto_test-indep:
 
-override_dh_update_autotools_config:
-	touch stamp-h.in
-	dh_update_autotools_config
-
 override_dh_auto_configure:
 	chmod 755 configure
 	mkdir -p obj/testhome obj-static/testhome
@@ -84,7 +80,6 @@ override_dh_auto_configure:
 override_dh_auto_clean:
 	dh_auto_clean -B obj
 	dh_auto_clean -B obj-static
-	dh_auto_clean
 
 override_dh_installdocs-indep:
 	dh_installdocs -pzsh-doc --link-doc=zsh-common --doc-main-package=zsh-common
