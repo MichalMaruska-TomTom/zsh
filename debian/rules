@@ -106,9 +106,9 @@ override_dh_auto_install-indep: build-dynamic
 	     done'
 
 # Docs: Info + HTML
-	cd obj && $(MAKE) install.info DESTDIR=$(CURDIR)/debian/zsh-doc
+	cd obj && $(MAKE) install.info install.html \
+	    DESTDIR=$(CURDIR)/debian/zsh-doc htmldir=/usr/share/doc/zsh-common/html
 	rm -f debian/zsh-doc/usr/share/info/dir*
-	cd obj && $(MAKE) install.html DESTDIR=$(CURDIR)/debian/zsh-doc htmldir=/usr/share/doc/zsh-common/html
 
 # Work around texi2html unfriendliness
 	sed -i -e 's/<BODY.*>/<BODY LANG="EN">/' debian/zsh-doc/usr/share/doc/zsh-common/html/*.html
@@ -132,9 +132,8 @@ override_dh_compress-indep:
 	dh_compress -i -Xpdf
 
 override_dh_auto_install-arch:
-	cd obj && $(MAKE) install.bin     DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
-	cd obj && $(MAKE) install.modules DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
-
+	cd obj && $(MAKE) install.bin install.modules \
+	    DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 	rm debian/zsh/bin/zsh-5.[0-9]*
 
 override_dh_strip-arch:
