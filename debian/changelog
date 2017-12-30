@@ -1,3 +1,16 @@
+zsh (5.4.2-3) unstable; urgency=low
+
+  * debian/rules:
+    + [5df0d11d,9d0df8ac,28b774be,fd367287] Switch from explicit targets
+      to a "minimal" dh style.
+    + [616bc13e] Drop some no more needed, fitting or relevant comments.
+  * [48f580fc,40eff612] Declare compliance with Debian Policy 4.1.3. (No
+    other changes were required.)
+  * [90037107] Bump debhelper compatibility to 11.
+    + Update versioned build-dependency on debhelper accordingly.
+
+ -- Axel Beckert <abe@debian.org>  Sat, 30 Dec 2017 07:25:44 +0100
+
 zsh (5.4.2-2) unstable; urgency=medium
 
   * [efc08e15] Declare compliance with Debian Policy 4.1.1. (No other
