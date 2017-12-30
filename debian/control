@@ -3,7 +3,7 @@ Section: shells
 Priority: optional
 Build-Depends: bsdmainutils,
                cm-super-minimal,
-               debhelper (>= 10),
+               debhelper (>= 11~),
                dpkg-dev (>= 1.16.2~),
                ghostscript,
                groff,
