@@ -1,3 +1,12 @@
+zsh (5.4.2-test-2-1) UNRELEASED; urgency=medium
+
+  * [6e1ab9aa] Import new release candidate for upcoming 5.5 release.
+    + [37353844] 41943: Completion: add --clean for vim (Closes: #879187)
+    + [b54a7e55] Drop cherry-picked patches for CVE-2018-1071 and
+      CVE-2018-1083.
+
+ -- Axel Beckert <abe@debian.org>  Sat, 07 Apr 2018 15:18:00 +0200
+
 zsh (5.4.2-4) unstable; urgency=medium
 
   * [d49689fe] Cherry-pick upstream patches to fix:
