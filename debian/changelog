@@ -1,3 +1,17 @@
+zsh (5.4.2-4) unstable; urgency=medium
+
+  * [d49689fe] Cherry-pick upstream patches to fix:
+    + CVE-2018-1071 (Check bounds when copying path in "hashcmd()".
+      Closes: #894044)
+    + CVE-2018-1083 (Check bounds on PATH_MAX-sized buffer used for file
+      completion candidates. Closes: #894043)
+  * [01004557] Drop zsh-static lintian override for no more emitted tag.
+  * [5c603baa] Update Vcs-* headers for move to Salsa.
+  * [35768486] Declare compliance with Debian Policy 4.1.4. (No other
+    changes were required.)
+
+ -- Axel Beckert <abe@debian.org>  Sat, 07 Apr 2018 03:50:13 +0200
+
 zsh (5.4.2-3) unstable; urgency=low
 
   * debian/rules:
