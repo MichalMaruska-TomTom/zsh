@@ -92,7 +92,6 @@ override_dh_auto_install-indep: build-dynamic
 	perl $(CURDIR)/Util/helpfiles Doc/zshbuiltins.1 debian/zsh-common/usr/share/zsh/help
 
 	cd obj && $(MAKE) install.fns DESTDIR=$(CURDIR)/debian/zsh-common
-	rm -r debian/zsh-common/usr/local
 
 	awk '/^#define FPATH_DIR/     { head=$$3;       gsub(/"/,"",head); };        \
              /^#define FPATH_SUBDIRS/ { $$1=""; $$2=""; gsub(/[" ]/,""); tail=$$0; } \
