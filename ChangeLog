@@ -1,3 +1,72 @@
+2018-04-08  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* unposted: release zsh-5.5.
+
+2018-04-08  Oliver Kiddle  <okiddle@yahoo.co.uk>
+
+	* c.f. 42499: tera torn: Completion/Unix/Command/_twisted:
+	update twisted completion stub for new twist command
+
+2018-04-07  Oliver Kiddle  <okiddle@yahoo.co.uk>
+
+	* 42605: Src/Modules/mapfile.c, Src/Zle/complete.c,
+	Src/Zle/zle_params.c: properly free the vi registers hash
+
+	* 42601: Src/builtin.c: tidy up code for set -A/+A to not
+	increment a NULL pointer and to be more efficient
+
+	* 42607, CVE-2018-1100: Src/utils.c: check bounds on buffer
+	in mail checking
+
+	* 42600: Src/Zle/computil.c: error paths for _values leaked
+	the exclusion list array
+
+	* 42597: Src/params.c: plug memory leak found by coverity
+
+	* 42595: Src/utils.c: remove dead code flagged by coverity
+
+	* Matthew Martin: 42604: Completion/BSD/Command/_signify,
+	Completion/BSD/Command/_vmctl: new completions for OpenBSD's
+	signify and vmctl
+
+	* github #24: Klas Mellbourn: Completion/X/Command/_code:
+	Add completion script for Visual Studio Code
+
+2018-04-06  Mikael Magnusson  <mikachu@gmail.com>
+
+	* 42602: Completion/Unix/Command/_gcc: Update _gcc as of GCC
+	7.3.0 for generic options and x86
+
+2018-04-05  Oliver Kiddle  <okiddle@yahoo.co.uk>
+
+	* 42591: Completion/Debian/Command/_apt: complete *.changes and
+	*.dsc files alongside *.deb
+
+	* 42584: Completion/Unix/Command/_ssh: complete options for
+	ssh-keyscan and update options for ssh-copy-id
+
+	* 42583: Completion/Unix/Command/_column: new column completion
+
+	* 42582: Completion/BSD/Command/_cu, Completion/Unix/Command/_uniq,
+	Completion/Unix/Command/_dhclient, Completion/Unix/Command/_script:
+	updates to options in completions for OpenBSD 6.3
+
+	* 42575: Src/Zle/computil.c, Test/Y03arguments.ztst: fix to not
+	complete options in the argument to another option
+
+2018-04-05  Jun-ichi Takimoto <takimoto-j@kba.biglobe.ne.jp>
+
+	* 42590: Completion/Unix/Command/_fmt: fix detection of OSTYPE
+
+	* 42585 (cf. 42574: Eitan Adler): Completion/Unix/Command/_tar,
+	Completion/Unix/Type/_tar_archive: complete all compressed
+	archives when libarchive-based tar is being used without
+	compression flag
+
+	* 42577: Completion/Unix/Command/_strings: fix macOS support
+
+	* 42578: Completion/Unix/Command/_shutdown: add support for macOS
+
 2018-04-04  Peter Stephenson  <p.w.stephenson@ntlworld.com>
 
 	* unposted: 5.4.2-test-2.

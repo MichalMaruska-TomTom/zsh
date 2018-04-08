@@ -1653,7 +1653,7 @@ checkmailpath(char **s)
 	    LinkList l;
 	    DIR *lock = opendir(unmeta(*s));
 	    char buf[PATH_MAX * 2 + 1], **arr, **ap;
-	    int ct = 1;
+	    int buflen, ct = 1;
 
 	    if (lock) {
 		char *fn;
@@ -1662,9 +1662,11 @@ checkmailpath(char **s)
 		l = newlinklist();
 		while ((fn = zreaddir(lock, 1)) && !errflag) {
 		    if (u)
-			sprintf(buf, "%s/%s?%s", *s, fn, u);
+			buflen = snprintf(buf, sizeof(buf), "%s/%s?%s", *s, fn, u);
 		    else
-			sprintf(buf, "%s/%s", *s, fn);
+			buflen = snprintf(buf, sizeof(buf), "%s/%s", *s, fn);
+		    if (buflen < 0 || buflen >= (int)sizeof(buf))
+			continue;
 		    addlinknode(l, dupstring(buf));
 		    ct++;
 		}
@@ -2486,9 +2488,7 @@ zstrtoul_underscore(const char *s, zulong *retval)
 	base = 2, s++;
     else
 	base = isset(OCTALZEROES) ? 8 : 10;
-    if (base < 2 || base > 36) {
-	return 0;
-    } else if (base <= 10) {
+    if (base <= 10) {
 	for (; (*s >= '0' && *s < ('0' + base)) ||
 		 *s == '_'; s++) {
 	    if (*s == '_')

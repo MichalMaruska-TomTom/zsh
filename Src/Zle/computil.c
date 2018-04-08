@@ -2675,7 +2675,7 @@ bin_comparguments(char *nam, char **args, UNUSED(Options ops), UNUSED(int func))
 
 	    for (; lstate; lstate = lstate->snext) {
 		if (lstate->actopts &&
-		    (lstate->opt || lstate->def ||
+		    (lstate->opt || (ca_doff && lstate->def) ||
 		     (lstate->def && lstate->def->opt &&
 		      (lstate->def->type == CAA_OPT ||
 		       (lstate->def->type >= CAA_RARGS &&
@@ -3022,6 +3022,7 @@ parse_cvdef(char *nam, char **args)
 
 	if (hassep && !sep && name + bs + 1 < p) {
 	    freecvdef(ret);
+	    if (xor) freearray(xor);
 	    zwarnnam(nam, "no multi-letter values with empty separator allowed");
 	    return NULL;
 	}
@@ -3035,6 +3036,7 @@ parse_cvdef(char *nam, char **args)
 
 	    if (!*p) {
 		freecvdef(ret);
+		if (xor) freearray(xor);
 		zwarnnam(nam, "invalid value definition: %s", *args);
 		return NULL;
 	    }
@@ -3046,6 +3048,7 @@ parse_cvdef(char *nam, char **args)
 	}
 	if (c && c != ':') {
 	    freecvdef(ret);
+	    if (xor) freearray(xor);
 	    zwarnnam(nam, "invalid value definition: %s", *args);
 	    return NULL;
 	}
@@ -3054,6 +3057,7 @@ parse_cvdef(char *nam, char **args)
 	if (c == ':') {
 	    if (hassep && !sep) {
 		freecvdef(ret);
+		if (xor) freearray(xor);
 		zwarnnam(nam, "no value with argument with empty separator allowed");
 		return NULL;
 	    }
