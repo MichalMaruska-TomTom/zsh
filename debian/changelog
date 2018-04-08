@@ -1,4 +1,4 @@
-zsh (5.5-1) UNRELEASED; urgency=medium
+zsh (5.5-1) unstable; urgency=medium
 
   [ Axel Beckert ]
   * [fe36c1ad] Import new upstream release.
@@ -9,7 +9,7 @@ zsh (5.5-1) UNRELEASED; urgency=medium
   * [1521c7d0] Handle /usr/local/share/zsh with dh_usrlocal.
     (Closes: #895153)
 
- -- Axel Beckert <abe@debian.org>  Mon, 09 Apr 2018 00:43:01 +0200
+ -- Axel Beckert <abe@debian.org>  Mon, 09 Apr 2018 01:17:56 +0200
 
 zsh (5.4.2-test-2-1) experimental; urgency=low
 
