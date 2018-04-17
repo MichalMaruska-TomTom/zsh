@@ -1,9 +1,11 @@
-zsh (5.5.1-1) UNRELEASED; urgency=medium
+zsh (5.5.1-1) unstable; urgency=medium
 
   * [03fcdd08] Import new upstream bugfix release.
     + [517cda38] Fixes GLOB_DOTS for !RM_STAR_SILENT (Closes: #875460)
+  * [b83399fc] Retroactively mention #891140 in the debian/changelog
+    entries of 5.4.2-test-2-1 and 5.5-1.
 
- -- Axel Beckert <abe@debian.org>  Tue, 17 Apr 2018 03:00:42 +0200
+ -- Axel Beckert <abe@debian.org>  Tue, 17 Apr 2018 03:36:13 +0200
 
 zsh (5.5-1) unstable; urgency=medium
 
