@@ -1,10 +1,10 @@
-zsh (5.5.1-test-2-1) UNRELEASED; urgency=medium
+zsh (5.5.1-test-2-1) experimental; urgency=low
 
   * [ef619183,719a7156] New upstream release candidate.
   * [7da8d19c] Declare compliance with Debian Policy 4.2.1. (No other
     changes required.)
 
- -- Axel Beckert <abe@debian.org>  Mon, 27 Aug 2018 01:24:35 +0200
+ -- Axel Beckert <abe@debian.org>  Mon, 27 Aug 2018 14:29:21 +0200
 
 zsh (5.5.1-1) unstable; urgency=medium
 
