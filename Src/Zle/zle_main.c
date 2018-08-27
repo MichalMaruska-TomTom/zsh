@@ -58,6 +58,11 @@ mod_export int incompctlfunc;
 /**/
 mod_export int hascompmod;
 
+/* Increment for each nested recursive-edit */
+
+/**/
+mod_export int zle_recursive;
+
 /* ZLRF_* flags passed to zleread() */
 
 /**/
@@ -631,6 +636,8 @@ raw_getbyte(long do_keytmout, char *cptr)
 		continue;
 	    }
 	    if (selret == 0) {
+		zlong save_lastval;
+
 		/*
 		 * Nothing ready and no error, so we timed out.
 		 */
@@ -648,6 +655,7 @@ raw_getbyte(long do_keytmout, char *cptr)
 		    break;
 
 		case ZTM_FUNC:
+		    save_lastval = lastval;
 		    while (firstnode(timedfns)) {
 			Timedfn tfdat = (Timedfn)getdata(firstnode(timedfns));
 			/*
@@ -661,6 +669,7 @@ raw_getbyte(long do_keytmout, char *cptr)
 			    break;
 			tfdat->func();
 		    }
+		    lastval = save_lastval;
 		    /* Function may have messed up the display */
 		    if (resetneeded)
 			zrefresh();
@@ -800,6 +809,8 @@ raw_getbyte(long do_keytmout, char *cptr)
 		}
 # endif
 	    }
+	    /* If looping, need to recalculate timeout */
+	    calc_timeout(&tmout, do_keytmout);
 	}
 # ifdef HAVE_POLL
 	zfree(fds, sizeof(struct pollfd) * nfds);
@@ -1648,6 +1659,7 @@ bin_vared(char *name, char **args, Options ops, UNUSED(int func))
     Param pm = 0;
     int ifl;
     int type = PM_SCALAR, obreaks = breaks, haso = 0, oSHTTY = 0;
+    int warn_flags;
     char *p1, *p2, *main_keymapname, *vicmd_keymapname, *init, *finish;
     Keymap main_keymapsave = NULL, vicmd_keymapsave = NULL;
     FILE *oshout = NULL;
@@ -1661,6 +1673,7 @@ bin_vared(char *name, char **args, Options ops, UNUSED(int func))
 	return 1;
     }
 
+    warn_flags = OPT_ISSET(ops, 'g') ? 0 : ASSPM_WARN;
     if (OPT_ISSET(ops,'A'))
     {
 	if (OPT_ISSET(ops, 'a'))
@@ -1841,11 +1854,11 @@ bin_vared(char *name, char **args, Options ops, UNUSED(int func))
 	a = spacesplit(t, 1, 0, 1);
 	zsfree(t);
 	if (PM_TYPE(pm->node.flags) == PM_ARRAY)
-	    setaparam(args[0], a);
+	    assignaparam(args[0], a, warn_flags);
 	else
 	    sethparam(args[0], a);
     } else
-	setsparam(args[0], t);
+	assignsparam(args[0], t, warn_flags);
     unqueue_signals();
     return 0;
 }
@@ -1933,6 +1946,8 @@ recursiveedit(UNUSED(char **args))
     int locerror;
     int q = queue_signal_level();
 
+    ++zle_recursive;
+
     /* zlecore() expects to be entered with signal queue disabled */
     dont_queue_signals();
 
@@ -1941,6 +1956,8 @@ recursiveedit(UNUSED(char **args))
     zlecore();
 
     restore_queue_signals(q);
+
+    --zle_recursive;
 
     locerror = errflag ? 1 : 0;
     errflag = done = eofsent = 0;
@@ -2144,7 +2161,7 @@ zle_main_entry(int cmd, va_list ap)
 
 static struct builtin bintab[] = {
     BUILTIN("bindkey", 0, bin_bindkey, 0, -1, 0, "evaM:ldDANmrsLRp", NULL),
-    BUILTIN("vared",   0, bin_vared,   1,  1, 0, "aAcef:hi:M:m:p:r:t:", NULL),
+    BUILTIN("vared",   0, bin_vared,   1,  1, 0, "aAcef:ghi:M:m:p:r:t:", NULL),
     BUILTIN("zle",     0, bin_zle,     0, -1, 0, "aAcCDfFgGIKlLmMNrRTUw", NULL),
 };
 
