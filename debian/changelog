@@ -1,3 +1,12 @@
+zsh (5.6-1) UNRELEASED; urgency=medium
+
+  * [b30b8941,6e6500bfa] New upstream release.
+    + [ec2144bb] Refresh patch further-mitigate-test-suite-hangs.patch.
+    + [1c4c7b6a] Fixes two security issues in shebang line
+      parsing. (CVE-2018-0502, CVE-2018-13259)
+
+ -- Axel Beckert <abe@debian.org>  Mon, 03 Sep 2018 18:05:18 +0200
+
 zsh (5.5.1-test-2-1) experimental; urgency=low
 
   * [ef619183,719a7156] New upstream release candidate.
