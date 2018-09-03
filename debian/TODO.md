@@ -10,3 +10,8 @@ Decisions
 ---------
 
 * Do we want to continue providing a static build (zsh-static)?
+
+Minor non-trivial issues
+------------------------
+
+* README.Debian not updated for automatic debug symbols
