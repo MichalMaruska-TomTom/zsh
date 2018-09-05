@@ -4,7 +4,7 @@ Zsh for Debian
 You may find more uptodate information about Debian's zsh packages at
 https://wiki.debian.org/Zsh
 
- -- Axel Beckert <abe@debian.org>, Mon, 20 Oct 2014 14:40:42 +0200
+ -- Axel Beckert <abe@debian.org>, Wed,  5 Sep 2018 02:51:49 +0200
 
 This version of zsh has been compiled with support for maildir
 folders in MAIL and MAILPATH.
@@ -21,13 +21,35 @@ code on how to use bash completion scripts with zsh.
  -- Axel Beckert <abe@debian.org>, Tue, 26 May 2015 14:46:31 +0200
 
 
-How to use the zsh-dbg package
-------------------------------
+How to use the zsh-dbgsym package
+---------------------------------
 
-In the first terminal execute:
+To install the zsh-dbgsym package you first need to add the APT
+repository for debug packages. Since this APT repo is rather huge, but
+seldomly needed, it's usually not available on your average Debian
+mirror. As root or with sudo edit the file /etc/apt/sources.list (or
+add a new file /etc/apt/sources.list.d/dbgpkg.list) with the following
+contents:
 
-  sudo apt-get install zsh-dbg
-  apt-get source zsh
+  deb http://debug.mirrors.debian.org/debian-debug/ <your-release>-debug <your-archive>
+
+and replace <your-release> and <your-archive> with the according
+values for your installation. E.g. on Debian Buster it probably looks
+like this:
+
+  deb http://debug.mirrors.debian.org/debian-debug/ stretch-debug main
+
+After having edited the file, run "apt update" with root
+permissions (e.g. with sudo).
+
+See https://wiki.debian.org/AutomaticDebugPackages and
+https://michael-prokop.at/blog/2017/05/26/the-newinstretch-game-dbgsym-packages-in-debianstretch/
+for details.
+
+Afterwards execute in the first terminal:
+
+  sudo apt install zsh-dbgsym
+  apt source zsh
   cd zsh-*
 
 In the second terminal invoke 'zsh -f' (or drop the '-f' if you
@@ -45,7 +67,7 @@ Then execute:
 Now you can use the usual gdb commands like step / continue / ...
 to debug the Zsh process at source level.
 
- -- Michael Prokop <mika@debian.org>
+ -- Michael Prokop <mika@debian.org> and Axel Beckert <abe@debian.org>
 
 
 Load-path for functions from other packages
