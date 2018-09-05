@@ -3,7 +3,7 @@ zsh (5.6-1) unstable; urgency=high
   * [b30b8941,6e6500bfa] New upstream release.
     + [ec2144bb] Refresh patch further-mitigate-test-suite-hangs.patch.
     + [1c4c7b6a] Fixes two security issues in shebang line
-      parsing. (CVE-2018-0502, CVE-2018-13259)
+      parsing. (CVE-2018-0502, CVE-2018-13259; Closes: #908000)
     + Upload to unstable with high urgency.
   * [c605c9a1] Install symlinks to NEWS.gz (Policy 4.2.0) + README.Debian
     to /usr/share/doc/zsh/. Drop no more used symlink from changelog.gz to
