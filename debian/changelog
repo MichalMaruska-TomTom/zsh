@@ -1,3 +1,12 @@
+zsh (5.6.1-1) UNRELEASED; urgency=medium
+
+  * [b3239c5e,b531f38d] New upstream bugfix release.
+  * [5379b4c6] Retroactively mention #908000 in previous changelog entry.
+  * [a04e81b6] Update README.Debian wrt. -dbg vs -dbgsym packages and
+    apt-get vs apt.
+
+ -- Axel Beckert <abe@debian.org>  Tue, 11 Sep 2018 01:12:31 +0200
+
 zsh (5.6-1) unstable; urgency=high
 
   * [b30b8941,6e6500bfa] New upstream release.
