@@ -37,7 +37,7 @@ and replace <your-release> and <your-archive> with the according
 values for your installation. E.g. on Debian Buster it probably looks
 like this:
 
-  deb http://debug.mirrors.debian.org/debian-debug/ stretch-debug main
+  deb http://debug.mirrors.debian.org/debian-debug/ buster-debug main
 
 After having edited the file, run "apt update" with root
 permissions (e.g. with sudo).
