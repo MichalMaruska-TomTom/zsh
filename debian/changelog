@@ -1,3 +1,16 @@
+zsh (5.6.2-1) UNRELEASED; urgency=medium
+
+  * [92bef885,3d116bbb] New upstream bugfix release.
+    + [7c5241ed] 43446: More entersubsh() / addproc() wiring.
+      (Closes: #908033, #908818)
+    + [07ad7fd9] Fix windowsize when reattaching to terminal on process
+      exit. (Closes: #908625)
+
+  [ Daniel Shahaf ]
+  * [77265d89] d/README.Debian: Fix typo.
+
+ -- Axel Beckert <abe@debian.org>  Sat, 15 Sep 2018 01:48:16 +0200
+
 zsh (5.6.1-1) unstable; urgency=medium
 
   * [b3239c5e,b531f38d] New upstream bugfix release.
