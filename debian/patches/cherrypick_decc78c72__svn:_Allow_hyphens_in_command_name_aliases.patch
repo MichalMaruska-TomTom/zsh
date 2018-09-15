@@ -1,0 +1,17 @@
+Origin: commit decc78c72110159bd8a27faf579c020abca6cb0b
+Author: Daniel Shahaf <d.s@daniel.shahaf.name>
+Date: Fri Sep 14 14:25:07 2018 +0000
+Description: _svn: Allow hyphens in command name aliases.
+ Used by svn 1.11.0-rc1.
+
+--- a/Completion/Unix/Command/_subversion
++++ b/Completion/Unix/Command/_subversion
+@@ -34,7 +34,7 @@
+     typeset -gHA _svn_cmds
+     if _cache_invalid svn-cmds || ! _retrieve_cache svn-cmds; then
+       _svn_cmds=(
+-	${=${(f)${${"$(_call_program commands svn help)"#l#*Available subcommands:}%%Subversion is a tool*}}/(#s)[[:space:]]#(#b)([a-z-]##)[[:space:]]#(\([a-z, ?]##\))#/$match[1] :$match[1]${match[2]:+:${${match[2]//[(),]}// /:}}:}
++	${=${(f)${${"$(_call_program commands svn help)"#l#*Available subcommands:}%%Subversion is a tool*}}/(#s)[[:space:]]#(#b)([a-z-]##)[[:space:]]#(\([a-z, ?-]##\))#/$match[1] :$match[1]${match[2]:+:${${match[2]//[(),]}// /:}}:}
+       )
+       if (( $? == 0 )); then
+         _store_cache svn-cmds _svn_cmds

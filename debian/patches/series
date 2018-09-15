@@ -1,2 +1,3 @@
 further-mitigate-test-suite-hangs.patch
 update-debian-sections.patch
+cherrypick_decc78c72__svn:_Allow_hyphens_in_command_name_aliases.patch
