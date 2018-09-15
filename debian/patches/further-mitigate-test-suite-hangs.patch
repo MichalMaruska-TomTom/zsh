@@ -5,7 +5,7 @@ Description: Add a sleep call which should prevent a race condition in coproc
 
 --- a/Test/A05execution.ztst
 +++ b/Test/A05execution.ztst
-@@ -230,6 +230,7 @@
+@@ -239,6 +239,7 @@
    print -u $ZTST_fd 'This test takes 5 seconds to fail...'
    { printf "%d\n" {1..20000} } 2>/dev/null | ( read -e )
    hang(){ printf "%d\n" {2..20000} | cat }; hang 2>/dev/null | ( read -e )
