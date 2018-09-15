@@ -1,6 +1,7 @@
-zsh (5.6.2-1) UNRELEASED; urgency=medium
+zsh (5.6.2-1) unstable; urgency=medium
 
   * [92bef885,3d116bbb] New upstream bugfix release.
+    + [490c395d] Refresh further-mitigate-test-suite-hangs.patch.
     + [7c5241ed] 43446: More entersubsh() / addproc() wiring.
       (Closes: #908033, #908818)
     + [07ad7fd9] Fix windowsize when reattaching to terminal on process
@@ -9,7 +10,11 @@ zsh (5.6.2-1) UNRELEASED; urgency=medium
   [ Daniel Shahaf ]
   * [77265d89] d/README.Debian: Fix typo.
 
- -- Axel Beckert <abe@debian.org>  Sat, 15 Sep 2018 01:48:16 +0200
+  [ Axel Beckert ]
+  * [5484e5d4] Cherry-pick decc78c72 from upstream: _svn: Allow hyphens in
+    command name aliases.
+
+ -- Axel Beckert <abe@debian.org>  Sat, 15 Sep 2018 03:02:31 +0200
 
 zsh (5.6.1-1) unstable; urgency=medium
 
