@@ -37,7 +37,7 @@ for where in ./ ../ ../../ ../../../ ../../../../ ../../../../../; do
     fi
 done
 
-export GIT_EDITOR=${GIT_EDITOR:-emacsclient}
+export GIT_EDITOR=${GIT_EDITOR:-${VISUAL:-${EDITOR:-emacsclient}}}
 
 if [ $# -ne 1 ]; then
     printf 'usage: patch2quilt <commit-id>\n'
