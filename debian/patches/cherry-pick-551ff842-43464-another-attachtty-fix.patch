@@ -1,0 +1,109 @@
+Origin: upstream (commit 551ff842721d6ca83727dbe6cd40178f46cc8201)
+Author: Peter Stephenson <p.w.stephenson@ntlworld.com>
+Date:   Sun Sep 16 19:13:38 2018 +0100
+Description: 43464: Another attachtty() fix.
+    If list_pipe_job triggered more than once we need to know
+    the most recent process group leader, so record that
+    both if the attach happened in the main shell on in
+    entersubsh().
+    
+    Also don't pass back proocess group for ESUB_ASYNC subshells.
+
+diff --git a/Src/exec.c b/Src/exec.c
+index b9af9ea63..a667b078d 100644
+--- a/Src/exec.c
++++ b/Src/exec.c
+@@ -1036,7 +1036,7 @@ entersubsh(int flags, struct entersubsh_ret *retp)
+ 		if (!(flags & ESUB_ASYNC))
+ 		    attachtty(jobtab[thisjob].gleader);
+ 	    }
+-	    if (retp) {
++	    if (retp && !(flags & ESUB_ASYNC)) {
+ 		retp->gleader = jobtab[list_pipe_job].gleader;
+ 		retp->list_pipe_job = list_pipe_job;
+ 	    }
+@@ -1058,12 +1058,13 @@ entersubsh(int flags, struct entersubsh_ret *retp)
+ 		!jobtab[list_pipe_job].gleader)
+ 		jobtab[list_pipe_job].gleader = jobtab[thisjob].gleader;
+ 	    setpgrp(0L, jobtab[thisjob].gleader);
+-	    if (!(flags & ESUB_ASYNC))
++	    if (!(flags & ESUB_ASYNC)) {
+ 		attachtty(jobtab[thisjob].gleader);
+-	    if (retp) {
+-		retp->gleader = jobtab[thisjob].gleader;
+-		if (list_pipe_job != thisjob)
+-		    retp->list_pipe_job = list_pipe_job;
++		if (retp) {
++		    retp->gleader = jobtab[thisjob].gleader;
++		    if (list_pipe_job != thisjob)
++			retp->list_pipe_job = list_pipe_job;
++		}
+ 	    }
+ 	}
+     }
+diff --git a/Src/jobs.c b/Src/jobs.c
+index db2e87ec1..2d58319a8 100644
+--- a/Src/jobs.c
++++ b/Src/jobs.c
+@@ -40,6 +40,11 @@ mod_export pid_t origpgrp;
+ 
+ /**/
+ mod_export pid_t mypgrp;
++
++/* the last process group to attach to the terminal */
++
++/**/
++pid_t last_attached_pgrp;
+  
+ /* the job we are working on */
+  
+@@ -1405,6 +1410,11 @@ addproc(pid_t pid, char *text, int aux, struct timeval *bgtime,
+ 	    jobtab[thisjob].gleader = gleader;
+ 	    if (list_pipe_job_used != -1)
+ 		jobtab[list_pipe_job_used].gleader = gleader;
++	    /*
++	     * Record here this is the latest process group to grab the
++	     * terminal as attachtty() was run in the subshell.
++	     */
++	    last_attached_pgrp = gleader;
+ 	} else if (!jobtab[thisjob].gleader)
+ 		jobtab[thisjob].gleader = pid;
+ 	/* attach this process to end of process list of current job */
+diff --git a/Src/signals.c b/Src/signals.c
+index 99aad0fab..26d88abc2 100644
+--- a/Src/signals.c
++++ b/Src/signals.c
+@@ -540,8 +540,8 @@ wait_for_processes(void)
+ 		if (WIFEXITED(status) &&
+ 		    pn->pid == jn->gleader &&
+ 		    killpg(pn->pid, 0) == -1) {
+-		    jn->gleader = 0;
+-		    if (!(jn->stat & STAT_NOSTTY)) {
++		    if (last_attached_pgrp == jn->gleader &&
++			!(jn->stat & STAT_NOSTTY)) {
+ 			/*
+ 			 * This PID was in control of the terminal;
+ 			 * reclaim terminal now it has exited.
+@@ -552,6 +552,7 @@ wait_for_processes(void)
+ 			attachtty(mypgrp);
+ 			adjustwinsize(0);
+ 		    }
++		    jn->gleader = 0;
+ 		}
+ 	    }
+ 	    update_job(jn);
+diff --git a/Src/utils.c b/Src/utils.c
+index 075d27241..5a9fbdd32 100644
+--- a/Src/utils.c
++++ b/Src/utils.c
+@@ -4670,6 +4670,10 @@ attachtty(pid_t pgrp)
+ 		ep = 1;
+ 	    }
+ 	}
++	else
++	{
++	    last_attached_pgrp = pgrp;
++	}
+     }
+ }
+ 
