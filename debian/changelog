@@ -1,3 +1,15 @@
+zsh (5.6.2-2) unstable; urgency=medium
+
+  [ Axel Beckert ]
+  * [a5db2473] Switch from the deprecated libpcre3 to the newer (!)
+    libpcre2. (LP: #1792544)
+
+  [ Daniel Shahaf ]
+  * [3d8f4eee] Cherry-pick 551ff842 from upstream: Another attachtty()
+    fix. (Closes: #908818)
+
+ -- Axel Beckert <abe@debian.org>  Tue, 18 Sep 2018 01:15:17 +0200
+
 zsh (5.6.2-1) unstable; urgency=medium
 
   * [92bef885,3d116bbb] New upstream bugfix release.
