@@ -1,3 +1,11 @@
+zsh (5.6.2-3) unstable; urgency=medium
+
+  * [92175749] Revert "Switch from the deprecated libpcre3 to the newer
+    (!) libpcre2." libpcre2 is not a drop-in replacement and not detected
+    by zsh's configure script. (Closes: #909084, reopens LP#1792544)
+
+ -- Axel Beckert <abe@debian.org>  Wed, 19 Sep 2018 01:06:53 +0200
+
 zsh (5.6.2-2) unstable; urgency=medium
 
   [ Axel Beckert ]
