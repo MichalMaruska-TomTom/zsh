@@ -10,17 +10,17 @@ set -e
 #    cd $(dir_top) && DESTDIR= $(MAKE) MODDIR=`pwd`/$(subdir)/Modules install.modules
 #fi
 
-if [ -z "$ADTTMP" -o ! -d "$ADTTMP" ]; then
-    echo '$ADTTMP ("'"$ADTTMP"'") is not set or not a directory' 1>&2
+if [ -z "$AUTOPKGTEST_TMP" -o ! -d "$AUTOPKGTEST_TMP" ]; then
+    echo '$AUTOPKGTEST_TMP ("'"$AUTOPKGTEST_TMP"'") is not set or not a directory' 1>&2
     exit 2
 fi
 
-ZTST_testdir="$ADTTMP/Test"
+ZTST_testdir="$AUTOPKGTEST_TMP/Test"
 export ZTST_testdir
 
 cp -pvr Test "$ZTST_testdir"
-cp -pvr Misc "$ADTTMP/Misc"
-cd "$ADTTMP"
+cp -pvr Misc "$AUTOPKGTEST_TMP/Misc"
+cd "$AUTOPKGTEST_TMP"
 
 ln -vfs /usr/lib/*/zsh/[0-9]* "$ZTST_testdir/Modules"
 ln -vfs /usr/share/zsh/functions Functions
