@@ -1,6 +1,11 @@
 zsh (5.6.2-4) UNRELEASED; urgency=medium
 
-  * d/tests: Use AUTOPKGTEST_TMP instead of ADTTMP
+  [ Daniel Shahaf ]
+  * [19fed9e6] debian/upstream/signing-key.asc: Add the upstream signing
+    key used since 5.5.1-test-1.
+
+  [ Ondřej Nový ]
+  * [b402fc2e] debian/tests: Use AUTOPKGTEST_TMP instead of ADTTMP.
 
  -- Ondřej Nový <onovy@debian.org>  Mon, 01 Oct 2018 10:08:08 +0200
 
