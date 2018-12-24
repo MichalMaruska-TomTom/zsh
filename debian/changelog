@@ -1,4 +1,8 @@
-zsh (5.6.2-4) UNRELEASED; urgency=medium
+zsh (5.6.2-test-2-1) UNRELEASED; urgency=medium
+
+  * [9dbde9e,bf8b7f7] New upstream release candidate
+    + [dc2bfeee] Have V07pcre fail if PCRE was enabled by configure
+      (config.modules) but failed to load for any reason. (Closes: #909114)
 
   [ Daniel Shahaf ]
   * [19fed9e6] debian/upstream/signing-key.asc: Add the upstream signing
@@ -7,7 +11,12 @@ zsh (5.6.2-4) UNRELEASED; urgency=medium
   [ Ondřej Nový ]
   * [b402fc2e] debian/tests: Use AUTOPKGTEST_TMP instead of ADTTMP.
 
- -- Ondřej Nový <onovy@debian.org>  Mon, 01 Oct 2018 10:08:08 +0200
+  [ Axel Beckert ]
+  * [24256bb7] Add zsh-autosuggestions to list of zsh-related packages in bug-script
+  * [1239bb28] Declare compliance with Debian Policy 4.3.0. (No changes needed.)
+  * [06946d43] debian/TODO.md: Mention that switching zsh-dev to arch:all is non-trivial.
+
+ -- Axel Beckert <abe@debian.org>  Mon, 24 Dec 2018 04:42:34 +0100
 
 zsh (5.6.2-3) unstable; urgency=medium
 
