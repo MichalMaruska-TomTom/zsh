@@ -1,10 +1,12 @@
 Debian Zsh TODO
 ===============
 
-After the Jessie-Release
+After the Buster-Release
 ------------------------
 
 * Remove alternatives system properly
+* Change zsh-dev to Arch:all (requires probably non-trivial reordering
+  in debian/rules)
 
 Decisions
 ---------
