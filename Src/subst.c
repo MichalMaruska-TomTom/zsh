@@ -2405,6 +2405,8 @@ paramsubst(LinkList l, LinkNode n, char **str, int qt, int pf_flags,
 	    aspar = 0;
 	} else if (aspar)
 	    idbeg = val;
+	if (*val == Nularg)
+	    ++val;
 	*s = sav;
 	/*
 	 * This tests for the second double quote in an expression
@@ -2552,8 +2554,8 @@ paramsubst(LinkList l, LinkNode n, char **str, int qt, int pf_flags,
 		    val = dyncat(val, "-readonly");
 		if (f & PM_TAGGED)
 		    val = dyncat(val, "-tag");
-		if (f & PM_TAGGED_LOCAL)
-		    val = dyncat(val, "-tag_local");
+		if (f & PM_TIED)
+		    val = dyncat(val, "-tied");
 		if (f & PM_EXPORTED)
 		    val = dyncat(val, "-export");
 		if (f & PM_UNIQUE)
