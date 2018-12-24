@@ -1,8 +1,11 @@
-zsh (5.6.2-test-2-1) UNRELEASED; urgency=medium
+zsh (5.6.2-test-2-1) experimental; urgency=low
 
   * [9dbde9e,bf8b7f7] New upstream release candidate
     + [dc2bfeee] Have V07pcre fail if PCRE was enabled by configure
       (config.modules) but failed to load for any reason. (Closes: #909114)
+    + [44b0a973] Remove all cherry-picked patches.
+    + [01c3153e] debian/rules: Build zshbuiltins.1 out-of-tree like the
+      rest.
 
   [ Daniel Shahaf ]
   * [19fed9e6] debian/upstream/signing-key.asc: Add the upstream signing
@@ -12,11 +15,17 @@ zsh (5.6.2-test-2-1) UNRELEASED; urgency=medium
   * [b402fc2e] debian/tests: Use AUTOPKGTEST_TMP instead of ADTTMP.
 
   [ Axel Beckert ]
-  * [24256bb7] Add zsh-autosuggestions to list of zsh-related packages in bug-script
-  * [1239bb28] Declare compliance with Debian Policy 4.3.0. (No changes needed.)
-  * [06946d43] debian/TODO.md: Mention that switching zsh-dev to arch:all is non-trivial.
+  * [24256bb7] Add zsh-autosuggestions to list of zsh-related packages in
+    bug-script.
+  * [1239bb28] Declare compliance with Debian Policy 4.3.0. (No other
+    changes were necessary.)
+  * [06946d43] debian/TODO.md: Mention that switching zsh-dev to arch:all
+    is non-trivial.
+  * [e0798c2f] Declare debian/pkg-zsh-workflow.md as outdated.  Add
+    debian/pkg-zsh-workflow-new-upstream-release.md as massively reduced
+    replacement.
 
- -- Axel Beckert <abe@debian.org>  Mon, 24 Dec 2018 04:42:34 +0100
+ -- Axel Beckert <abe@debian.org>  Mon, 24 Dec 2018 05:55:48 +0100
 
 zsh (5.6.2-3) unstable; urgency=medium
 
