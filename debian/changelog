@@ -1,9 +1,17 @@
-zsh (5.6.2-test-3-1) UNRELEASED; urgency=medium
+zsh (5.6.2-test-3-1) experimental; urgency=low
 
   * [325fceab,7e6a3d734] New upstream release candidate
     + [f64cd71d] Fixes FTBFS on 32-bits architectures
+  * [2c01967c] debian/pkg-zsh-workflow-new-upstream-release.md fine-tuning
+  * [30825099] Bump debhelper compatibility level to 12.
+    + Use b-d on "debhelper-compat (= 12)" instead of debian/compat.
+  * [087d6045] Change shebang path in example script to Debian's zsh path.
+  * [6cbe67e6] Make autopkgtest pass by including config.modules in
+    zsh-dev. (Test/V07pcre.ztst now tries to access ../config.modules to
+    check if the PCRE module was enabled and needs to be tested. The test
+    emits a warning on STDERR if ../config.modules is not found.)
 
- -- Axel Beckert <abe@debian.org>  Sat, 05 Jan 2019 13:26:06 +0100
+ -- Axel Beckert <abe@debian.org>  Sat, 05 Jan 2019 16:08:39 +0100
 
 zsh (5.6.2-test-2-1) experimental; urgency=low
 
