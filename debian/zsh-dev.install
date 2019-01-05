@@ -13,3 +13,4 @@ obj/Src/Modules/*.mdh usr/include/zsh/Modules
 obj/Src/Zle/*.h usr/include/zsh/Zle
 obj/Src/Zle/*.mdh usr/include/zsh/Zle
 obj/config.h usr/include/zsh
+obj/config.modules usr/include/zsh

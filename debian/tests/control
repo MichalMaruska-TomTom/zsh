@@ -1,5 +1,5 @@
 Tests: run-testsuite
-Depends: zsh
+Depends: zsh, zsh-dev
 
 Tests: adequate
 Depends: @, adequate
