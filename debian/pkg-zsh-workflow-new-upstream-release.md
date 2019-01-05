@@ -6,13 +6,16 @@ When upstream releases a new version, we should follow these steps:
 ### Merging new upstream tag (`zsh-$version`) into our upstream branch
 
     % git checkout upstream
-    % git pull origin
+    % git pull --ff-only origin
     % git fetch zsh
     % git merge --ff-only zsh-$version
 
 ### Merging the branch upstream into the branch debian
 
-Merge `upstream` into `debian`: git merge upstream.
+Merge `upstream` into `debian`:
+
+    % git checkout debian
+    % git merge upstream
 
 Make the commit message something like:
 
