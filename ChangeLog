@@ -1,3 +1,76 @@
+2018-01-05  dana  <dana@dana.is>
+
+	* unposted: Config/version.mk, NEWS: Update for 5.6.2-test-3
+
+2018-01-04  dana  <dana@dana.is>
+
+	* 43974: Completion/Unix/Command/_git: Always offer -F/-m for
+	`git tag`
+
+	* 43970, 43971: Etc/creating-a-release.txt, NEWS: Document some
+	changes in 5.{4,5,6} not previously mentioned, clarify that
+	process in release instructions
+
+2019-01-03  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* 43969: Src/Zle/compctl.c: untokenize Dash for compctl with
+	GLOB_SUBST set.
+
+2018-01-01  dana  <dana@dana.is>
+
+	* 43960: Completion/Linux/Command/_setsid,
+	Completion/Zsh/Command/_exec, Completion/Zsh/Command/_precommand:
+	Add full completion for exec and setsid
+
+	* 43959: Completion/Unix/Command/_ipsec,
+	Completion/Unix/Command/_swanctl, Completion/Unix/Type/_urls: Add
+	completion for strongSwan, &al.; complete unix:// URIs
+
+2018-12-31  dana  <dana@dana.is>
+
+	* 43962: Test/X04zlehighlight.ztst: Fix module_path
+
+2018-12-30  Peter Stephenson  <p.w.stephenson@ntlworld.com>
+
+	* Sebastian: users/23809: Src/prompt.c,
+	Test/X04zlehighlight.ztst: Add ZLE_HIGHLITHT extensions to
+	termcap for colours > 7, add tests.
+
+	* 43944: Martijn: Doc/Zsh/options.yo, README, Src/math.c,
+	Test/C01arith.ztst: apply NO_UNSET consistently to arithmetic.
+
+	* unposted: Test/D04parameter.ztst: test for 43938.
+
+2018-12-30  dana  <dana@dana.is>
+
+	* 43914 (tweaked): Completion/Unix/Command/_composer: Add
+	completion for Composer
+
+	* 43930: Completion/Base/Utility/_multi_parts: Improve performance
+
+	* unposted (per 43938): Src/utils.c: Avoid segfault when
+	unmetafying empty string
+
+2018-12-29  dana  <dana@dana.is>
+
+	* 43953 (tweaked per 43954): Src/utils.c, Test/V09datetime.ztst:
+	Fix rounding/truncation error in %. time-format specifier
+
+2018-12-24  dana  <dana@dana.is>
+
+	* 43935 (tweaked): Src/Modules/datetime.c, Test/V09datetime.ztst:
+	Fix test error on 32-bit machines, reject too-large nanosecond
+	values given to strftime
+
+2018-12-23  dana  <dana@dana.is>
+
+	* 43928: Completion/Base/Utility/_alternative: Evaluate (...)
+	action syntax as with _arguments
+
+2018-12-21  Bart Schaefer  <schaefer@zsh.org>
+
+	* 43921: ${\var} should be an error
+
 2018-12-19  Peter Stephenson  <p.w.stephenson@ntlworld.com>
 
 	* unposted: Config/version.mk, Etc/FAQ.yo, README: update for
@@ -6959,6 +7032,12 @@
 	* 37305: Src/params.c, Test/A06assign.ztst,
 	Test/B02typeset.ztst, Test/V10private.ztst: typeset -p
 	can now output arrays on one line.
+
+	* 37303: Test/E01options.ztst: test WARN_CREATE_GLOBAL negative
+	cases.
+
+	* 37302: Src/exec.c, Src/params.c: suppress WARN_CREATE_GLOBAL
+	warnings after a fork
 
 	* unposted: Src/exec.c, Src/init.c: fix up init_io() calls
 	in previous change.
