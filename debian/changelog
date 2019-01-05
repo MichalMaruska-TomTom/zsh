@@ -1,3 +1,10 @@
+zsh (5.6.2-test-3-1) UNRELEASED; urgency=medium
+
+  * [325fceab,7e6a3d734] New upstream release candidate
+    + [f64cd71d] Fixes FTBFS on 32-bits architectures
+
+ -- Axel Beckert <abe@debian.org>  Sat, 05 Jan 2019 13:26:06 +0100
+
 zsh (5.6.2-test-2-1) experimental; urgency=low
 
   * [9dbde9e,bf8b7f7] New upstream release candidate
