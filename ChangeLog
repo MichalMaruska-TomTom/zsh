@@ -1,3 +1,30 @@
+2018-01-24  dana  <dana@dana.is>
+
+	* unposted: Config/version.mk, README: Update for 5.7
+
+2018-01-23  dana  <dana@dana.is>
+
+	* 44012: Test/X04zlehighlight.ztst: Fix spurious test failures
+	on OpenBSD
+
+2019-01-23  Mikael Magnusson  <mikachu@gmail.com>
+
+	* 44011: Doc/Zsh/zle.yo, Src/prompt.c, Test/X04zlehighlight.ztst:
+	Only use fg_start_code for non-truecolor
+
+2018-01-21  dana  <dana@dana.is>
+
+	* 44001: Completion/Zsh/Context/_brace_parameter: Complete (q+)
+
+2018-01-18  dana  <dana@dana.is>
+
+	* 43990: Completion/Linux/Command/_opkg: Support gain-privileges
+
+2019-01-08  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* users/23829: Completion/Unix/Type/_path_files,
+	Doc/Zsh/compsys.yo: Add and document file-split-chars style.
+
 2018-01-05  dana  <dana@dana.is>
 
 	* unposted: Config/version.mk, NEWS: Update for 5.6.2-test-3
