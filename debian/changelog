@@ -1,8 +1,9 @@
-zsh (5.7-1) UNRELEASED; urgency=medium
+zsh (5.7-1) unstable; urgency=low
 
   * [9799d0f9,7b75d97c] New upstream release
+    + Upload to unstable again.
 
- -- Axel Beckert <abe@debian.org>  Fri, 25 Jan 2019 22:47:46 +0100
+ -- Axel Beckert <abe@debian.org>  Fri, 25 Jan 2019 23:48:48 +0100
 
 zsh (5.6.2-test-3-1) experimental; urgency=low
 
