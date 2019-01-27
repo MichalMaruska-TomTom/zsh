@@ -1,0 +1,12 @@
+Index: pkg-zsh/Functions/VCS_Info/Backends/VCS_INFO_detect_p4
+===================================================================
+--- pkg-zsh.orig/Functions/VCS_Info/Backends/VCS_INFO_detect_p4
++++ pkg-zsh/Functions/VCS_Info/Backends/VCS_INFO_detect_p4
+@@ -44,7 +44,6 @@ VCS_INFO_p4_get_server() {
+ }
+ 
+ 
+-(( ${+functions[VCS_INFO_detect_p4]} )) ||
+ VCS_INFO_detect_p4() {
+   local serverport p4where
+ 
