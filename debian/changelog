@@ -1,3 +1,10 @@
+zsh (5.7-2) unstable; urgency=low
+
+  [ Frank Terbeck ]
+  * [cb6fba8] Fix perforce detection in vcs-info
+
+ -- Michael Prokop <mika@debian.org>  Sun, 27 Jan 2019 22:35:34 +0100
+
 zsh (5.7-1) unstable; urgency=low
 
   * [9799d0f9,7b75d97c] New upstream release
