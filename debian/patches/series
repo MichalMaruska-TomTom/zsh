@@ -1,4 +1,3 @@
-fix-vcs-info-p4.patch
 further-mitigate-test-suite-hangs.patch
 update-debian-sections.patch
 example-shebang.patch
