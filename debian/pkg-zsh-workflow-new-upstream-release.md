@@ -56,7 +56,7 @@ Example:
 
     % quilt push -a
     % quilt pop -a
-    % git rm debian/patchees/cherry*
+    % git rm debian/patches/cherry*
     % $EDITOR debian/patches/series
     % git add debian/patches
     % quilt push -a
