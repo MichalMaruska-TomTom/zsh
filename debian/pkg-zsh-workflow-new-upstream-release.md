@@ -63,6 +63,16 @@ Example:
     % quilt pop -a
     % git commit -m "Remove all patches applied upstream"
 
+### Update `debian/NEWS`
+
+Review the upstream `NEWS` file and the list of compatibilities in the upstream
+`README` file (starts at line 33) and add them to `debian/NEWS`:
+
+    % less NEWS
+    % less +33 README
+    % dch --news
+    % git commit -m "Add NEWS based on incompatibilities listed in upstream's README."
+
 ### Create the fake orig tar ball (until we can work with upstream's tarball)
 
 This requires the upstream release to be properly tagged.
