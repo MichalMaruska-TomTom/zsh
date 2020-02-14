@@ -32,11 +32,6 @@ Comment: This applies to portions of Src/compat.c, the remainder is
 Copyright: 1990, 1993 The Regents of the University of California
 License: BSD-3
 
-Files: Completion/Unix/Command/_hg
-Copyright: 2005, 2006 Steve Borho <steve@borho.org>
-           2006-2009 Brendan Cully <brendan@kublai.com>
-License: Zsh
-
 Files: Completion/Unix/Command/_darcs
 Copyright: 2009 Nicolas Pouillard
 License: GPL-2+
