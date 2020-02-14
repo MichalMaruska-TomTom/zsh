@@ -1,3 +1,32 @@
+zsh (5.7.1-test-3-1) experimental; urgency=low
+
+  From the upstream README of 5.7.1-test-3:
+
+  > The history expansion !:1:t2 used to be interpreted such that the 2
+  > was a separate character added after the history expansion.  Now it is
+  > an argument to the :t modifier.
+  >
+  > For example
+  >
+  > % echo /my/interesting/path
+  > % echo !:1:t2
+  >
+  > used to echo "path2", but now echoes "interesting/path".
+  >
+  > The behaviour of :h has similarly changed.
+  >
+  > The behaviour has also changed in forms such as ${foo:t2) and *(:t2),
+  > but in those cases the previous behaviour was not meaningful.
+  >
+  > The vcs_info function VCS_INFO_quilt-dirfind now returns a string value
+  > by setting $REPLY.  Previously it printed the value to standard output.
+  > This only affects you if you override that function in your dotfiles.
+  >
+  > The cd and chdir builtins no longer interpret operands like -1 and +2 as
+  > stack entries when POSIX_CD is enabled.
+
+ -- Axel Beckert <abe@debian.org>  Fri, 14 Feb 2020 02:44:59 +0100
+
 zsh (5.4.2-1) unstable; urgency=medium
 
   From the upstream README of 5.4.1:
