@@ -71,7 +71,7 @@ Review the upstream `NEWS` file and the list of compatibilities in the upstream
     % less NEWS
     % less +33 README
     % dch --news
-    % git commit -m "Add NEWS based on incompatibilities listed in upstream's README."
+    % git commit -m "Add NEWS based on incompatibilities listed in upstream's README." -m "Gbp-Dch: Ignore"
 
 ### Create the fake orig tar ball (until we can work with upstream's tarball)
 
