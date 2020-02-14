@@ -1,4 +1,4 @@
-zsh (5.7.1-test-3-1) UNRELEASED; urgency=low
+zsh (5.7.1-test-3-1) experimental; urgency=low
 
   * [643de931,74561cc5] New upstream release candidate
     + [a8b0d399] unposted: _ip: Complete the -brief option (Closes !1)
@@ -8,7 +8,14 @@ zsh (5.7.1-test-3-1) UNRELEASED; urgency=low
   [ Daniel Shahaf ]
   * [74561cc5] Add 'Documentation' to d/upstream/metadata
 
- -- Axel Beckert <abe@debian.org>  Fri, 14 Feb 2020 02:00:07 +0100
+  [ Axel Beckert ]
+  * [e1280df9] Drop debian/copyright file stanza for file dropped
+    upstream.
+  * [8f7982cd] Add lintian override for zsh sub-man-pages.
+  * [5df2cbba] Declare compliance with Debian Policy 4.5.0. (No changes
+    needed.)
+
+ -- Axel Beckert <abe@debian.org>  Fri, 14 Feb 2020 03:44:40 +0100
 
 zsh (5.7.1-1) unstable; urgency=medium
 
