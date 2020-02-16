@@ -46,7 +46,11 @@ CONFIGFLAGS += --enable-zsh-secure-free
 CONFIGFLAGS += --enable-zsh-hash-debug
 endif
 
-BUILT_USING=$(shell dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W libcap-dev libncursesw5-dev libpcre3-dev libc-dev-bin)
+# We first need to check if the package is installed, otherwise the
+# resulting syntax might be invalid. Needed for packages which are
+# also provided by other packages like libncurses-dev and
+# libncursesw5-dev which both fulfil the according build-dependency.
+BUILT_USING=$(shell for pkg in libcap-dev libncurses-dev libncursesw5-dev libpcre3-dev libc-dev-bin; do dpkg-query -f '$${status}' -W $$pkg 2>&1 | grep -Fq installed && dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W $$pkg; done)
 
 %:
 	dh $@
