@@ -1,3 +1,15 @@
+zsh (5.8-1) UNRELEASED; urgency=medium
+
+  * Import upstream version 5.8
+    + Fixes CVE-2019-20044: When unsetting the PRIVILEGED option, the
+      shell sets its effective user and group IDs to match their
+      respective real IDs. On some platforms (including Linux), when the
+      RUID and EUID were both non-zero, it was possible to regain the
+      shell's former privileges by e.g. assigning to the EUID or EGID
+      parameter.
+
+ -- Axel Beckert <abe@debian.org>  Sun, 16 Feb 2020 03:29:19 +0100
+
 zsh (5.7.1-test-3-1) experimental; urgency=low
 
   * [643de931,74561cc5] New upstream release candidate
