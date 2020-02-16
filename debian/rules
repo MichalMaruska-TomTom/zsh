@@ -162,10 +162,3 @@ override_dh_install-arch:
 
 override_dh_gencontrol-arch:
 	dh_gencontrol -a -- -VBuilt-Using="$(BUILT_USING)"
-
-get-orig-source: version=$(shell git describe --tags --match='zsh-*' upstream | sed -e 's/^zsh-//')
-get-orig-source:
-	git archive --format=tar --output=../zsh_$(version).orig.tar --prefix=zsh-$(version)/ zsh-$(version)
-	xz -7v ../zsh_$(version).orig.tar
-
-.PHONY: get-orig-source
