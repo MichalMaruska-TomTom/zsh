@@ -1,27 +1,45 @@
 Transitioning to a New Upstream Version in a Nutshell
 =====================================================
 
+TL;DR: We're more or less using the `gbp import-orig` workflow.
+
+Prerequisites
+-------------
+
+* Having the zsh upstream git repo configured as a git remote named
+  `upstream-repo`. If that's not the case, `dpt import-orig` will
+  create that remote automatically. You can also use `dpt
+  upstream-repo` to create that git remote semi-automatically. Both
+  commands take the upstream git repo URL from
+  `debian/upstream/metadata`.
+
+* Having the package `git-buildpackage` installed for the `gbp`
+  command.
+
+* Having the package `devscripts` installed for the `uscan` command
+  (used by `gbp` and `dpt`).
+
+* Optionally: Having the package `pkg-perl-tools` installed for the
+  `dpt` command, which partially is a convenience wrapper around `gbp`.
+
+Workflow
+--------
+
 When upstream releases a new version, we should follow these steps:
 
-### Merging new upstream tag (`zsh-$version`) into our upstream branch
+### Donwloading, Importing and Merging the New Upstream Tar-Ball
 
-    % git checkout upstream
-    % git pull --ff-only origin
-    % git fetch zsh
-    % git merge --ff-only zsh-$version
+... and verifying its PGP signature.
 
-### Merging the branch upstream into the branch debian
+    % gbp import-orig --uscan
 
-Merge `upstream` into `debian`:
+or
 
-    % git checkout debian
-    % git merge upstream
+    % dpt import-orig
 
-Make the commit message something like:
-
-    New upstream release candidate 5.6.2-test-2
-    
-    Merge branch 'upstream' at 'zsh-5.6.2-test-2' into branch debian
+(`dpt import-orig` implies `--uscan`, but will also call `dch`, so
+you'll need to amend that instead of creating it in the next step. Or
+undo it)
 
 ### Create a debian/changelog entry for the new upstream release
 
@@ -34,7 +52,7 @@ release was merged into the debian branch as referred commit ids.
 
 Example:
 
-    * [9dbde9e,bf8b7f7] New upstream release candidate
+    * [9dbde9e,bf8b7f7] Import new upstream release candidate X.Y-test-Z
       + [dc2bfeee] Have V07pcre fail if PCRE was enabled by configure
         (config.modules) but failed to load for any reason. (Closes: #909114)
 
@@ -73,8 +91,10 @@ Review the upstream `NEWS` file and the list of compatibilities in the upstream
     % dch --news
     % git commit -m "Add NEWS based on incompatibilities listed in upstream's README." -m "Gbp-Dch: Ignore"
 
-### Create the fake orig tar ball (until we can work with upstream's tarball)
+### After a build, restore what the clean target removed
 
-This requires the upstream release to be properly tagged.
+Use any of these three commands:
 
-    % make -f debian/rules get-orig-source
+    % debian/rules restore-cleaned-files
+    % make -f debian/rules restore-cleaned-files
+    % git status --porcelain | egrep '^ D ' | cut -c4- | xargs --no-run-if-empty git checkout
