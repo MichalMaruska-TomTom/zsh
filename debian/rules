@@ -170,3 +170,8 @@ override_dh_install-arch:
 
 override_dh_gencontrol-arch:
 	dh_gencontrol -a -- -VBuilt-Using="$(BUILT_USING)"
+
+restore-cleaned-files:
+	git status --porcelain | egrep '^ D ' | cut -c4- | xargs --no-run-if-empty git checkout
+
+.PHONY: restore-cleaned-files
