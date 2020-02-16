@@ -4,6 +4,7 @@ build-arch
 build-indep
 build-static
 config.cache
+config.h.in
 config.status
 config.status.lineno
 configure
@@ -16,6 +17,7 @@ Doc/version.yo
 Doc/zsh*.1
 Doc/zsh.idx
 Doc/zsh.texi
+Etc/FAQ
 META-FAQ
 obj-static/
 obj/
