@@ -3,3 +3,4 @@ Depends: zsh, zsh-dev
 
 Tests: adequate
 Depends: @, adequate
+Restrictions: superficial
