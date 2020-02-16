@@ -1,3 +1,28 @@
+2020-02-14  dana  <dana@dana.is>
+
+	* unposted: Config/version.mk: Update for 5.8
+
+	* Sam Foxman, Daniel Shahaf, dana: CVE-2019-20044: NEWS,
+	README, Src/openssh_bsd_setres_id.c, Src/options.c, Src/zsh.mdd,
+	Src/zsh_system.h, Test/E01options.ztst, Test/P01privileged.ztst,
+	Test/README, configure.ac: Fix insecure dropping of privileges
+	when unsetting PRIVILEGED option
+
+	* unposted: Test/V01zmodload.ztst: Fix failing test from
+	workers/45385
+
+	* 45423 (tweaked): Completion/Unix/Command/_su: Improve arg
+	handling, shell look-ups
+
+2020-02-07  dana  <dana@dana.is>
+
+	* unposted: Completion/Unix/Command/_zip: Recognise '--'
+
+2020-02-06  Daniel Shahaf  <danielsh@apache.org>
+
+	* 45385: Test/V01zmodload.ztst: Add a test for 'zmodload -Fa'
+	preemptively disabling ("blacklisting"?) features.
+
 2020-02-06  dana  <dana@dana.is>
 
 	* unposted: Config/version.mk: Update for 5.7.1-test-3
