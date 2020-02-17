@@ -105,7 +105,7 @@ autoload -Uz run-help
 
 # If you don't want compinit called here, place the line
 # skip_global_compinit=1
-# in your $ZDOTDIR/.zshenv or $ZDOTDIR/.zprofile
+# in your $ZDOTDIR/.zshenv
 if grep -q 'ID.*=.*ubuntu' /etc/os-release && [[ -z "$skip_global_compinit" ]]; then
   autoload -U compinit
   compinit
