@@ -1,3 +1,12 @@
+zsh (5.8-2) unstable; urgency=medium
+
+  [ Daniel Shahaf ]
+  * [dae9b602] Fix advice in comment: zprofile isn't sourced by non-login
+    interactive shells.
+  * [b43af98a] d/zshrc: Tighten regex.
+
+ -- Axel Beckert <abe@debian.org>  Tue, 18 Feb 2020 01:33:26 +0100
+
 zsh (5.8-1) unstable; urgency=medium
 
   * Switch to using the original upstream tar ball instead of generating a
