@@ -1,5 +1,5 @@
 Tests: run-testsuite
-Depends: zsh, zsh-dev, libpcre3
+Depends: zsh, zsh-dev, @builddeps@
 
 Tests: adequate
 Depends: @, adequate:native
