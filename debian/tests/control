@@ -1,6 +1,6 @@
 Tests: run-testsuite
-Depends: zsh, zsh-dev
+Depends: zsh, zsh-dev, libpcre3
 
 Tests: adequate
-Depends: @, adequate
+Depends: @, adequate:native
 Restrictions: superficial

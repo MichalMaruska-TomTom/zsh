@@ -68,6 +68,7 @@ Description: shell with lots of features
 
 Package: zsh-doc
 Architecture: all
+Multi-Arch: foreign
 Section: doc
 Depends: zsh-common (= ${source:Version}),
          ${misc:Depends}
