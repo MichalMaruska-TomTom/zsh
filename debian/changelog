@@ -1,3 +1,19 @@
+zsh (5.8-3) unstable; urgency=medium
+
+  [ Steve Langasek ]
+  * [ca933173] Make autopkgtests cross-test-friendly
+    + debian/tests/control: Declare dependency on adequate as native.
+    + debian/tests/control: Let run-testsuite also depend on libpcre3.
+    + Mark zsh-doc as "Multi-Arch: foreign".
+
+  [ Axel Beckert ]
+  * [ca933173] Merge changes from Ubuntu's 5.8-2ubuntu1 and 5.8-2ubuntu2,
+    see above.
+  * [7ca6cb3f] debian/tests/control: Replace libpcre3 with @builddeps@ to
+    pull in all Recommends.
+
+ -- Axel Beckert <abe@debian.org>  Sat, 22 Feb 2020 01:10:43 +0100
+
 zsh (5.8-2) unstable; urgency=medium
 
   [ Daniel Shahaf ]
