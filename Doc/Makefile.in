@@ -327,11 +327,12 @@ uninstall: uninstall.man uninstall.runhelp
 .PHONY: uninstall
 
 # install man pages, creating install directory if necessary
+# fixme: the files are in Git, so in $(sdir)
 install.man: man
 	${SHELL} $(sdir_top)/mkinstalldirs $(DESTDIR)$(mandir)/man1
 	for file in $(MAN); do \
-	    test -s $$file || exit 1; \
-	    $(INSTALL_DATA) $$file $(DESTDIR)$(mandir)/man1/`echo $$file | sed 's|zsh|$(tzsh)|'` || exit 1; \
+	    if test -s $$file; then src_file=$$file; else src_file=$(sdir)/$$file;fi ;\
+	    $(INSTALL_DATA) $$src_file $(DESTDIR)$(mandir)/man1/`echo $$file | sed 's|zsh|$(tzsh)|'` || exit 1; \
 	done
 .PHONY: install.man
 
