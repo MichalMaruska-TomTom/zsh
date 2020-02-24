@@ -142,7 +142,8 @@ zsh.info: $(sdir)/zsh.texi
 	$(MAKEINFO) $(sdir)/zsh.texi
 
 .yo.1:
-	@case $@ in \
+	set -x ;\
+	case $@ in \
 	  */*) target=$@ ;; \
 	  *) target=$@ ;; \
 	esac; \
