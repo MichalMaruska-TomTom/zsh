@@ -34,6 +34,13 @@ _bsd_pkg_pkgs() {
   compadd "$@" - ${PKG_DBDIR:-/var/db/pkg}/*(/:t)
 }
 
+(( $+functions[_bsd_pkg_pkgs_new] )) ||
+_bsd_pkg_pkgs_new() {
+    # all              (: after ":" modifier: Remove all leading pathname components = leave TAIL
+    # but still including version & tgz ?
+  compadd "$@" - ${PKG_PACKAGES:-/var/db/pkg}/All/*(.:t:r)
+}
+
 (( $+functions[_bsd_pkg_pkgs_and_files] )) ||
 _bsd_pkg_pkgs_and_files() {
   local ret=1
@@ -104,7 +111,7 @@ _bsd_pkg() {
         '-U[replace an already installed version]'
         '-u[update]'
         '-V[show version and exit]'
-        '*:package to install:_bsd_pkg_pkgs' # files
+        '*:package to install:_bsd_pkg_pkgs_new' # files
       )
       ;;
     openbsd*)
