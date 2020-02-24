@@ -48,10 +48,11 @@ PAPERSIZE = @PAPERSIZE@
 .SUFFIXES: .yo .1
 
 # man pages to install
-MAN = zsh.1 zshbuiltins.1 zshcalsys.1 zshcompctl.1 zshcompwid.1 zshcompsys.1 \
+MAN1 = zsh.1 zshbuiltins.1 zshcalsys.1 zshcompctl.1 zshcompwid.1 zshcompsys.1 \
 zshcontrib.1 zshexpn.1 zshmisc.1 zshmodules.1 \
-zshoptions.1 zshparam.1 zshroadmap.1 zshtcpsys.1 zshzftpsys.1 zshzle.1 \
-zshall.1
+zshoptions.1 zshparam.1 zshroadmap.1 zshtcpsys.1 zshzftpsys.1 zshzle.1
+
+MAN = $(MAN1) zshall.1
 
 # yodl documentation
 
@@ -141,7 +142,8 @@ info: zsh.info
 zsh.info: $(sdir)/zsh.texi
 	$(MAKEINFO) $(sdir)/zsh.texi
 
-.yo.1:
+# .yo.1:
+$(MAN1) : %.1 :%.yo
 	set -x ;\
 	case $@ in \
 	  */*) target=$@ ;; \
