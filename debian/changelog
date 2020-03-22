@@ -1,3 +1,10 @@
+zsh (5.8-4) UNRELEASED; urgency=medium
+
+  [ Romain Porte ]
+  * Add completion for dscverify. (Closes: #953389)
+
+ -- Axel Beckert <abe@debian.org>  Sun, 22 Mar 2020 14:57:39 +0100
+
 zsh (5.8-3) unstable; urgency=medium
 
   [ Steve Langasek ]
