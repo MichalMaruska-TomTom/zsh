@@ -2,3 +2,4 @@ further-mitigate-test-suite-hangs.patch
 update-debian-sections.patch
 cross-compile.diff
 example-shebang.patch
+completion-dscverify.diff
