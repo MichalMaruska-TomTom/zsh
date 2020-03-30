@@ -65,6 +65,7 @@ zsh (5.8-1) unstable; urgency=medium
         + Adjust upstream autoconf cross-compile default fallbacks.
         + Skip zcompile when cross-compiling.
         + Add libelf-dev build-dependency.
+        + Closes: #928194
     + [1424bad8] debian/zshrc: Enable completions only on Ubuntu and
       derivatives by default, so that the behaviour neither changes on
       Debian nor on Ubuntu nor on according derivatives.
