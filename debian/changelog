@@ -458,6 +458,7 @@ zsh (5.2-test-1-1) experimental; urgency=low
     fix-segfault-in-is_cond_binary_op.patch
   * [516efade] Cherry-pick af2ab0247: attempt to make output from
     interactive test more robust
+  * Add completion for virsh(1). (Closes: #740587)
 
  -- Axel Beckert <abe@debian.org>  Sun, 04 Dec 2016 21:35:22 +0100
 
