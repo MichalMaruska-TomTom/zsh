@@ -1,5 +1,5 @@
 Tests: run-testsuite
-Depends: zsh, zsh-dev, @builddeps@
+Depends: zsh, zsh-dev, libpcre3-dev, libcap-dev [linux-any], libelf-dev, libgdbm-dev, libncursesw5-dev
 
 Tests: adequate
 Depends: @, adequate:native
