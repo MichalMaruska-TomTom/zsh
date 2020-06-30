@@ -1,3 +1,24 @@
+zsh (5.8-5) unstable; urgency=medium
+
+  [ Axel Beckert ]
+  * [75eb3334] Retroactively mention #928194 in 5.8-1 changelog entry.
+  * [d4dedd99] Adapt to "col" having been moved from bsdmainutils to
+    bsdextrautils. (Closes: #963420)
+  * [71a1b8a4] Try to fix cross-installability of run-testsuite
+    autopkgtest check.
+  * [dc40a872] Add a minimal debian/salsa-ci.yml file.
+  * [27586e0e] Bump debhelper compatibility level to 13.
+  * [c2242d6d] Cherry-pick 754658af from upstream to fix "git stash drop"
+    tab-completion.
+  * [eda6cb4d] Update lintian overrides wrt. renamed lintian tags.
+
+  [ Daniel Shahaf ]
+  * [49dbae2c] Retroactively close #740587 in 5.2-test-1-1.
+  * [e8d6bb61] Cherry-pick d128bc0b from upstream: 45731: _debsnap: New
+    completion function (Closes: #960298)
+
+ -- Axel Beckert <abe@debian.org>  Tue, 30 Jun 2020 17:42:41 +0200
+
 zsh (5.8-4) unstable; urgency=medium
 
   [ Romain Porte ]
