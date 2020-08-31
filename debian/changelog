@@ -1273,7 +1273,7 @@ zsh (4.3.12-1) unstable; urgency=low
   * [f575f568] Add urcl script for changelog updates at upstream releases
   * [8bcd117f] at2quilt: Updating autotools patches
   * [bf0a44a8] Enable additional $fpath entries for add-ons from other
-    packages (Closes: #620452)
+    packages (Closes: #489646 #620452)
   * [b52c798e] Add do-dch script for convenience
   * [0ffda0fa] workflow.org: Fix structure
   * [b70d6102] Workflow updates
