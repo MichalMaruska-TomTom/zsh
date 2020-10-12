@@ -1,0 +1,12 @@
+/*.debhelper
+/*.debhelper.*
+/*.substvars
+/.debhelper/
+/autoreconf.*
+/debhelper-*-stamp
+/files
+/zsh-common/
+/zsh-dev/
+/zsh-doc/
+/zsh-static/
+/zsh/
