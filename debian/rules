@@ -17,7 +17,7 @@ CFLAGS += -Wall -g
 CONFIGFLAGS =  --prefix=/usr
 CONFIGFLAGS += --mandir=/usr/share/man
 CONFIGFLAGS += --bindir=/bin
-CONFIGFLAGS += LDFLAGS="-Wl,--as-needed -g $(H_LDFLAGS)"
+CONFIGFLAGS += LDFLAGS="-g $(H_LDFLAGS)"
 
 CONFIGFLAGS += --infodir=/usr/share/info
 CONFIGFLAGS += --enable-maildir-support
