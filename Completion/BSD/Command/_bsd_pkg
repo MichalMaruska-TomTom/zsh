@@ -89,7 +89,7 @@ _bsd_pkg() {
     )
 
     case "$OSTYPE" in
-    netbsd*)
+    netbsd* | linux-gnu )
       flags+=(
         '-A[do not record packages as installed manually]'
         '-C[specify configuration file]:config file:_files'
@@ -152,7 +152,7 @@ _bsd_pkg() {
 
   pkg_create)
     case "$OSTYPE" in
-    netbsd*)
+    netbsd* | linux-gnu)
       # NetBSD users, improve me!
       flags=(
         '*:package name:_bsd_pkg_pkgs'
@@ -170,7 +170,7 @@ _bsd_pkg() {
     )
 
     case "$OSTYPE" in
-    netbsd*)
+    netbsd* | linux-gnu)
       flags+=(
         '(:)-A[remove automatically installed packages that are no longer required]'
         "-D[don't execute deinstallation scripts]"
@@ -234,7 +234,7 @@ _bsd_pkg() {
     )
 
     case "$OSTYPE" in
-    netbsd*)
+    netbsd* | linux-gnu)
       flags+=(
         '-B[show build information]'
         '-b[show RCS Id strings]'
