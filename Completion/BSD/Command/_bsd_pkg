@@ -1,4 +1,4 @@
-#compdef pkg_add pkg_create pkg_delete pkg_info
+#compdef pkg_add pkg_create pkg_delete pkg_info pkg_alternatives
 
 (( $+functions[_bsd_pkg_pkgfiles] )) ||
 _bsd_pkg_pkgfiles() {
@@ -51,6 +51,37 @@ _bsd_pkg() {
   local flags
 
   case "$service" in
+  pkg_alternatives)
+      flags=(
+          #'(:)-a[show all installed packages]'
+          '(2)-g[Group operation]'
+          '-s[be silent]'
+          '(1 3 )-w[individual wrappers]'
+          #'->alternative_command'
+          #'-p:'
+          #
+          #'(-g)*:command:'
+          #'(-a -A)*:package name:_bsd_pkg_pkgs_and_files'
+          '1:group command:(auto manual status destroy list rebuild register unregister)'
+          '2:group command:(auto manual status register unregister)'
+          '3:package to install:_bsd_pkg_pkgs'
+          '4:file:_path_files -W /home/michal/pkg/c/libdata/pkg_alternatives/home/michal/pkg/c/'
+          #
+      )
+
+      subcmd=(auto pkg
+              manual pkg
+              status pkg
+              destroy
+              list
+              rebuild
+
+              register
+              unregister
+             )
+
+      _arguments -s $flags[@]
+      ;;
   pkg_add)
     flags=(
       "-n[don't really install packages]"
