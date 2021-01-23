@@ -2,10 +2,8 @@ Source: zsh
 Section: shells
 Priority: optional
 Build-Depends: bsdextrautils | bsdmainutils (<< 12~),
-               cm-super-minimal,
                debhelper-compat (= 13),
                dpkg-dev (>= 1.16.2~),
-               ghostscript,
                groff,
                groff-base,
                libcap-dev [linux-any],
@@ -13,6 +11,9 @@ Build-Depends: bsdextrautils | bsdmainutils (<< 12~),
                libgdbm-dev,
                libncursesw5-dev,
                libpcre3-dev,
+Build-Depends-Indep:
+               cm-super-minimal,
+               ghostscript,
                texinfo (>= 5~),
                texlive-fonts-recommended,
                texlive-latex-base,
