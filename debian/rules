@@ -63,6 +63,7 @@ build-static:
 
 override_dh_auto_build-indep:
 	dh_auto_build -B obj -- pdf
+	dh_auto_build -B obj/Etc # FAQ
 
 override_dh_auto_test-arch:
 	if dpkg-architecture -qDEB_BUILD_ARCH_OS | grep -qv hurd; then \
