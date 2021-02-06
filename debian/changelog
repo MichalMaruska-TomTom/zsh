@@ -1,3 +1,36 @@
+zsh (5.8-6) unstable; urgency=medium
+
+  [ Daniel Shahaf ]
+  * [d248a7ff] d/changelog: In 4.3.12-1, retroactively list #489646 as a
+    duplicate of #620452.
+
+  [ Axel Beckert ]
+  * [78bd839c] Add a debian/.gitignore file to ignore build artefacts.
+  * [79fc7a20] zsh-static: Drop lintian override
+    package-contains-broken-symlink, no more needed.
+  * [ec4b020b] Add lintian override for hardening-no-fortify-functions on
+    gdbm.so, too.
+  * [5d383282] Drop "-Wl,--as-needed" from $LDFLAGS. (No more needed
+    according to lintian warning debian-rules-uses-as-needed-linker-flag.)
+  * [a127f477] Disable blhc CI job for now. (too many and only false
+    positives)
+  * [12746f0a] Salsa CI: Allow reprotest to fail. (The FTBFS inside
+    reprotest is locally not reproducible with "reprotest
+    --variations=-kernel".)
+  * [3141c8a5] Declare compliance with Debian Policy 4.5.1. (No other
+    changes were needed.)
+  * [033709c5] Also install the Zsh FAQ. (Closes: #961757)
+    + Thanks Daniel Shahaf!
+    + [82386525] Install text-only FAQ into zsh-doc, too, for now, despite
+      it better fits into zsh-common. See #980903 against debhelper for
+      details.
+
+  [ Helmut Grohne ]
+  * [d0a05770] Demote documentation dependencies to B-D-I.
+    (Closes: #980895)
+
+ -- Axel Beckert <abe@debian.org>  Sat, 06 Feb 2021 05:15:22 +0100
+
 zsh (5.8-5) unstable; urgency=medium
 
   [ Axel Beckert ]
