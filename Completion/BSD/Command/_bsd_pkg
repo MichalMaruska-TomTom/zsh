@@ -104,7 +104,7 @@ _bsd_pkg() {
         '-U[replace an already installed version]'
         '-u[update]'
         '-V[show version and exit]'
-        '*:package to install:_bsd_pkg_pkgfiles'
+        '*:package to install:_bsd_pkg_pkgs' # files
       )
       ;;
     openbsd*)
