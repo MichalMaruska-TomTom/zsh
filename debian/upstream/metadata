@@ -4,6 +4,7 @@
 Bug-Submit: mailto:zsh-workers@zsh.org
 Changelog: http://zsh.sourceforge.net/releases.html
 Contact: zsh-workers@zsh.org
+Security-Contact: zsh-security@zsh.org
 FAQ: http://zsh.sourceforge.net/FAQ/
 Name: Z shell
 Homepage: https://www.zsh.org/
