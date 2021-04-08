@@ -73,7 +73,7 @@ to debug the Zsh process at source level.
 Load-path for functions from other packages
 -------------------------------------------
 
-In respsonse to #620452, the zsh-binary from Debian's zsh package started to
+In response to #620452, the zsh-binary from Debian's zsh package started to
 provide two entries to $fpath (the search path for loadable functions) for
 other packages to drop function files into:
 
