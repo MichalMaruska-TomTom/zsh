@@ -87,3 +87,17 @@ function load-path, please use the those conventions when installing function
 files.
 
  -- Frank Terbeck <ft@bewatermyfriend.org>, Wed, 21 May 2014 13:15:58 +0200
+
+
+Patch series management functionality
+-------------------------------------
+
+vcs_info is a zsh contributed function for showing information from version
+control systems (git, hg, svn, ...) at the prompt.
+
+Maintainers of Debian packagers may find it useful to enable vcs_info's patch
+series functionality when managing their packages' patch series.  See
+/usr/share/doc/zsh/examples/Misc/vcs_info-examples for examples and the
+vcs_info section in the manual[1] for reference.
+
+[1] zshcontrib(1), or one of the other formats provided by the zsh-doc package.
