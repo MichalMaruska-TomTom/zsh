@@ -4242,6 +4242,7 @@ wcsiblank(wint_t wc)
 mod_export int
 wcsitype(wchar_t c, int itype)
 {
+  // mmc: wordchars
     int len;
     mbstate_t mbs;
     VARARR(char, outstr, MB_CUR_MAX);

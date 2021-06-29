@@ -112,7 +112,7 @@ int
 boot_(Module m)
 {
     w_deletetochar = addzlefunction("delete-to-char", deltochar,
-                                    ZLE_KILL | ZLE_KEEPSUFFIX);
+				    ZLE_KILL | ZLE_KEEPSUFFIX);
     if (w_deletetochar) {
 	w_zaptochar = addzlefunction("zap-to-char", deltochar,
 				     ZLE_KILL | ZLE_KEEPSUFFIX);

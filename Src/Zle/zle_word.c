@@ -53,6 +53,7 @@ forwardword(char **args)
 	zmult = n;
 	return ret;
     }
+    // implicitly it's 1.
     while (n--) {
 	while (zlecs != zlell && ZC_iword(zleline[zlecs]))
 	    INCCS();
@@ -249,13 +250,15 @@ backwardword(char **args)
 	return ret;
     }
     while (n--) {
+	// skip over NON-word!!!
 	while (zlecs) {
 	    int pos = zlecs;
-	    DECPOS(pos);
+	    DECPOS(pos);	/* utf-8 aware? */
 	    if (ZC_iword(zleline[pos]))
 		break;
 	    zlecs = pos;
 	}
+	// skip back over word.
 	while (zlecs) {
 	    int pos = zlecs;
 	    DECPOS(pos);
