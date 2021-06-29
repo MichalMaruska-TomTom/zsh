@@ -96,7 +96,8 @@ override_dh_installdocs-indep:
 # Needs a freshly built (arch-dependent) zsh executable to compile .zwc files
 override_dh_auto_install-indep: build-dynamic
 	cd obj && $(MAKE) install.man DESTDIR=$(CURDIR)/debian/zsh-common
-	perl $(CURDIR)/Util/helpfiles obj/Doc/zshbuiltins.1 debian/zsh-common/usr/share/zsh/help
+	# $(CURDIR)/debian/zsh-common//usr/share/man/man1/zshbuiltins.1
+	perl $(CURDIR)/Util/helpfiles Doc/zshbuiltins.1 debian/zsh-common/usr/share/zsh/help
 
 	cd obj && $(MAKE) install.fns DESTDIR=$(CURDIR)/debian/zsh-common
 
