@@ -12,12 +12,12 @@ Doc/Zsh/manmodmenu.yo
 Doc/Zsh/modlist.yo
 Doc/Zsh/modmenu.yo
 Doc/help.txt
-Doc/help/*
+# Doc/help/*
 Doc/version.yo
-Doc/zsh*.1
+# Doc/zsh*.1
 Doc/zsh.idx
 Doc/zsh.texi
-Etc/FAQ
+# Etc/FAQ
 META-FAQ
 obj-static/
 obj/
