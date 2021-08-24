@@ -1,6 +1,13 @@
 Tests: run-testsuite
-Depends: zsh, zsh-dev, libpcre3-dev, libcap-dev [linux-any], libelf-dev, libgdbm-dev, libncursesw5-dev
+Depends: libcap-dev [linux-any],
+         libelf-dev,
+         libgdbm-dev,
+         libncursesw5-dev,
+         libpcre3-dev,
+         zsh,
+         zsh-dev
 
 Tests: adequate
-Depends: @, adequate:native
+Depends: adequate:native,
+         @
 Restrictions: superficial
