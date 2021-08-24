@@ -144,10 +144,6 @@ override_dh_auto_install-arch:
 	    DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
 	rm debian/zsh/bin/zsh-5.[0-9]*
 
-override_dh_strip-arch:
-	dh_strip -pzsh --dbgsym-migration=zsh-dbg
-	dh_strip -pzsh-static
-
 override_dh_shlibdeps-arch:
 	dh_shlibdeps -pzsh -- \
 		-dDepends    debian/zsh/bin/*   \
