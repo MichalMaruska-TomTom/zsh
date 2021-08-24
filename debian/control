@@ -3,6 +3,7 @@ Section: shells
 Priority: optional
 Build-Depends: bsdextrautils | bsdmainutils (<< 12~),
                debhelper-compat (= 13),
+               debhelper (>= 13.4),
                dpkg-dev (>= 1.16.2~),
                groff,
                groff-base,
@@ -34,7 +35,8 @@ Package: zsh-common
 Architecture: all
 Depends: ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
-Replaces: zsh (<= 5.0.2-1)
+Replaces: zsh (<= 5.0.2-1), zsh-doc (>= 5.8-7~)
+Breaks: zsh-doc (>= 5.8-7~)
 Recommends: zsh
 Suggests: zsh-doc
 Multi-Arch: foreign

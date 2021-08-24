@@ -8,6 +8,6 @@ Abstract: This document contains a list of frequently-asked (or
  Bourne-like shells for interactive use.
 Section: Shells
 
-Format: HTML
-Index: /usr/share/doc/zsh-common/html/FAQ.html
-Files: /usr/share/doc/zsh-common/html/FAQ*.html
+Format: Text
+Index: /usr/share/doc/zsh-common/FAQ.gz
+Files: /usr/share/doc/zsh-common/FAQ.gz
