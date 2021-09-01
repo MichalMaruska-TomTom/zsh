@@ -35,8 +35,8 @@ Architecture: all
 Depends: ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Replaces: zsh (<= 5.0.2-1),
-          zsh-doc (>= 5.8-7~)
-Breaks: zsh-doc (>= 5.8-7~)
+          zsh-doc (<= 5.8-7~)
+Breaks: zsh-doc (<= 5.8-7~)
 Recommends: zsh
 Suggests: zsh-doc
 Multi-Arch: foreign
