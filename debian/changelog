@@ -1,3 +1,23 @@
+zsh (5.8-7) unstable; urgency=medium
+
+  [ Axel Beckert ]
+  * [8d275ba5] Add the new zsh-security mailing list as Security-Contact
+    to debian/upstream/metadata.
+  * [e868fe11] Install text-only FAQ into zsh-common. See #961757 + #980903.
+    + Add Breaks and Replaces headers against zsh-doc to zsh-common.
+    + Add a build-dependency on debhelper ≥ 13.4.
+  * [96fbd8b2] Declare compliance with Debian Policy 4.6.0. (No other
+    changes were needed.)
+  * [06824140] Drop override_dh_strip-arch due to debug symbol migration
+    being long complete.
+  * [0f5af7a7] Run "wrap-and-sort -a".
+
+  [ Daniel Shahaf ]
+  * [9ddb0116] d/README.Debian: Mention vcs_info's patch series support
+    for Debian package maintainers.
+
+ -- Axel Beckert <abe@debian.org>  Wed, 25 Aug 2021 02:25:11 +0200
+
 zsh (5.8-6) unstable; urgency=medium
 
   [ Daniel Shahaf ]
