@@ -26,6 +26,7 @@ CONFIGFLAGS += --enable-etcdir=/etc/zsh
 CONFIGFLAGS += --enable-function-subdirs
 CONFIGFLAGS += --enable-site-fndir=/usr/local/share/zsh/site-functions
 CONFIGFLAGS += --enable-fndir=/usr/share/zsh/functions
+CONFIGFLAGS += --enable-runhelpdir=/usr/share/zsh/help
 CONFIGFLAGS += --with-tcsetpgrp
 CONFIGFLAGS += --with-term-lib="ncursesw tinfo"
 CONFIGFLAGS += --enable-cap --enable-pcre
@@ -131,7 +132,7 @@ override_dh_install-indep:
 	dh_install -i
 
 # Doesn't this need to go before we zcompile stuff into .zwc files? -- Axel
-	sed -i -e 's,^local HELPDIR=.*,local HELPDIR=$${HELPDIR:-/usr/share/zsh/help},; s,:-more,:-/usr/bin/pager,;' \
+	sed -i -e 's,:-more,:-/usr/bin/pager,;' \
 		debian/zsh-common/usr/share/zsh/functions/Misc/run-help
 	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#;' \
 		`find debian/zsh-common/usr/share/zsh/functions -type f`
