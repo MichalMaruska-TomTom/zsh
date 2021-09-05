@@ -132,8 +132,6 @@ override_dh_install-indep:
 	dh_install -i
 
 # Doesn't this need to go before we zcompile stuff into .zwc files? -- Axel
-	sed -i -e 's,:-more,:-/usr/bin/pager,;' \
-		debian/zsh-common/usr/share/zsh/functions/Misc/run-help
 	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#;' \
 		`find debian/zsh-common/usr/share/zsh/functions -type f`
 
