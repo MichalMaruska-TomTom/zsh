@@ -10,7 +10,7 @@ Build-Depends: bsdextrautils | bsdmainutils (<< 12~),
                libcap-dev [linux-any],
                libelf-dev,
                libgdbm-dev,
-               libncursesw5-dev,
+               libncurses-dev,
                libpcre3-dev
 Build-Depends-Indep: cm-super-minimal,
                      ghostscript,

@@ -2,7 +2,7 @@ Tests: run-testsuite
 Depends: libcap-dev [linux-any],
          libelf-dev,
          libgdbm-dev,
-         libncursesw5-dev,
+         libncurses-dev,
          libpcre3-dev,
          zsh,
          zsh-dev
