@@ -70,7 +70,7 @@ override_dh_auto_test-arch:
 	if dpkg-architecture -qDEB_BUILD_ARCH_OS | grep -qv hurd; then \
 		HOME="$(CURDIR)/obj/testhome" ZTST_verbose=1 dh_auto_test -B obj; \
 	fi
-	#HOME="$(CURDIR)/obj-static/testhome" ZTST_verbose=1 dh_auto_test -B obj-static || true
+	HOME="$(CURDIR)/obj-static/testhome" ZTST_verbose=1 dh_auto_test -B obj-static || true
 
 override_dh_auto_test-indep:
 
