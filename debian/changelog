@@ -1,3 +1,24 @@
+zsh (5.8-8) UNRELEASED; urgency=medium
+
+  [ Axel Beckert ]
+  * [3637af2b] Set runhelpdir at configure time; drop sed-based fixup at
+    install time. (Closes: #993539)
+  * [7f57499f] Add patch to set default pager to /usr/bin/pager instead of
+    more. Drop according sed call from debian/rules which didn't catch
+    .zwc files.
+  * [741c837e] Reenable running build-time testsuite against zsh-static.
+    (See discussion in #993843.)
+  * [cd6dff21] Update lintian override for slightly modified
+    pkg-not-in-package-test tag.
+
+  [ Vincent Lefevre ]
+  * [e178f191] Replace all occurrences of transitional package
+    libncursesw5-dev with libncurses-dev.  Remove resulting
+    duplicates. (Related to commit 71ee4aef.) Fixes FTBFS iff
+    libncursesw5-dev was not installed. (Closes: #993861)
+
+ -- Axel Beckert <abe@debian.org>  Wed, 15 Sep 2021 00:35:53 +0200
+
 zsh (5.8-7) unstable; urgency=medium
 
   [ Axel Beckert ]
