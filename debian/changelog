@@ -19,7 +19,11 @@ zsh (5.8-8) UNRELEASED; urgency=medium
     duplicates. (Related to commit 71ee4aef.) Fixes FTBFS iff
     libncursesw5-dev was not installed. (Closes: #993861)
 
- -- Axel Beckert <abe@debian.org>  Wed, 15 Sep 2021 00:35:53 +0200
+  [ Marco Trevisan (Treviño) ]
+  * [fa46e8b0] debian/zshrc: Don't use grep to check if we're in Ubuntu.
+    (Merges Salsa MR!2)
+
+ -- Axel Beckert <abe@debian.org>  Wed, 15 Sep 2021 01:55:08 +0200
 
 zsh (5.8-7) unstable; urgency=medium
 
