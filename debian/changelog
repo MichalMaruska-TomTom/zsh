@@ -196,6 +196,8 @@ zsh (5.7.1-test-3-1) experimental; urgency=low
   * [8f7982cd] Add lintian override for zsh sub-man-pages.
   * [5df2cbba] Declare compliance with Debian Policy 4.5.0. (No changes
     needed.)
+  * [a8b0d399] Completion/Unix/Command/_ip: Complete the -brief option.
+    (Merges Salsa MR!1)
 
  -- Axel Beckert <abe@debian.org>  Fri, 14 Feb 2020 03:44:40 +0100
 
