@@ -10,6 +10,8 @@ zsh (5.8-8) UNRELEASED; urgency=medium
     (See discussion in #993843.)
   * [cd6dff21] Update lintian override for slightly modified
     pkg-not-in-package-test tag.
+  * [b78df051] Retroactively mention Salsa MR!1 (upstream commit a8b0d399)
+    in 5.7.1-test-3-1 debian/changelog entry.
 
   [ Vincent Lefevre ]
   * [e178f191] Replace all occurrences of transitional package
