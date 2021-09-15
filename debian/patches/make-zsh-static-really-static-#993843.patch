@@ -1,0 +1,194 @@
+Description: Try to fix dynamic linking with zsh-static and resulting segfaults on libc updates
+Bug-Debian: https://bugs.debian.org/993843
+Bug: https://zsh.org/workers/49392
+Author: Axel Beckert <abe@debian.org>
+
+--- a/Src/hashnameddir.c
++++ b/Src/hashnameddir.c
+@@ -178,7 +178,7 @@
+ 	    /* Using NIS or NIS+ didn't add any user directories. This seems
+ 	     * fishy, so we fall back to using getpwent(). If we don't have
+ 	     * that, we only use the passwd file. */
+-#ifdef HAVE_GETPWENT
++#ifdef USE_GETPWENT
+ 	    struct passwd *pw;
+ 
+ 	    setpwent();
+@@ -190,7 +190,7 @@
+ 
+ 	    endpwent();
+ 	    usepwf = 0;
+-#endif /* HAVE_GETPWENT */
++#endif /* USE_GETPWENT */
+ 	}
+ 	if (usepwf) {
+ 	    /* Don't forget the non-NIS matches from the flat passwd file */
+@@ -229,7 +229,7 @@
+ 	    adduserdir(pw->pw_name, pw->pw_dir, ND_USERNAME, 1);
+ 
+ 	endpwent();
+-#endif /* HAVE_GETPWENT */
++#endif /* USE_GETPWENT */
+ #endif
+ 	allusersadded = 1;
+     }
+--- a/Src/options.c
++++ b/Src/options.c
+@@ -807,7 +807,7 @@
+ 	    return -1;
+ 	}
+ 
+-# ifdef HAVE_INITGROUPS
++# ifdef USE_INITGROUPS
+ 	/* Set the supplementary groups list.
+ 	 *
+ 	 * Note that on macOS, FreeBSD, and possibly some other platforms,
+--- a/Src/params.c
++++ b/Src/params.c
+@@ -4414,7 +4414,7 @@
+ void
+ usernamesetfn(UNUSED(Param pm), char *x)
+ {
+-#if defined(HAVE_SETUID) && defined(HAVE_GETPWNAM)
++#if defined(HAVE_SETUID) && defined(USE_GETPWNAM)
+     struct passwd *pswd;
+ 
+     if (x && (pswd = getpwnam(x)) && (pswd->pw_uid != cached_uid)) {
+@@ -4431,7 +4431,7 @@
+ 	    cached_uid = pswd->pw_uid;
+ 	}
+     }
+-#endif /* HAVE_SETUID && HAVE_GETPWNAM */
++#endif /* HAVE_SETUID && USE_GETPWNAM */
+     zsfree(x);
+ }
+ 
+--- a/Src/utils.c
++++ b/Src/utils.c
+@@ -1115,7 +1115,7 @@
+ char *
+ get_username(void)
+ {
+-#ifdef HAVE_GETPWUID
++#ifdef USE_GETPWUID
+     struct passwd *pswd;
+     uid_t current_uid;
+ 
+@@ -1128,9 +1128,9 @@
+ 	else
+ 	    cached_username = ztrdup("");
+     }
+-#else /* !HAVE_GETPWUID */
++#else /* !USE_GETPWUID */
+     cached_uid = getuid();
+-#endif /* !HAVE_GETPWUID */
++#endif /* !USE_GETPWUID */
+     return cached_username;
+ }
+ 
+@@ -1306,7 +1306,7 @@
+ 	return str;
+     }
+ 
+-#ifdef HAVE_GETPWNAM
++#ifdef USE_GETPWNAM
+     {
+ 	/* Retrieve an entry from the password table/database for this user. */
+ 	struct passwd *pw;
+@@ -1322,7 +1322,7 @@
+ 		return dupstring(pw->pw_dir);
+ 	}
+     }
+-#endif /* HAVE_GETPWNAM */
++#endif /* USE_GETPWNAM */
+ 
+     /* There are no more possible sources of directory names, so give up. */
+     return NULL;
+--- a/Src/Modules/stat.c
++++ b/Src/Modules/stat.c
+@@ -137,13 +137,13 @@
+ 	    strcat(outbuf, " (");
+     }
+     if (flags & STF_STRING) {
+-#ifdef HAVE_GETPWUID
++#ifdef USE_GETPWUID
+ 	struct passwd *pwd;
+ 	pwd = getpwuid(uid);
+ 	if (pwd)
+ 	    strcat(outbuf, pwd->pw_name);
+ 	else
+-#endif /* !HAVE_GETPWUID */
++#endif /* !USE_GETPWUID */
+ 	{
+ 	    char *optr;
+ 	    for (optr = outbuf; *optr; optr++)
+--- a/Src/Modules/parameter.c
++++ b/Src/Modules/parameter.c
+@@ -2055,7 +2055,9 @@
+ 
+     /* Get group names */
+     for (gaptr = gs->array; gaptr < gs->array + gs->num; gaptr++) {
++#ifdef USE_GETGRGID
+ 	grptr = getgrgid(gaptr->gid);
++#endif /* USE_GETGRGID */
+ 	if (!grptr) {
+ 	    return NULL;
+ 	}
+--- a/Src/Modules/files.c
++++ b/Src/Modules/files.c
+@@ -734,6 +734,7 @@
+ 	struct passwd *pwd;
+ 	if(end)
+ 	    *end = 0;
++#ifdef USE_GETPWNAM
+ 	pwd = getpwnam(p);
+ 	if(pwd)
+ 	    chm.uid = pwd->pw_uid;
+@@ -746,20 +747,35 @@
+ 		return 1;
+ 	    }
+ 	}
++#else /* !USE_GETPWNAM */
++	zwarnnam(nam, "%s: getpwnam not usable in static build", p);
++	free(uspec);
++	return 1;
++#endif /* !USE_GETPWNAM */
+ 	if(end) {
+ 	    p = end+1;
+ 	    if(!*p) {
++#ifdef USE_GETPWUID
+ 		if(!pwd && !(pwd = getpwuid(chm.uid))) {
+ 		    zwarnnam(nam, "%s: no such user", uspec);
+ 		    free(uspec);
+ 		    return 1;
+ 		}
++#else /* !USE_GETPWUID */
++                if(!pwd) {
++		    zwarnnam(nam, "%s: getpwuid not usable in static build",
++			     uspec);
++		    free(uspec);
++		    return 1;
++		}
++#endif /* !USE_GETPWUID */
+ 		chm.gid = pwd->pw_gid;
+ 	    } else if(p[0] == ':' && !p[1]) {
+ 		chm.gid = -1;
+ 	    } else {
+ 		struct group *grp;
+ 		dogroup:
++#ifdef USE_GETGRNAM
+ 		grp = getgrnam(p);
+ 		if(grp)
+ 		    chm.gid = grp->gr_gid;
+@@ -772,6 +788,11 @@
+ 			return 1;
+ 		    }
+ 		}
++#else /* !USE_GETGRNAM */
++		zwarnnam(nam, "%s: getgrnam not usable in static build", p);
++		free(uspec);
++		return 1;
++#endif /* !USE_GETGRNAM */
+ 	    }
+ 	 } else
+ 	    chm.gid = -1;
