@@ -7,6 +7,15 @@ Depends: libcap-dev [linux-any],
          zsh,
          zsh-dev
 
+Tests: run-testsuite-static
+Depends: libcap-dev [linux-any],
+         libelf-dev,
+         libgdbm-dev,
+         libncurses-dev,
+         libpcre3-dev,
+         zsh-static,
+         zsh-dev
+
 Tests: adequate
 Depends: adequate:native,
          @
