@@ -1,4 +1,4 @@
-zsh (5.8-8) UNRELEASED; urgency=medium
+zsh (5.8-8) unstable; urgency=medium
 
   [ Axel Beckert ]
   * [3637af2b] Set runhelpdir at configure time; drop sed-based fixup at
@@ -12,6 +12,11 @@ zsh (5.8-8) UNRELEASED; urgency=medium
     pkg-not-in-package-test tag.
   * [b78df051] Retroactively mention Salsa MR!1 (upstream commit a8b0d399)
     in 5.7.1-test-3-1 debian/changelog entry.
+  * [801f5e10] Explicitly declare B-D-I on cm-super-minimal as arch:all to
+    fix crossbuild issues.
+  * [8d37726d] Also let autopkgtest check zsh-static in a separate test
+    run. Skip V07pcre.ztst there as --enable-pcre does require dynamic
+    loading. Triggered by the discussion in #993843.
 
   [ Vincent Lefevre ]
   * [e178f191] Replace all occurrences of transitional package
@@ -23,7 +28,7 @@ zsh (5.8-8) UNRELEASED; urgency=medium
   * [fa46e8b0] debian/zshrc: Don't use grep to check if we're in Ubuntu.
     (Merges Salsa MR!2)
 
- -- Axel Beckert <abe@debian.org>  Wed, 15 Sep 2021 01:55:08 +0200
+ -- Axel Beckert <abe@debian.org>  Wed, 15 Sep 2021 18:48:16 +0200
 
 zsh (5.8-7) unstable; urgency=medium
 
