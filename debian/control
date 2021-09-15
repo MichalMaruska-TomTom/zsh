@@ -12,7 +12,7 @@ Build-Depends: bsdextrautils | bsdmainutils (<< 12~),
                libgdbm-dev,
                libncurses-dev,
                libpcre3-dev
-Build-Depends-Indep: cm-super-minimal,
+Build-Depends-Indep: cm-super-minimal:all,
                      ghostscript,
                      texinfo (>= 5~),
                      texlive-fonts-recommended,
