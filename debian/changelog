@@ -1,3 +1,13 @@
+zsh (5.8-9) unstable; urgency=medium
+
+  * [b895ac67] Revert "Explicitly declare B-D-I on cm-super-minimal as
+    arch:all to fix crossbuild issues".  While it fixes crossbuild issues
+    on Salsa's CI and builds fine there in all steps and even passes
+    test-build-all, it causes the arch:all build on the build daemons to
+    not start due to "build dependency uninstallable". *sigh*
+
+ -- Axel Beckert <abe@debian.org>  Thu, 16 Sep 2021 03:26:30 +0200
+
 zsh (5.8-8) unstable; urgency=medium
 
   [ Axel Beckert ]
