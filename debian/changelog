@@ -1,3 +1,11 @@
+zsh (5.8-10) unstable; urgency=medium
+
+  * [130801d2,92b60e43] Fix segfaults in zsh-static after glibc upgrades
+    by making sure nothing is loaded dynamically anymore. (Closes: #993843
+    and fixes autopkgtest failures in not or too up to date chroots.)
+
+ -- Axel Beckert <abe@debian.org>  Fri, 17 Sep 2021 15:48:52 +0200
+
 zsh (5.8-9) unstable; urgency=medium
 
   * [b895ac67] Revert "Explicitly declare B-D-I on cm-super-minimal as

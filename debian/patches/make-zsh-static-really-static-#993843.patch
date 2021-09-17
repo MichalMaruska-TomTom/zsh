@@ -1,4 +1,4 @@
-Description: Try to fix dynamic linking with zsh-static and resulting segfaults on libc updates
+Description: Fix dynamic linking with zsh-static and resulting segfaults on libc updates
 Origin: https://zsh.org/workers/49422
 Bug-Debian: https://bugs.debian.org/993843
 Bug: https://zsh.org/workers/49392
