@@ -101,7 +101,15 @@ Description: shell with lots of features (static link)
  shell functions (with autoloading), a history mechanism, and a
  host of other features.
  .
- This is the statically-compiled version of the shell.
+ This is the statically-compiled version of the shell, i.e. it doesn't
+ require any dynamically loaded libraries to be present and will work
+ even if libraries zsh (in general) needs are broken on the system. So
+ it's more robust in case of a broken system.
+ .
+ It though also has a few limitations compared to the normal,
+ dynamically linked, e.g. it can't use NSS related functionality which
+ might result in minor imperfections like e.g. user names being shown
+ in the prompt.
 
 Package: zsh-dev
 Architecture: any
