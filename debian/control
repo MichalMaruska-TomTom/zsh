@@ -88,8 +88,8 @@ Description: zsh documentation - info/HTML format
 
 Package: zsh-static
 Architecture: any
-Depends: zsh,
-         ${misc:Depends}
+Depends: ${misc:Depends}
+Recommends: zsh-common
 Suggests: zsh-doc
 Built-Using: ${Built-Using}
 Description: shell with lots of features (static link)
