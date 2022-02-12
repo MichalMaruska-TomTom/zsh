@@ -1,3 +1,32 @@
+zsh (5.8.1-1) UNRELEASED; urgency=high
+
+  * [1a490c705,12eb3e53,a13f7a2b] Import new upstream security and bugfix
+    release 5.8.1.
+    + [c187154f,fdb8b0ce,bdc4d70a] Fixes CVE-2021-45444, a vulnerability
+      in prompt expansion which could be exploited through e.g. VCS_Info
+      to execute arbitrary shell commands without a user's knowledge.
+    + [92d7d4dd] Refresh patches as needed. Drop cherry-picked patch with
+      commit 754658af, included in upstream bugfix release.
+  * [2556a97c] Drop debian/zsh-static.NEWS, zsh-static will stay. Thanks
+    to those who gave feedback about our proposed zsh-static removal back
+    in 2015, especially Vincent Bernat.
+  * [0fbb22e7] Extend zsh-static package description to explain its use
+    cases. Thanks to shirish शिरीष to make us aware of this deficency of
+    the package description by asking the right questions (back in
+    2015). :-)
+  * [daf87c89] zsh-static: Drop dep. on zsh, recommend zsh-common instead.
+  * [2f5cd2e1] Update lintian overrides wrt. to change tag formats.
+  * [cf14eeb5] Add lintian override for bash-term-in-posix-shell. It's zsh
+    code and it's guarded by a check if we're running zsh or not.
+  * [ca06fcef] Add lintian overrides for bin-sbin-mismatch false positives.
+  * [db8c6c1c] debian/zsh5: Add ${static} suffix also to alternative path
+    in warning.
+  * [dc50ace5] Update copyright years in debian/copyright. Thanks Lintian!
+  * [e872908c] debian/copyright: Remove obsolete upstream URLs. (FTP + SF)
+  * [60187dd3] debian/watch: Drop comment about FTP timeouts.
+
+ -- Axel Beckert <abe@debian.org>  Sat, 12 Feb 2022 20:56:58 +0100
+
 zsh (5.8-10) unstable; urgency=medium
 
   * [130801d2,92b60e43] Fix segfaults in zsh-static after glibc upgrades
