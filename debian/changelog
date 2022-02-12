@@ -1,4 +1,4 @@
-zsh (5.8.1-1) UNRELEASED; urgency=high
+zsh (5.8.1-1) unstable; urgency=high
 
   * [1a490c705,12eb3e53,a13f7a2b] Import new upstream security and bugfix
     release 5.8.1.
@@ -24,8 +24,12 @@ zsh (5.8.1-1) UNRELEASED; urgency=high
   * [dc50ace5] Update copyright years in debian/copyright. Thanks Lintian!
   * [e872908c] debian/copyright: Remove obsolete upstream URLs. (FTP + SF)
   * [60187dd3] debian/watch: Drop comment about FTP timeouts.
+  * [34379187] Make paths in lintian overrides agnostic to upstream versions
+  * [566bf8c1] Add lintian overrides for all occurrences of
+    very-long-line-length-in-source-file. They're all false positives.
+  * [32c07ee0] Update copyright years in debian/copyright. Thanks Lintian!
 
- -- Axel Beckert <abe@debian.org>  Sat, 12 Feb 2022 20:56:58 +0100
+ -- Axel Beckert <abe@debian.org>  Sat, 12 Feb 2022 23:00:09 +0100
 
 zsh (5.8-10) unstable; urgency=medium
 
