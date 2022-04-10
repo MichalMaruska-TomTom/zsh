@@ -223,13 +223,20 @@ shingetchar(void)
 	return STOUC(*shinbufptr++);
 
     shinbufreset();
-    do {
-	errno = 0;
-	nread = read(SHIN, shinbuffer, SHINBUFSIZE);
-    } while (nread < 0 && errno == EINTR);
-    if (nread <= 0)
-	return -1;
-    shinbufendptr = shinbuffer + nread;
+    for (;;) {
+       errno = 0;
+       nread = read(SHIN, shinbufendptr, 1);
+       if (nread > 0) {
+           /* Use line buffering (POSIX requirement) */
+           if (*shinbufendptr++ == '\n')
+               break;
+           if (shinbufendptr == shinbuffer + SHINBUFSIZE)
+               break;
+       } else if (nread == 0 || errno != EINTR)
+           break;
+    }
+    if (shinbufendptr == shinbuffer)
+        return -1;
     return STOUC(*shinbufptr++);
 }
 
@@ -595,9 +602,9 @@ stuff(char *fn)
 	zerr("can't open %s", fn);
 	return 1;
     }
-    fseek(in, 0, 2);
+    fseek(in, 0, SEEK_END);
     len = ftell(in);
-    fseek(in, 0, 0);
+    fseek(in, 0, SEEK_SET);
     buf = (char *)zalloc(len + 1);
     if (!(fread(buf, len, 1, in))) {
 	zerr("read error on %s", fn);

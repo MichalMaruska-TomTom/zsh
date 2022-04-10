@@ -1,5 +1,5 @@
 read [ -rszpqAclneE ] [ -t [ num ] ] [ -k [ num ] ] [ -d delim ]
-     [ -u n ] [ name[?prompt] ] [ name ...  ]
+     [ -u n ] [ [name][?prompt] ] [ name ...  ]
        Read one line and break it into fields using the  characters  in
        $IFS  as  separators, except as noted below.  The first field is
        assigned to the first name, the second field to the second name,

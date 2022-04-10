@@ -18,4 +18,5 @@ ttyctl [ -fu ]
        command line are preserved.  Strings  of  commands  run  between
        editing  the  command line will see a consistent tty state.  See
        also the shell variable STTY for a means of initialising the tty
-       before running external commands.
+       before  running external commands and/or freezing the tty around
+       a single command.
