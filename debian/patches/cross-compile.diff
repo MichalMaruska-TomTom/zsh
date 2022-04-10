@@ -9,7 +9,7 @@ X-Bzr-Revision-Id: dmitrijs.ledkovs@canonical.com-20121220153357-amh2d7kzw5d314m
 +++ b/aczsh.m4
 @@ -172,7 +172,7 @@
  }
- ], [zsh_cv_shared_$1=yes],
+ ]])],[zsh_cv_shared_$1=yes],
  [zsh_cv_shared_$1=no],
 -[zsh_cv_shared_$1=no]
 +[zsh_cv_shared_$1=yes]
@@ -18,7 +18,7 @@ X-Bzr-Revision-Id: dmitrijs.ledkovs@canonical.com-20121220153357-amh2d7kzw5d314m
      zsh_cv_shared_$1=no
 @@ -244,7 +244,7 @@
  }
- ], [zsh_cv_sys_dynamic_clash_ok=yes],
+ ]])],[zsh_cv_sys_dynamic_clash_ok=yes],
  [zsh_cv_sys_dynamic_clash_ok=no],
 -[zsh_cv_sys_dynamic_clash_ok=no]
 +[zsh_cv_sys_dynamic_clash_ok=yes]
@@ -27,7 +27,7 @@ X-Bzr-Revision-Id: dmitrijs.ledkovs@canonical.com-20121220153357-amh2d7kzw5d314m
      zsh_cv_sys_dynamic_clash_ok=no
 @@ -318,7 +318,7 @@
  }
- ], [zsh_cv_sys_dynamic_rtld_global=yes],
+ ]])],[zsh_cv_sys_dynamic_rtld_global=yes],
  [zsh_cv_sys_dynamic_rtld_global=no],
 -[zsh_cv_sys_dynamic_rtld_global=no]
 +[zsh_cv_sys_dynamic_rtld_global=yes]
@@ -36,7 +36,7 @@ X-Bzr-Revision-Id: dmitrijs.ledkovs@canonical.com-20121220153357-amh2d7kzw5d314m
      zsh_cv_sys_dynamic_rtld_global=no
 @@ -388,7 +388,7 @@
  int fred () { return 42; }
- ], [zsh_cv_sys_dynamic_execsyms=yes],
+ ]])],[zsh_cv_sys_dynamic_execsyms=yes],
  [zsh_cv_sys_dynamic_execsyms=no],
 -[zsh_cv_sys_dynamic_execsyms=no]
 +[zsh_cv_sys_dynamic_execsyms=yes]
@@ -45,7 +45,7 @@ X-Bzr-Revision-Id: dmitrijs.ledkovs@canonical.com-20121220153357-amh2d7kzw5d314m
  else
 @@ -462,7 +462,7 @@
  int fred () { return 42; }
- ], [zsh_cv_sys_dynamic_strip_exe=yes],
+ ]])],[zsh_cv_sys_dynamic_strip_exe=yes],
  [zsh_cv_sys_dynamic_strip_exe=no],
 -[zsh_cv_sys_dynamic_strip_exe=no]
 +[zsh_cv_sys_dynamic_strip_exe=yes]
@@ -54,7 +54,7 @@ X-Bzr-Revision-Id: dmitrijs.ledkovs@canonical.com-20121220153357-amh2d7kzw5d314m
  else
 @@ -528,7 +528,7 @@
  }
- ], [zsh_cv_sys_dynamic_strip_lib=yes],
+ ]])],[zsh_cv_sys_dynamic_strip_lib=yes],
  [zsh_cv_sys_dynamic_strip_lib=no],
 -[zsh_cv_sys_dynamic_strip_lib=no]
 +[zsh_cv_sys_dynamic_strip_lib=yes]

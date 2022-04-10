@@ -3,6 +3,4 @@ update-debian-sections.patch
 cross-compile.diff
 example-shebang.patch
 completion-dscverify.diff
-cherry-pick-d128bc0b-45731-debsnap-new-completion-function.patch
 use-pager-instead-of-more-by-default.patch
-make-zsh-static-really-static-#993843.patch
