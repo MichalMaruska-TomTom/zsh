@@ -25,6 +25,7 @@ emulate -R zsh
 # Ensure the locale does not screw up sorting.  Don't supply a locale
 # unless there's one set, to minimise problems.
 [[ -n $LC_ALL ]] && LC_ALL=C
+[[ -n $LC_CTYPE ]] && LC_CTYPE=C
 [[ -n $LC_COLLATE ]] && LC_COLLATE=C
 [[ -n $LC_NUMERIC ]] && LC_NUMERIC=C
 [[ -n $LC_MESSAGES ]] && LC_MESSAGES=C
@@ -36,8 +37,6 @@ typeset +x WORDCHARS
 # Set the module load path to correspond to this build of zsh.
 # This Modules directory should have been created by "make check".
 [[ -d Modules/zsh ]] && module_path=( $PWD/Modules )
-# Allow this to be passed down.
-export MODULE_PATH
 
 # We need to be able to save and restore the options used in the test.
 # We use the $options variable of the parameter module for this.
@@ -60,7 +59,7 @@ ZTST_mainopts=(${(kv)options})
 ZTST_testdir=$PWD
 ZTST_testname=$1
 
-integer ZTST_testfailed
+integer ZTST_testfailed=0
 
 # This is POSIX nonsense.  Because of the vague feeling someone, somewhere
 # may one day need to examine the arguments of "tail" using a standard
@@ -139,6 +138,19 @@ ZTST_testfailed() {
     print -r "Was testing: $ZTST_message"
   fi
   print -r "$ZTST_testname: test failed."
+  if [[ -n $ZTST_failmsg ]]; then
+    print -r "The following may (or may not) help identifying the cause:
+$ZTST_failmsg"
+  fi
+  ZTST_testfailed=1
+  return 1
+}
+ZTST_testxpassed() {
+  print -r "Test $ZTST_testname was expected to fail, but passed."
+  if [[ -n $ZTST_message ]]; then
+    print -r "Was testing: $ZTST_message"
+  fi
+  print -r "$ZTST_testname: test XPassed."
   if [[ -n $ZTST_failmsg ]]; then
     print -r "The following may (or may not) help identifying the cause:
 $ZTST_failmsg"
@@ -520,7 +532,7 @@ $ZTST_code"
 	return 1
       fi
       if (( expected_to_fail )); then
-        ZTST_testfailed "test was expected to fail, but passed."
+        ZTST_testxpassed
         return 1
       fi
     fi
