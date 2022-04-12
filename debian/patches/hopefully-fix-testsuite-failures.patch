@@ -1,0 +1,31 @@
+Origin: https://zsh.org/workers/50046
+Author: Jun T <takimoto-j@kba.biglobe.ne.jp>
+Description: Set LANG to hopefully make D07multibyte.ztst pass
+
+It failed on the buildds as well as on Salsa runners, but neither
+locally not in pbuilder. Upstream suspects that LANG needs to be set
+(correctly) to pass.
+
+Original comment by Jun:
+
+I've found that the test Xpassed if LANG was unset:
+
+% unset LANG
+% make TESTNUM=D07 check
+./D07multibyte.ztst: test XPassed.
+
+It seems we need to export LANG (in ztst.zsh) to pass it to
+$ZTST_testdir/../Src/zsh.
+
+diff --git a/Test/ztst.zsh b/Test/ztst.zsh
+index 89fe69b5b..263573333 100755
+--- a/Test/ztst.zsh
++++ b/Test/ztst.zsh
+@@ -30,6 +30,7 @@ emulate -R zsh
+ [[ -n $LC_NUMERIC ]] && LC_NUMERIC=C
+ [[ -n $LC_MESSAGES ]] && LC_MESSAGES=C
+ [[ -n $LANG ]] && LANG=C
++export LANG
+
+ # Don't propagate variables that are set by default in the shell.
+ typeset +x WORDCHARS
