@@ -1,4 +1,4 @@
-.TH "ZSHPARAM" "1" "April 9, 2022" "zsh 5\&.8\&.1\&.2-test"
+.TH "ZSHPARAM" "1" "May 1, 2022" "zsh 5\&.8\&.1\&.3-test"
 .SH "NAME"
 zshparam \- zsh parameters
 .\" Yodl file: Zsh/params.yo
@@ -810,6 +810,11 @@ as set by the most recently failed system call\&.
 This value is system dependent and is intended for debugging
 purposes\&.  It is also useful with the \fBzsh/system\fP module which
 allows the number to be turned into a name or message\&.
+.RS
+.PP
+To use this parameter, it must first be assigned a value (typically
+0 (zero))\&.  It is initially unset for scripting compatibility\&.
+.RE
 .TP
 \fBFUNCNEST\fP <S>
 Integer\&.  If greater than or equal to zero, the maximum nesting depth of

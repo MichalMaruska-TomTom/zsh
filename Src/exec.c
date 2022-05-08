@@ -561,7 +561,7 @@ zexecve(char *pth, char **argv, char **newenvp)
                         isbinary = 1;
                         hasletter = 0;
                         for (ptr = execvebuf; ptr < ptr2; ptr++) {
-                            if (islower(*ptr) || *ptr == '$' || *ptr == '`')
+                            if (islower(STOUC(*ptr)) || *ptr == '$' || *ptr == '`')
                                 hasletter = 1;
                             if (hasletter && *ptr == '\n') {
                                 isbinary = 0;
@@ -3898,6 +3898,10 @@ execcmd_exec(Estate state, Execcmd_params eparams,
 	    for (i = 0; i < 10; i++)
 		if (save[i] != -2)
 		    zclose(save[i]);
+	    /*
+	     * We're done with this job, no need to wait for it.
+	     */
+	    jobtab[thisjob].stat |= STAT_DONE;
 	    goto done;
 	}
 	if (isset(XTRACE)) {
@@ -4879,13 +4883,9 @@ getoutputfile(char *cmd, char **eptr)
 	child_unblock();
 	return nam;
     } else if (pid) {
-	int os;
-
 	close(fd);
-	os = jobtab[thisjob].stat;
 	waitforpid(pid, 0);
 	cmdoutval = 0;
-	jobtab[thisjob].stat = os;
 	return nam;
     }
 

@@ -1159,6 +1159,9 @@
 /* Define to 1 if h_errno is not defined by the system. */
 #undef USE_LOCAL_H_ERRNO
 
+/* Define to 1 if lseek() can be used for SHIN. */
+#undef USE_LSEEK
+
 /* Define to 1 if you want to allocate stack memory e.g. with `alloca'. */
 #undef USE_STACK_ALLOCATION
 
