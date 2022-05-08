@@ -1,3 +1,110 @@
+2022-05-01  dana  <dana@dana.is>
+
+	* unposted: Config/version.mk: Update for 5.8.1.3-test (5.9)
+
+	* unposted: Etc/creating-a-release.txt: Mention #zsh topic
+
+2022-04-30  Bart Schaefer  <schaefer@zsh.org>
+
+	* unposted: Etc/BUGS: remove debian #924736, fixed since 5.8 by
+	workers/44142; correct misguided edit from earlier commit
+
+	* unposted: Doc/Zsh/expn.yo, NEWS: Details about ${(*)...}
+
+	* 50150: Src/Modules/stat.c: Filenames need unmetafy for printing
+
+	* 50149: Etc/BUGS, Src/builtin.c, Src/jobs.c: Remove all =(...)
+	files at shell exit
+
+2022-04-29  Bart Schaefer  <schaefer@zsh.org>
+
+	* 50136: Etc/BUGS, Src/exec.c: Fix =(nosuchcommand) race/deadlock
+	first reported in workers/42609
+
+	* 50134: Src/jobs.c: Tweak process group handling (workers/43409)
+	to avoid creating "unkillable" pipelines that ignore signals
+
+	* unposted: Etc/BUGS: Details about STTY; consistency nit
+
+2022-04-28  Bart Schaefer  <schaefer@zsh.org>
+
+	* 50138: Doc/Zsh/params.yo:  Note ERRNO must be set before use.
+
+	* 50133 (Bart, PWS, Jun-ichi): Src/input.c, configure.ac: when
+	lseek(2) is available, use it to check for and rewind read-ahead
+	for more efficient line-buffered input.
+
+	* 50126: Etc/BUGS, Src/exec.c: Fix multios in current-shell "exec"
+
+	* 50101: Src/Modules/system.c: sysread -o with param matches doc
+
+2022-04-26  dana  <dana@dana.is>
+
+	* unposted: Completion/Unix/Command/_getopt: Fix util-linux
+	variant detection
+
+	* unposted: NEWS: Adjust dedication wording
+
+2022-04-26  Jun-ichi Takimoto  <takimoto-j@kba.biglobe.ne.jp>
+
+	* 50089: Test/X03zlebindkey.ztst: unset LC_* for multibyte tests
+
+2022-04-12  Peter Stephenson  <p.stephenson@samsung.com>
+
+	* 50049: Src/exec.c, Src/prompt.c: care with signed character
+	indices on the few remaining systems such as Cygwin that aren't
+	otherwise protected.
+
+2022-04-20  Jun-ichi Takimoto  <takimoto-j@kba.biglobe.ne.jp>
+
+	* 50081: Src/pattern.c, Src/params.c: reset global mbstate_t
+	variables when LC_CTYPE changes
+
+	* 50080: Src/hist.c: add missing STOUC() in casemodify()
+
+2022-04-19  Bart Schaefer  <schaefer@zsh.org>
+
+	* unposted (cf. users/27656 (Tomasz Pala), users/27660):
+	Completion/Unix/Type/_path_files: fix $SUFFIX when GLOB_COMPLETE
+
+2022-04-14  Bart Schaefer  <schaefer@zsh.org>
+
+	* 50069: Test/C03traps.ztst: fix test description
+
+	* 50068: Etc/BUGS, Src/builtin.c, Test/C03traps.ztst: 'exit' in
+	trap causes calling function to return (fixes workers/44007)
+
+2022-04-14  Jun-ichi Takimoto  <takimoto-j@kba.biglobe.ne.jp>
+
+	* 50052: Test/V14system.ztst: do nothing when skipping the test
+
+	* 50046: Test/ztst.zsh: export LANG to child zsh
+
+2022-04-12  Jun-ichi Takimoto  <takimoto-j@kba.biglobe.ne.jp>
+
+	* 50013: Test/P01privileged.ztst, Test/ztst.zsh: skip %test if
+	a chunk in %prep returns nonzero
+
+	* 49996 (Peter) + 50012: Test/README, Test/ztst.zsh: add
+	ZTST_continue to continue tests after a failure
+
+	* 50017: Completion/Unix/Type/_time_zone: allow lowercase to
+	match with uppercase
+
+2022-04-11  Bart Schaefer  <schaefer@zsh.org>
+
+	* 50043: Test/D02glob.ztst, Test/E03posix.ztst: for root user,
+	skip glob tests	that rely on limited privilege and fix EUID test
+
+2022-04-11  Mikael Magnusson  <mikachu@gmail.com>
+
+	* 50042: Src/Zle/compcore.c: Another fix for 49915
+
+2022-04-10  Daniel Shahaf  <d.s@daniel.shahaf.name>
+
+	* unposted: NEWS: Improve flow between the paragraph and
+	its links.
+
 2022-04-09  dana  <dana@dana.is>
 
 	* unposted: Config/version.mk, Etc/FAQ.yo: Update for

@@ -13243,6 +13243,86 @@ if test x$zsh_cv_sys_fifo = xyes; then
 
 fi
 
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if lseek() correctly reports seekability" >&5
+printf %s "checking if lseek() correctly reports seekability... " >&6; }
+if test ${zsh_cv_sys_lseek+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test "$cross_compiling" = yes
+then :
+  zsh_cv_sys_lseek=yes
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+int main() {
+    int pipefd[2], fd;
+    off_t ret;
+    char* tmpfile = "seekfiletest.tmp";
+    if ((fd = open(tmpfile, O_CREAT, S_IRUSR)) < 0) {
+	fprintf(stderr, "creating file failed\n");
+	return 1;
+    }
+    ret = lseek(fd, 0, SEEK_CUR);
+    close(fd);
+    unlink(tmpfile);
+    if (ret == (off_t)-1) {
+	fprintf(stderr, "lseek on regular file failed\n");
+	return 1;
+    }
+    if (pipe(pipefd) < 0) {
+	fprintf(stderr, "creating pipe failed\n");
+	return 1;
+    }
+    write(pipefd[1], "abcdefgh", 8);
+    ret = lseek(pipefd[0], 0, SEEK_CUR);
+    close(pipefd[0]);
+    close(pipefd[1]);
+    if (ret != (off_t)-1) {
+	fprintf(stderr, "lseek on pipe succeeded\n");
+	return 1;
+    }
+    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+	fprintf(stderr, "creating UNIX domain socket failed\n");
+	return 1;
+    }
+    ret = lseek(fd, 0, SEEK_CUR);
+    close(fd);
+    if (ret != (off_t)-1) {
+	fprintf(stderr, "lseek on UNIX domain socket succeeded\n");
+	return 1;
+    }
+    return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"
+then :
+  zsh_cv_sys_lseek=yes
+else $as_nop
+  zsh_cv_sys_lseek=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $zsh_cv_sys_lseek" >&5
+printf "%s\n" "$zsh_cv_sys_lseek" >&6; }
+
+if test x$zsh_cv_sys_lseek = xyes; then
+  printf "%s\n" "#define USE_LSEEK 1" >>confdefs.h
+
+fi
+
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if link() works" >&5
 printf %s "checking if link() works... " >&6; }
 if test ${zsh_cv_sys_link+y}

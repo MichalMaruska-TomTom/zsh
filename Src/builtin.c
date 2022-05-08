@@ -5720,6 +5720,8 @@ bin_break(char *name, char **argv, UNUSED(Options ops), int func)
 	     * a bad job.
 	     */
 	    if (stopmsg || (zexit(0, ZEXIT_DEFERRED), !stopmsg)) {
+		if (trap_state) 
+		    trap_state = TRAP_STATE_FORCE_RETURN;
 		retflag = 1;
 		breaks = loops;
 		exit_pending = 1;
@@ -5858,6 +5860,7 @@ zexit(int val, enum zexit_t from_where)
 	/* send SIGHUP to any jobs left running  */
 	killrunjobs(from_where == ZEXIT_SIGNAL);
     }
+    cleanfilelists();
     if (isset(RCS) && interact) {
 	if (!nohistsave) {
 	    int writeflags = HFILE_USE_OPTIONS;

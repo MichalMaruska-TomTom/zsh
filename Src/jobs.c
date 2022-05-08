@@ -1368,6 +1368,18 @@ deletefilelist(LinkList file_list, int disowning)
 
 /**/
 void
+cleanfilelists(void)
+{
+    int i;
+
+    DPUTS(shell_exiting >= 0, "BUG: cleanfilelists() before exit");
+ 
+    for (i = 1; i <= maxjob; i++)
+	deletefilelist(jobtab[i].filelist, 0);
+}
+
+/**/
+void
 freejob(Job jn, int deleting)
 {
     struct process *pn, *nx;
@@ -1476,7 +1488,10 @@ addproc(pid_t pid, char *text, int aux, struct timeval *bgtime,
 	 * set it for that, too.
 	 */
 	if (gleader != -1) {
-	    jobtab[thisjob].gleader = gleader;
+	    if (jobtab[thisjob].stat & STAT_CURSH)
+		jobtab[thisjob].gleader = gleader;
+	    else
+		jobtab[thisjob].gleader = pid;
 	    if (list_pipe_job_used != -1)
 		jobtab[list_pipe_job_used].gleader = gleader;
 	    /*

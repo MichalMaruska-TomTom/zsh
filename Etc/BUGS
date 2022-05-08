@@ -23,17 +23,12 @@ the underlying VCS but not whether quilt is used.
 Workaround: test (( ${+funcstack[(r)VCS_INFO_quilt]} )).
 ------------------------------------------------------------------------
 41184: 'exec' optimization for last command in a subshell should be
-skipped when STTY=... is set for that command
+skipped when STTY=... is set for that command.  This is complicated
+because the decision to (not) fork is made in execcmd_exec() before
+the prefix parameter assignments are examined in execute().
 ------------------------------------------------------------------------
 41203 and others: Make it easier to maintain C modules out of tree.
 (May require defining a stable API for modules, see 41254)
-------------------------------------------------------------------------
-42609: :|: =(hang)
-------------------------------------------------------------------------
-44007 - Martijn - exit in trap executes rest of function
-See test case in Test/C03traps.ztst.
-------------------------------------------------------------------------
-44133 debian #924736 (partial patch in 44134) three setopts following `    #`
 ------------------------------------------------------------------------
 44850 terminal issues with continuation markers
 ------------------------------------------------------------------------
@@ -49,17 +44,9 @@ interactive and the subshell is the foreground job.  The USEZLE option is
 always turned off in subshells, for reasons lost to history.  There is a
 related, probably obsolete, vared special case for $TERM set to "emacs".
 ------------------------------------------------------------------------
-users/26150: MULTIOS does not work with "exec":
-
-exec 3>/tmp/test1 3>/tmp/test2
-
-causes a script to hang.
-------------------------------------------------------------------------
 47561: [PATCH v4] vcs_info: choose backend by basedir
-------------------------------------------------------------------------
-39319: () { exit } =(:) doesn't clean up the tempfile
 ------------------------------------------------------------------------
 48091: Bug in compdescribe with matcher 'b:-=+'
 ------------------------------------------------------------------------
-users/26071: Strange behavior about option completion of `git push
+users/26071: Strange behavior about option completion of "git push --f"
 ------------------------------------------------------------------------

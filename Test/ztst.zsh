@@ -17,6 +17,9 @@
 # Defined in such a way that any value from the environment is used.
 : ${ZTST_verbose:=0}
 
+# If non-zero, continue the tests even after a test fails.
+: ${ZTST_continue:=0}
+
 # We require all options to be reset, not just emulation options.
 # Unfortunately, due to the crud which may be in /etc/zshenv this might
 # still not be good enough.  Maybe we should trick it somehow.
@@ -30,6 +33,9 @@ emulate -R zsh
 [[ -n $LC_NUMERIC ]] && LC_NUMERIC=C
 [[ -n $LC_MESSAGES ]] && LC_MESSAGES=C
 [[ -n $LANG ]] && LANG=C
+# Test file may (or may not) set LANG to other locales. In either case,
+# LANG must be passed to child zsh.
+export LANG
 
 # Don't propagate variables that are set by default in the shell.
 typeset +x WORDCHARS
@@ -143,6 +149,10 @@ ZTST_testfailed() {
 $ZTST_failmsg"
   fi
   ZTST_testfailed=1
+  # if called from within ZTST_Test() this will increment ZTST_Test's local
+  # ZTST_failures. Otherwise global ZTST_failures will be incremented
+  # (but currently its value is not used).
+  (( ++ZTST_failures ))
   return 1
 }
 ZTST_testxpassed() {
@@ -156,6 +166,7 @@ ZTST_testxpassed() {
 $ZTST_failmsg"
   fi
   ZTST_testfailed=1
+  (( ++ZTST_failures ))
   return 1
 }
 
@@ -291,16 +302,18 @@ ZTST_execchunk() {
 }
 
 # Functions for preparation and cleaning.
-# When cleaning up (non-zero string argument), we ignore status.
-ZTST_prepclean() {
-  # Execute indented code chunks.
-  while ZTST_getchunk; do
-    ZTST_execchunk >/dev/null || [[ -n $1 ]] || {
-      [[ -n "$ZTST_unimplemented" ]] ||
+ZTST_prep ZTST_clean () {
+  # Execute indented code chunks. If ZTST_unimplemented is set
+  # in any chunk then we will skip the remaining chunks.
+  # We ignore return status of chunks when cleaning up.
+  while [[ -z "$ZTST_unimplemented" ]] && ZTST_getchunk; do
+    ZTST_execchunk >/dev/null || [[ $0 = ZTST_clean ]] || {
       ZTST_testfailed "non-zero status from preparation code:
-$ZTST_code" && return 0
+$ZTST_code"
+      return 1
     }
   done
+  return 0
 }
 
 # diff wrapper
@@ -373,12 +386,12 @@ ZTST_diff() {
 
   return "$diff_ret"
 }
-    
+
 ZTST_test() {
   local last match mbegin mend found substlines
   local diff_out diff_err
   local ZTST_skip
-  integer expected_to_fail
+  integer expected_to_fail ZTST_failures
 
   while true; do
     rm -f $ZTST_in $ZTST_out $ZTST_err
@@ -492,7 +505,7 @@ $ZTST_curline"
 $ZTST_code${$(<$ZTST_terr):+
 Error output:
 $(<$ZTST_terr)}"
-	return 1
+        if (( ZTST_continue ));then continue; else return 1; fi
       fi
 
       ZTST_verbose 2 "ZTST_test: test produced standard output:
@@ -515,7 +528,7 @@ $(<$ZTST_terr)"
 $ZTST_code${$(<$ZTST_terr):+
 Error output:
 $(<$ZTST_terr)}"
-	return 1
+        if (( ZTST_continue ));then continue; else return 1; fi
       fi
       if [[ $ZTST_flags = *q* && -s $ZTST_err ]]; then
 	substlines="$(<$ZTST_err)"
@@ -529,21 +542,27 @@ $(<$ZTST_terr)}"
         fi
 	ZTST_testfailed "error output differs from expected as shown above for:
 $ZTST_code"
-	return 1
+        if (( ZTST_continue ));then continue; else return 1; fi
       fi
       if (( expected_to_fail )); then
         ZTST_testxpassed
-        return 1
+        if (( ZTST_continue ));then continue; else return 1; fi
       fi
     fi
     ZTST_verbose 1 "Test successful."
     [[ -n $last ]] && break
   done
 
-  ZTST_verbose 2 "ZTST_test: all tests successful"
+  if (( ZTST_failures )); then
+    ZTST_verbose 1 "ZTST_test: $ZTST_failures test(s) failed"
+  else
+    ZTST_verbose 2 "ZTST_test: all tests successful"
+  fi
 
   # reset message to keep ZTST_testfailed output correct
   ZTST_message=''
+
+  return ZTST_failures
 }
 
 
@@ -563,27 +582,29 @@ while [[ -z "$ZTST_unimplemented" ]] && ZTST_getsect $ZTST_skipok; do
     (prep) if (( ${ZTST_sects[prep]} + ${ZTST_sects[test]} + \
 	        ${ZTST_sects[clean]} )); then
 	    ZTST_testfailed "\`prep' section must come first"
-            exit 1
+	    break   # skip %test and %clean sections, but run ZTST_cleanup
 	  fi
-	  ZTST_prepclean
+	  ZTST_prep || ZTST_skipok=1
 	  ZTST_sects[prep]=1
 	  ;;
     (test)
 	  if (( ${ZTST_sects[test]} + ${ZTST_sects[clean]} )); then
 	    ZTST_testfailed "bad placement of \`test' section"
-	    exit 1
+	    break   # skip %clean section, but run ZTST_cleanup
 	  fi
-	  # careful here: we can't execute ZTST_test before || or &&
-	  # because that affects the behaviour of traps in the tests.
-	  ZTST_test
-	  (( $? )) && ZTST_skipok=1
+          if [[ -z "$ZTST_skipok" ]]; then  # if no error in %prep
+            # careful here: we can't execute ZTST_test before || or &&
+            # because that affects the behaviour of traps in the tests.
+            ZTST_test
+            (( $? )) && ZTST_skipok=1
+          fi
 	  ZTST_sects[test]=1
 	  ;;
     (clean)
 	   if (( ${ZTST_sects[test]} == 0 || ${ZTST_sects[clean]} )); then
 	     ZTST_testfailed "bad use of \`clean' section"
 	   else
-	     ZTST_prepclean 1
+	     ZTST_clean
 	     ZTST_sects[clean]=1
 	   fi
 	   ZTST_skipok=
