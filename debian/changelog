@@ -1,9 +1,9 @@
-zsh (5.8.1.3-test-1) UNRELEASED; urgency=medium
+zsh (5.8.1.3-test-1) experimental; urgency=low
 
   * [32100208,9529af72,5615b53b] Import new upstream test release.
     + [3b4287fe] Remove cherry-picked patches applied upstream
 
- -- Axel Beckert <abe@debian.org>  Mon, 09 May 2022 00:10:54 +0200
+ -- Axel Beckert <abe@debian.org>  Mon, 09 May 2022 04:11:56 +0200
 
 zsh (5.8.1.2-test-2) experimental; urgency=medium
 
