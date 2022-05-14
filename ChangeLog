@@ -1,3 +1,46 @@
+2022-05-14  dana  <dana@dana.is>
+
+	* unposted: Config/version.mk: Update for 5.9
+
+2022-05-11  Jun-ichi Takimoto  <takimoto-j@kba.biglobe.ne.jp>
+
+	* 50192: Src/openssh_bsd_setres_id.c: use set{u,g}id() instead of
+	setre{u,g}id() for dropping privilege on NetBSD
+
+2022-05-08  dana  <dana@dana.is>
+
+	* 50176 (with xpufx, tweaked): Completion/Linux/Command/_htop:
+	Improve htop completion
+
+2022-05-07  Bart Schaefer  <schaefer@zsh.org>
+
+	* 50184: Completion/Base/Utility/_values: fix inclusion of -S
+	separator in -r options passed to compadd through _describe
+
+	* Marlon Richert: 49954: Completion/Unix/Command/_gradle: improve
+	handling of task names, subprojects, completion tags, and caching
+
+	* unposted: Doc/Zsh/builtins.yo: cross-reference "typeset -f" for
+	"functions -[Tt]"
+
+2022-05-02  Bart Schaefer  <schaefer@zsh.org>
+
+	* unposted (cf. Jun-ichi 50164): Test/E01options.ztst: add sleep
+	after nullexec test to allow background process to flush writes
+	(observed only on MacOS Monterey 12).
+
+	* 50162: Test/D07multibyte.ztst: Tweak 50150 test to check proper
+	metafication of array elements and to ignore collation variances
+
+2022-05-01  Bart Schaefer  <schaefer@zsh.org>
+
+	* 50160: Test/D03procsubst.ztst, Test/E01options.ztst: Regression
+	tests for 50126, 50136, and 50149
+
+	* 50159: Test/V14system.ztst: Tests for sysread
+
+	* 50157 (Daniel Shahaf): Test/D07multibyte.ztst: Test for 50150
+
 2022-05-01  dana  <dana@dana.is>
 
 	* unposted: Config/version.mk: Update for 5.8.1.3-test (5.9)
