@@ -4,3 +4,4 @@ cross-compile.diff
 example-shebang.patch
 completion-dscverify.diff
 use-pager-instead-of-more-by-default.patch
+fix-typos-in-man-pages.patch
