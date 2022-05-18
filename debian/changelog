@@ -1,3 +1,28 @@
+zsh (5.9-1-maruska) unstable; urgency=medium
+
+  * [3146c1ac] When TAB-completing p4 changeset, don't list the author, but rather the message.
+  * [818d43e3] Fix the arithmetics for 3rd party Git commands.
+  * [9d079ca7] complete pkg_alternatives as well
+  * [9ea1b931] adapt debian to locate manpage in src directory & invoke helpfiles
+  * [ebbad921] pkg_info: make it work on Linux the same way as netbsd
+  * [83f05abd] Fix finding the installed packages to extract dependencies
+  * [cb9dfdca] pkg_add (on linux): complete package names not filenames. But only installed
+  * [db0904e0] relax clean
+  * [82fad6f3] pkg_add: complete all locally built packages: in PKG_PACKAGES
+  * [d5badb10] debian: point at FAQ file in source-tree, not build-tree
+  * [5478a377] kill_region_hook
+  * [c08ae68f] comments
+  * [f56356fa] avoid test: "permission denied" instead of "no such file.." for redirection
+  * [5eeb1b1d] Install man pages from source directory (kept in git)
+  * [0f947e9c] verbose build
+  * [068c931b] stop using "suffix rules" -- WHY?
+  * [f2dd7918] kill-word-match: useless?
+  * [5f8c3b2a] comments on delete-to-char ???
+  * [c167f0f3] Add to gitignore
+  * [8e57a4cb] Disable privileged test
+
+ -- Michal Maruska <mmaruska@gmail.com>  Wed, 18 May 2022 14:56:05 +0200
+
 zsh (5.9-1) unstable; urgency=low
 
   * [73d31738,d4d20348,2ae4a398] Import new upstream release 5.9.
