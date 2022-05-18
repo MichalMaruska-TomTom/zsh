@@ -936,6 +936,8 @@ cut(int i, int ct, int flags)
   cuttext(zleline + i, ct, flags);
 }
 
+static size_t zstring_as_cstring(const ZLE_STRING_T zs, char** res, size_t len);
+
 /*
  * As cut, but explicitly supply the text together with its length.
  */
@@ -1023,11 +1025,67 @@ cuttext(ZLE_STRING_T line, int ct, int flags)
 	ZS_memcpy(cutbuf.buf + cutbuf.len, line, ct);
 	cutbuf.len += ct;
     }
+    {  /* Invoke kill_region_hook with the cutbuf text as the only argument. */
+        char* arg;
+        size_t size = 0;
+        LinkList hookargs = newlinklist();
+
+        arg = zlelineasstring(cutbuf.buf, cutbuf.len, 0, NULL, NULL, 0);
+/*        size = zstring_as_cstring(cutbuf.buf, &arg, cutbuf.len); */
+
+        if (size < 0) {
+            zbeep();
+        } else {
+            addlinknode(hookargs, "kill_region_hook");
+            addlinknode(hookargs, arg);
+            int retval;
+            callhookfunc("kill_region_hook", hookargs, 0, &retval); /* NULL */
+            /* zfree(arg, size);*/
+            free(arg);
+        }
+    }
     if(vilinerange)
 	cutbuf.flags |= CUTBUFFER_LINE;
     else
 	cutbuf.flags &= ~CUTBUFFER_LINE;
 }
+
+/* Convert the (sub)zstring ZS of lenght LEN, to a C-string allocated in *RES;
+ * following the Locale setting.
+ * Returns the size (of the allocated memory) or -1 if conversion failed. */
+
+static size_t
+zstring_as_cstring(const ZLE_STRING_T zs, char** res, size_t len)
+{
+#ifdef MULTIBYTE_SUPPORT
+    /* mmc: there is a difference between: "const wchar_t*" and "const ZLE_STRING_T"
+     *      so I use the cur variable: */
+    const wchar_t* cur = zs;
+    size_t size = wcsnrtombs(NULL, &cur, len, 0, NULL) + 1;
+    cur = zs;
+    if (size < 0)
+            return -1;
+#else
+    size_t size = len + 1;
+#endif  /* MULTIBYTE_SUPPORT */
+
+    *res = zalloc(size);
+#ifdef MULTIBYTE_SUPPORT
+    size_t s = wcsnrtombs(*res, &cur, len, size -1, NULL);
+    if (s<0)                    /* impossible here? */
+        {
+            zfree(*res, size);
+            return -1;
+        }
+#else
+    memcpy(*res, zs, size);
+#endif  /* MULTIBYTE_SUPPORT */
+    (*res)[size]=0;
+
+    return size+1;
+}
+
+
 
 /*
  * Now we're back in the world of zlecs where we need to keep
