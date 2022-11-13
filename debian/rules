@@ -158,8 +158,6 @@ execute_after_dh_install-arch:
 	  xargs sed -e 's@\.\./config\.h@config.h@;s@#\(\s*\)include "\([^"]\+\)"@#\1include <zsh/\2>@' -i
 
 	cd debian/zsh-dev/usr/share/aclocal; mv aczshoot.m4 zshoot.m4
-	install -D -m644 debian/zsh.shells debian/zsh/usr/share/debianutils/shells.d/zsh
-	install -D -m644 debian/zsh-static.shells debian/zsh-static/usr/share/debianutils/shells.d/zsh-static
 
 override_dh_gencontrol-arch:
 	dh_gencontrol -a -- -VBuilt-Using="$(BUILT_USING)"
