@@ -1,3 +1,15 @@
+zsh (5.9-2) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * [8dff29f4] Update /etc/shells using dpkg triggers (Closes: #1023317)
+
+  [ Axel Beckert ]
+  * [4cda7bc3] Update Helmut's patch to use more debhelper style file
+    installing.
+  * [27ee5df9] Bracketize and update lintian overrides where needed.
+
+ -- Axel Beckert <abe@debian.org>  Mon, 14 Nov 2022 01:38:14 +0100
+
 zsh (5.9-1) unstable; urgency=low
 
   * [73d31738,d4d20348,2ae4a398] Import new upstream release 5.9.
