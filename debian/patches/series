@@ -5,3 +5,4 @@ example-shebang.patch
 completion-dscverify.diff
 use-pager-instead-of-more-by-default.patch
 fix-typos-in-man-pages.patch
+cherry-pick-3e3cfabc-revert-38150-and-fix-in-calling-function-cfp_matcher_range-instead.patch
