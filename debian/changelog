@@ -1,3 +1,15 @@
+zsh (5.9-3) unstable; urgency=medium
+
+  * [50f17ad1] Cherry-pick upstream commit 3e3cfabc to fix a completion
+    regression with NO_CASE_GLOB in Zsh 5.9. Thanks to Vincent Lefèvre!
+    (Closes: #1013434)
+  * [c513a394] Declare compliance with Debian Policy 4.6.2. No other
+    changes were needed.
+  * [749f6b2d] Drop alternative build-dep on transitional package
+    bsdmainutils. Thanks to Lintian!
+
+ -- Axel Beckert <abe@debian.org>  Mon, 30 Jan 2023 02:13:43 +0100
+
 zsh (5.9-2) unstable; urgency=medium
 
   [ Helmut Grohne ]
