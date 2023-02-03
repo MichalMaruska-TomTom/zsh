@@ -28,6 +28,7 @@ CONFIGFLAGS += --enable-site-fndir=/usr/local/share/zsh/site-functions
 CONFIGFLAGS += --enable-fndir=/usr/share/zsh/functions
 CONFIGFLAGS += --enable-runhelpdir=/usr/share/zsh/help
 CONFIGFLAGS += --with-tcsetpgrp
+CONFIGFLAGS += --enable-gdbm
 CONFIGFLAGS += --with-term-lib="ncursesw tinfo"
 CONFIGFLAGS += --enable-cap --enable-pcre
 CONFIGFLAGS += --enable-readnullcmd=pager
