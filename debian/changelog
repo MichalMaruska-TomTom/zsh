@@ -1,3 +1,11 @@
+zsh (5.9-4) UNRELEASED; urgency=medium
+
+  * [76a48d6c] Enable gdbm module to be build again, this time via
+    --enable-gdbm. Thanks to András Korn for reporting this regression.
+    (Closes: 1030349)
+
+ -- Axel Beckert <abe@debian.org>  Fri, 03 Feb 2023 15:25:01 +0100
+
 zsh (5.9-3) unstable; urgency=medium
 
   * [50f17ad1] Cherry-pick upstream commit 3e3cfabc to fix a completion
