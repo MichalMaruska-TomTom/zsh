@@ -6,3 +6,6 @@ completion-dscverify.diff
 use-pager-instead-of-more-by-default.patch
 fix-typos-in-man-pages.patch
 cherry-pick-3e3cfabc-revert-38150-and-fix-in-calling-function-cfp_matcher_range-instead.patch
+cherry-pick-4b7a9fd0-additional-typset--p--m-fix-for-namespaces.patch
+cherry-pick-b62e91134-51723-migrate-pcre-module-to-pcre2.patch
+cherry-pick-10bdbd8b-51877-do-not-build-pcre-module-if-pcre2-config-is-not-found.patch

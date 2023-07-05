@@ -11,7 +11,7 @@ Build-Depends: bsdextrautils,
                libelf-dev,
                libgdbm-dev,
                libncurses-dev,
-               libpcre3-dev
+               libpcre2-dev
 Build-Depends-Indep: cm-super-minimal,
                      ghostscript,
                      texinfo (>= 5~),
