@@ -1,3 +1,29 @@
+zsh (5.9-4-maruska) unstable; urgency=medium
+
+  [ Michal Maruska ]
+  * [7cd6b85f] When TAB-completing p4 changeset, don't list the author, but rather the message.
+  * [7c0ac73c] Fix the arithmetics for 3rd party Git commands.
+  * [ef9e60ec] complete pkg_alternatives as well
+  * [d71cad83] pkg_info: make it work on Linux the same way as netbsd
+  * [e7c70bc8] pkg_add (on linux): complete package names not filenames. But only installed
+  * [6295b578] pkg_add: complete all locally built packages: in PKG_PACKAGES
+  * [ea9cab24] comments
+  * [3effcce4] adapt debian to locate manpage in src directory & invoke helpfiles
+  * [e91685d7] Fix finding the installed packages to extract dependencies
+  * [26d5ebd1] relax clean
+  * [6c53340a] debian: point at FAQ file in source-tree, not build-tree
+  * [66c6a028] kill_region_hook
+  * [2ef081bc] avoid test: "permission denied" instead of "no such file.." for redirection
+  * [71e97bd0] Install man pages from source directory (kept in git)
+  * [ab77d9ad] verbose build
+  * [d6ed85a9] stop using "suffix rules" -- WHY?
+  * [e68a11bd] kill-word-match: useless?
+  * [68acac69] comments on delete-to-char ???
+  * [4a5f48f9] Add to gitignore
+  * [a3d90997] Disable privileged test
+
+ --  <mmaruska@gmail.com>  Sun, 20 Aug 2023 21:57:48 +0200
+
 zsh (5.9-4) unstable; urgency=medium
 
   * [76a48d6c] Enable gdbm module to be build again, this time via
