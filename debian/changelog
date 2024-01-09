@@ -1,3 +1,10 @@
+zsh (5.9-6) unstable; urgency=medium
+
+  * [c366ecc] Cherry pick upstream commit ecd3f9c9 to fix FTBFS issue with
+    newer texinfo (Closes: #1057610)
+
+ -- Michael Prokop <mika@debian.org>  Tue, 09 Jan 2024 11:15:01 +0100
+
 zsh (5.9-5) unstable; urgency=medium
 
   * [138340f9,dc77864f] Cherry pick multiple (partial) upstream commits to
