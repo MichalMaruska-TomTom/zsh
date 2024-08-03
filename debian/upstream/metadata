@@ -2,13 +2,13 @@
 ---
 # https://wiki.debian.org/UpstreamMetadata
 Bug-Submit: mailto:zsh-workers@zsh.org
-Changelog: http://zsh.sourceforge.net/releases.html
+Changelog: https://zsh.sourceforge.io/releases.html
 Contact: zsh-workers@zsh.org
 Security-Contact: zsh-security@zsh.org
-FAQ: http://zsh.sourceforge.net/FAQ/
+FAQ: https://zsh.sourceforge.io/FAQ/
 Name: Z shell
 Homepage: https://www.zsh.org/
-Homepage: http://zsh.sourceforge.net/
-Repository: git://git.code.sf.net/p/zsh/code
+Homepage: https://zsh.sourceforge.io/
+Repository: https://git.code.sf.net/p/zsh/code
 Repository-Browse: https://sourceforge.net/p/zsh/code/ci/master/tree/
-Documentation: http://zsh.sourceforge.net/Doc/
+Documentation: https://zsh.sourceforge.io/Doc/
