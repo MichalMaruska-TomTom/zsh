@@ -16,7 +16,6 @@ CFLAGS += -Wall -g
 
 CONFIGFLAGS =  --prefix=/usr
 CONFIGFLAGS += --mandir=/usr/share/man
-CONFIGFLAGS += --bindir=/bin
 CONFIGFLAGS += LDFLAGS="-g $(H_LDFLAGS)"
 
 CONFIGFLAGS += --infodir=/usr/share/info
@@ -140,20 +139,20 @@ override_dh_compress-indep:
 override_dh_auto_install-arch:
 	cd obj && $(MAKE) install.bin install.modules \
 	    DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
-	rm debian/zsh/bin/zsh-5.[0-9]*
+	rm debian/zsh/usr/bin/zsh-5.[0-9]*
 
 override_dh_shlibdeps-arch:
 	dh_shlibdeps -pzsh -- \
-		-dDepends    debian/zsh/bin/*   \
+		-dDepends    debian/zsh/usr/bin/*   \
 		-dRecommends debian/zsh/usr/lib/*/zsh/*/zsh/*.so
 
 execute_after_dh_installdocs-arch:
 	awk 'BEGIN { print "The following modules are statically-compiled into the static zsh binary:\n"; } /link=static/ { printf "%s (%s %s)\n", substr($$1,6), $$4, $$5; }' obj-static/config.modules >debian/zsh-static/usr/share/doc/zsh-static/README.Debian
 
 execute_after_dh_install-arch:
-	mv debian/zsh-static/bin/zsh  debian/zsh-static/bin/zsh-static
-	mv debian/zsh-static/bin/zsh5 debian/zsh-static/bin/zsh5-static
-	sed -e 's:#!/bin/zsh:#!/bin/zsh-static:' -i debian/zsh-static/bin/zsh5-static
+	mv debian/zsh-static/usr/bin/zsh  debian/zsh-static/usr/bin/zsh-static
+	mv debian/zsh-static/usr/bin/zsh5 debian/zsh-static/usr/bin/zsh5-static
+	sed -e 's:#!/bin/zsh:#!/bin/zsh-static:' -i debian/zsh-static/usr/bin/zsh5-static
 
 	find debian/zsh-dev/usr/include/zsh -name '*.h' -o -name '*.mdh' | \
 	  xargs sed -e 's@\.\./config\.h@config.h@;s@#\(\s*\)include "\([^"]\+\)"@#\1include <zsh/\2>@' -i
