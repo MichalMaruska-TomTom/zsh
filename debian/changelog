@@ -1,3 +1,11 @@
+zsh (5.9-8) unstable; urgency=medium
+
+  * [75b0275] Cherry-pick upstream commit 727b493e to address FTBFS on
+    mips64el. Thanks to Chris Hofstaedtler <zeha@debian.org>
+    (Closes: #1078749)
+
+ -- Michael Prokop <mika@debian.org>  Fri, 16 Aug 2024 12:17:47 +0200
+
 zsh (5.9-7) unstable; urgency=medium
 
   [ Chris Hofstaedtler ]
