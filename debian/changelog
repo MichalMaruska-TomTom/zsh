@@ -1,3 +1,32 @@
+zsh (5.9-8-maruska1) unstable; urgency=medium
+
+  [ Daniel Shahaf ]
+  * [841bce70] d/README.source: Update address of the team's IRC channel
+
+  [ Michal Maruska ]
+  * [7ac4511e] When TAB-completing p4 changeset, don't list the author, but rather the message.
+  * [86844b22] Fix the arithmetics for 3rd party Git commands.
+  * [b249f09a] complete pkg_alternatives as well
+  * [3334c9f8] pkg_info: make it work on Linux the same way as netbsd
+  * [2a661ff6] pkg_add (on linux): complete package names not filenames. But only installed
+  * [ad9dc6a9] pkg_add: complete all locally built packages: in PKG_PACKAGES
+  * [88322dc5] adapt debian to locate manpage in src directory & invoke helpfiles
+  * [629c9ea0] kill_region_hook
+  * [5729b972] comments
+  * [3f4d4003] Fix finding the installed packages to extract dependencies
+  * [a1b3c684] relax clean
+  * [1da431e0] debian: point at FAQ file in source-tree, not build-tree
+  * [2061b5f0] avoid test: "permission denied" instead of "no such file.." for redirection
+  * [144ec837] Install man pages from source directory (kept in git)
+  * [459d3e4d] verbose build
+  * [a8e9965f] stop using "suffix rules" -- WHY?
+  * [0eeb5d2f] kill-word-match: useless?
+  * [914d530a] comments on delete-to-char ???
+  * [0516590b] Add to gitignore
+  * [9dd8f871] Disable privileged test
+
+ -- Michal Maruska <mmaruska@gmail.com>  Sun, 08 Dec 2024 17:29:38 +0100
+
 zsh (5.9-8) unstable; urgency=medium
 
   * [75b0275] Cherry-pick upstream commit 727b493e to address FTBFS on
