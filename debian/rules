@@ -51,7 +51,7 @@ endif
 # resulting syntax might be invalid. Needed for packages which are
 # also provided by other packages like libncurses-dev and
 # libncursesw5-dev which both fulfil the according build-dependency.
-BUILT_USING=$(shell for pkg in libcap-dev libncurses-dev libpcre2-dev libc-dev-bin; do dpkg-query -f '$${status}' -W $$pkg 2>&1 | grep -Fq installed && dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W $$pkg; done)
+BUILT_USING=$(shell for pkg in libcap-dev libncurses-dev libpcre2-dev libc-dev-bin; do dpkg-query -f '$${status}' -W $$pkg 2>&1 | grep -Fq ' installed' && dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W $$pkg; done)
 
 %:
 	dh $@
@@ -96,7 +96,8 @@ override_dh_installdocs-indep:
 # Needs a freshly built (arch-dependent) zsh executable to compile .zwc files
 override_dh_auto_install-indep: build-dynamic
 	cd obj && $(MAKE) install.man DESTDIR=$(CURDIR)/debian/zsh-common
-	perl $(CURDIR)/Util/helpfiles obj/Doc/zshbuiltins.1 debian/zsh-common/usr/share/zsh/help
+	# $(CURDIR)/debian/zsh-common//usr/share/man/man1/zshbuiltins.1
+	perl $(CURDIR)/Util/helpfiles Doc/zshbuiltins.1 debian/zsh-common/usr/share/zsh/help
 
 	cd obj && $(MAKE) install.fns DESTDIR=$(CURDIR)/debian/zsh-common
 
